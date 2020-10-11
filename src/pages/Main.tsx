@@ -36,23 +36,22 @@ const Main: React.FC = () => {
         <IonTabButton tab="info" href={`${url}/info`}>
           <IonIcon icon={informationCircle} />
           <IonLabel>Info Center</IonLabel>
-          <IonBadge>6</IonBadge>
         </IonTabButton>
 
         {currentUser.accountType === USER.ACCOUNT_TYPES.PATIENT ? (
-          <IonTabButton tab="professionals" href={`${url}/professionals`}>
+          <IonTabButton tab="professionals" href="/app/professionals">
             <IonIcon icon={personCircle} />
             <IonLabel>Professionals</IonLabel>
           </IonTabButton>
         ) : (
-            <IonTabButton tab="appointments" href={`${url}/appointments`}>
+            <IonTabButton tab="appointments" href="/app/appointments">
               <IonIcon icon={fileTrayFull} />
               <IonLabel>Appointments</IonLabel>
             </IonTabButton>
           )
         }
 
-        <IonTabButton tab="chat" href={`${url}/chat`}>
+        <IonTabButton tab="chat" href="/app/chat">
           <IonIcon icon={chatbubbles} />
           <IonLabel>Chat</IonLabel>
         </IonTabButton>

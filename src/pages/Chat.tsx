@@ -42,7 +42,6 @@ export default function Chat() {
 }
 
 function ThreadRibbon({ thread }: any) {
-  const { url } = useRouteMatch();
   const history = useHistory();
   const { currentUser } = useAppContext() as any;
   const otherUser = thread.participants.filter(
@@ -50,10 +49,8 @@ function ThreadRibbon({ thread }: any) {
   )[0];
 
   const toThread = () => history.push({
-    pathname: `${url}/${thread._id}`,
-    state: {
-      ...otherUser,
-    }
+    pathname: `/app/chat/${thread._id}`,
+    state: otherUser,
   });
 
   return (

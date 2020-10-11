@@ -10,15 +10,17 @@ import { useParams, useLocation, useHistory } from "react-router";
 import { getThreadMessages, getUserMessages, sendMessage } from "../http/messages";
 import { useAppContext } from "../lib/context-lib";
 import useToastManager from "../lib/toast-hook";
+import LoadingFallback from "../components/LoadingFallback";
 
 const messageSchema = Yup.object({
   body: Yup.string().required("Message can't be blank"),
 });
 
 const Thread: React.FC = () => {
-  let [messages, setMessages] = useState<any[]>([]);
+  let [messages, setMessages] = useState<any[] | null>(null);
   const { threadId } = useParams();
   const { state } = useLocation() as any;
+  const [otherUser] = useState(state);
   const history = useHistory();
   const { currentUser } = useAppContext() as any;
   const { onError } = useToastManager();
@@ -39,13 +41,16 @@ const Thread: React.FC = () => {
   };
 
   useEffect(() => {
-    if (state && !state.fetch) {
-      getThreadMessages(threadId, currentUser.token).then((data: any) => {
-        setMessages(data);
-      }).catch(error => onError(error.message));
+    if (state && !state.fullName) {
+      history.replace("/app/chat");
+      return;
     }
 
-    if (state && state.fetch) {
+    if (state && !state.fetch) {
+      getThreadMessages(threadId, currentUser.token).then(({ data }: any) => {
+        setMessages(data);
+      }).catch(error => onError(error.message));
+    } else if (state && state.fetch) {
       getUserMessages([
         currentUser._id,
         state._id,
@@ -56,30 +61,32 @@ const Thread: React.FC = () => {
       history.replace("/app/chat");
       return;
     }
+
     return () => {
       setMessages = () => { };
     };
   }, []);
-
-  if (state && !state.fullName) {
-    history.replace("/app/chat");
-    return null;
-  }
 
   return (
     <IonPage>
       <IonHeader>
         <IonToolbar>
           <IonButtons slot="start">
-            <IonBackButton defaultHref="/" />
+            <IonBackButton defaultHref="/app/chat" />
           </IonButtons>
-          <IonTitle>{(state && state.fullName) || "...user..."}</IonTitle>
+          <IonTitle className="ion-text-capitalize">
+            {otherUser.fullName}
+          </IonTitle>
         </IonToolbar>
       </IonHeader>
       <IonContent>
-        <IonGrid>
-          {messages.map((msg: any) => <Message key={msg._id} message={msg} />)}
-        </IonGrid>
+        {!messages ? (
+          <LoadingFallback />
+        ) : (
+            <IonGrid>
+              {messages.map((msg: any) => <Message key={msg._id} message={msg} />)}
+            </IonGrid>
+          )}
       </IonContent>
       <MessageBoxFooter
         threadId={threadId}
@@ -121,7 +128,7 @@ function MessageBoxFooter({ threadId, currentUser, otherUser, addMessage }: any)
         ...values,
       };
 
-      if (threadId) {
+      if (threadId !== "no-thread") {
         newMessage.thread = threadId;
       }
 
@@ -155,10 +162,10 @@ function MessageBoxFooter({ threadId, currentUser, otherUser, addMessage }: any)
                 <IonRow>
                   <IonCol size="3" className="ion-no-padding d-flex ion-align-items-center ion-justify-content-center">
                     <IonButtons>
-                      <IonButton>
+                      <IonButton color="secondary">
                         <IonIcon slot="icon-only" icon={callOutline} />
                       </IonButton>
-                      <IonButton>
+                      <IonButton color="secondary">
                         <IonIcon slot="icon-only" icon={attachOutline} />
                       </IonButton>
                     </IonButtons>
@@ -167,7 +174,7 @@ function MessageBoxFooter({ threadId, currentUser, otherUser, addMessage }: any)
                     <IonTextarea
                       value={values.body}
                       rows={1}
-                      className={"ion-no-margin" + touched.body && errors.body ? " has-error" : ""}
+                      className={`ion-no-margin ${touched.body && errors.body ? " has-error" : ""}`}
                       name="body"
                       onIonChange={handleChange}
                       onIonBlur={handleBlur}
