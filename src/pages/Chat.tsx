@@ -1,39 +1,41 @@
 import React, { useState, useEffect } from "react";
-import { IonPage, IonContent, IonHeader, IonToolbar, IonButtons, IonBackButton, IonTitle, IonCard, IonCardContent, IonItem, IonAvatar, IonList, IonLabel, IonText } from "@ionic/react";
+import { IonPage, IonContent, IonItem, IonAvatar, IonList, IonLabel, IonText } from "@ionic/react";
 
 import defaultAvatar from "../assets/img/default_avatar.jpg";
 import { useRouteMatch, useHistory } from "react-router";
 import { useAppContext } from "../lib/context-lib";
 import { getUserThreads } from "../http/messages";
+import UserHeader from "../components/UserHeader";
+import useToastManager from "../lib/toast-hook";
+import LoadingFallback from "../components/LoadingFallback";
 
 export default function Chat() {
-  const history = useHistory();
-  const [threads, setThreads] = useState<any>([]);
+  let [threads, setThreads] = useState<any[] | null>(null);
   const { currentUser } = useAppContext() as any;
+  const { onError } = useToastManager();
 
   useEffect(() => {
     getUserThreads(currentUser._id, currentUser.token).then(({ data }) => {
-      setThreads(data || threads);
-    }).catch(console.error);
-  }, []);
+      setThreads(data);
+    }).catch(error => onError(error.message));
 
-  const toProfile = () => history.push('/app/profile');
+    return () => {
+      setThreads = () => { };
+    }
+  }, []);
 
   return (
     <IonPage>
-      {/* TODO: Refactor this header */}
-      <IonHeader>
-        <IonToolbar>
-          <IonAvatar slot="start" className="ion-padding" onClick={toProfile}>
-            <img src={defaultAvatar} alt="mike scott" />
-          </IonAvatar>
-          <IonTitle>Chat</IonTitle>
-        </IonToolbar>
-      </IonHeader>
+      <UserHeader title="Chat" />
       <IonContent fullscreen>
-        <IonList>
-          {threads.map((thread: any) => <ThreadRibbon key={thread._id} thread={thread} />)}
-        </IonList>
+
+        {!threads ? (
+          <LoadingFallback />
+        ) : (
+            <IonList>
+              {threads.map((thread: any) => <ThreadRibbon key={thread._id} thread={thread} />)}
+            </IonList>
+          )}
       </IonContent>
     </IonPage>
   );
@@ -45,11 +47,12 @@ function ThreadRibbon({ thread }: any) {
   const { currentUser } = useAppContext() as any;
   const otherUser = thread.participants.filter(
     (user: any) => user._id !== currentUser._id
-  );
+  )[0];
+
   const toThread = () => history.push({
     pathname: `${url}/${thread._id}`,
     state: {
-      otherUser,
+      ...otherUser,
     }
   });
 
@@ -59,7 +62,7 @@ function ThreadRibbon({ thread }: any) {
         <img src={defaultAvatar} alt={otherUser.fullName} />
       </IonAvatar>
       <IonLabel>
-        <h2>{otherUser.fullName}</h2>
+        <h2 className="ion-text-capitalize">{otherUser.fullName}</h2>
         <IonText color="medium">{thread.lastMessage.body}</IonText>
       </IonLabel>
     </IonItem>

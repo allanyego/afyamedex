@@ -4,14 +4,14 @@ import request from "./request";
 const BASE_URL = SERVER_URL_DEV + "/conditions";
 
 export async function getConditions() {
-  return await request(BASE_URL);
+  return await request(BASE_URL, {});
 }
 
 export async function getById(id) {
-  return await request(`${BASE_URL}/${id}`);
+  return await request(`${BASE_URL}/${id}`, {});
 }
 
-export async function addCondition(token, data) {
+export async function addCondition(data, token) {
   return await request(BASE_URL, {
     method: "POST",
     data,

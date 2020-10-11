@@ -4,30 +4,27 @@ import { businessOutline, personOutline, person } from 'ionicons/icons';
 import { useAppContext } from '../lib/context-lib';
 import { useHistory } from 'react-router';
 import { editUser } from '../http/users';
+import { USER } from '../http/constants';
+import useToastManager from '../lib/toast-hook';
 
 const accountTypes = [
   {
-    accountType: "professional",
+    accountType: USER.ACCOUNT_TYPES.PROFESSIONAL,
     icon: person,
   },
   {
-    accountType: "patient",
+    accountType: USER.ACCOUNT_TYPES.PATIENT,
     icon: personOutline,
   },
   {
-    accountType: "institution",
+    accountType: USER.ACCOUNT_TYPES.INSTITUTION,
     icon: businessOutline,
   },
 ];
 
 export default function AccountType() {
   const { currentUser } = useAppContext() as any;
-  const history = useHistory();
   const [settingUp, setSettingUp] = useState(false);
-
-  if (!currentUser) {
-    history.push("/sign-in");
-  }
 
   return (
     <IonPage>
@@ -37,7 +34,7 @@ export default function AccountType() {
         }}>
           <div className="ion-text-center">
             <IonText>
-              <h1>Select account type</h1>
+              <h1>Select how you'd like to use Afyamedex</h1>
             </IonText>
             {accountTypes.map(type => <AccountTypeCard {...{ settingUp, setSettingUp, userId: currentUser._id }} {...type} />)}
           </div>
@@ -59,6 +56,7 @@ function AccountTypeCard({ accountType, icon, userId, settingUp, setSettingUp }:
   const [loading, setLoading] = useState(false);
   const { currentUser, setCurrentUser } = useAppContext() as any;
   const history = useHistory();
+  const { onError, onSuccess } = useToastManager();
 
   const setAccountType = settingUp ? null : async () => {
     setSettingUp(true);
@@ -73,16 +71,18 @@ function AccountTypeCard({ accountType, icon, userId, settingUp, setSettingUp }:
       });
 
       setLoading(false);
-      history.push("/app/profile")
+      onSuccess("Account type set");
+      history.push("/app/profile");
     } catch (error) {
       setLoading(false);
       setSettingUp(false);
+      onError(error.message);
     }
   };
   return (
     <IonCard button onClick={setAccountType as any}>
       <IonCardContent>
-        <div>
+        <div className="ion-justify-content-center">
           {loading ? <IonSpinner name="crescent" /> : <IonIcon icon={icon} />}
         </div>
         <IonText>

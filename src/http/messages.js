@@ -22,3 +22,10 @@ export async function sendMessage(data, token) {
     data,
   });
 }
+
+export async function getUserMessages(users, token) {
+  const url = `${BASE_URL}/user-messages?users=${users.join(";")}`;
+  return await request(url, {
+    headers: constructAuthHeader(token),
+  });
+}

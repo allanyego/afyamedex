@@ -3,7 +3,7 @@ import request, { constructAuthHeader } from "./request";
 
 const BASE_URL = SERVER_URL_DEV + "/appointments";
 
-export async function get(userId, token) {
+export async function getAppointments(userId, token) {
   return await request(`${BASE_URL}/${userId}`, {
     headers: constructAuthHeader(token),
   });

@@ -10,6 +10,18 @@ form .has-error {
   display: flex;
 }
 
+.d-block {
+  display: block;
+}
+
+.p-centered {
+  margin: auto;
+}
+
+.border-circle {
+  border-radius: 50%;
+}
+
 .section-title {
   margin-bottom: 0;
 }
