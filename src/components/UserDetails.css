@@ -1,0 +1,13 @@
+.edit-floating-btn {
+  --dimensions: 1.5em;
+  --offset: -0.25em;
+  position: absolute;
+  top: var(--offset);
+  right: var(--offset);
+  background: var(--ion-color-light-shade);
+  font-size: 0.75em;
+  height: var(--dimensions);
+  width: var(--dimensions);
+  z-index: 2;
+  cursor: pointer;
+}

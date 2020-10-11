@@ -7,36 +7,64 @@ import * as Yup from "yup";
 
 import "./Thread.css";
 import { useParams, useLocation, useHistory } from "react-router";
-import { getThreadMessages } from "../http/messages";
+import { getThreadMessages, getUserMessages, sendMessage } from "../http/messages";
 import { useAppContext } from "../lib/context-lib";
+import useToastManager from "../lib/toast-hook";
 
 const messageSchema = Yup.object({
   body: Yup.string().required("Message can't be blank"),
 });
 
 const Thread: React.FC = () => {
-  let [messages, setMessages] = useState([]);
+  let [messages, setMessages] = useState<any[]>([]);
   const { threadId } = useParams();
-  const location = useLocation() as any;
+  const { state } = useLocation() as any;
   const history = useHistory();
   const { currentUser } = useAppContext() as any;
+  const { onError } = useToastManager();
+
+  const addMessage = (msg: any) => {
+    setMessages((msgs: any) => [
+      ...msgs,
+      {
+        ...msg,
+        sender: {
+          fullName: currentUser.fullName,
+          _id: currentUser._id,
+        },
+        createdAt: Date.now(),
+        _id: String(Date.now())
+      },
+    ]);
+  };
 
   useEffect(() => {
-    getThreadMessages(threadId, currentUser.token).then((data: any) => {
-      setMessages(data || messages);
-    }).catch(console.error);
+    if (state && !state.fetch) {
+      getThreadMessages(threadId, currentUser.token).then((data: any) => {
+        setMessages(data);
+      }).catch(error => onError(error.message));
+    }
 
+    if (state && state.fetch) {
+      getUserMessages([
+        currentUser._id,
+        state._id,
+      ], currentUser.token).then(({ data }: any) => {
+        setMessages(data);
+      }).catch(error => onError(error.message));
+    } else {
+      history.replace("/app/chat");
+      return;
+    }
     return () => {
-      setMessages = null as any;
+      setMessages = () => { };
     };
   }, []);
 
-  if (!location!.state!.fullName) {
+  if (state && !state.fullName) {
     history.replace("/app/chat");
     return null;
   }
-
-  const handleSubmit = async (values: any, { setSubmitting }: any) => { };
 
   return (
     <IonPage>
@@ -45,7 +73,7 @@ const Thread: React.FC = () => {
           <IonButtons slot="start">
             <IonBackButton defaultHref="/" />
           </IonButtons>
-          <IonTitle>{location.state.fullName}</IonTitle>
+          <IonTitle>{(state && state.fullName) || "...user..."}</IonTitle>
         </IonToolbar>
       </IonHeader>
       <IonContent>
@@ -53,55 +81,12 @@ const Thread: React.FC = () => {
           {messages.map((msg: any) => <Message key={msg._id} message={msg} />)}
         </IonGrid>
       </IonContent>
-      <IonFooter>
-        <Formik
-          validationSchema={messageSchema}
-          onSubmit={handleSubmit}
-          initialValues={{}}
-        >
-          {({
-            handleChange,
-            handleBlur,
-            errors,
-            touched,
-            isValid,
-            isSubmitting,
-          }: any) => (
-              <Form noValidate>
-                <IonGrid>
-                  <IonRow>
-                    <IonCol size="3" className="ion-no-padding d-flex ion-align-items-center ion-justify-content-center">
-                      <IonButtons>
-                        <IonButton>
-                          <IonIcon slot="icon-only" icon={callOutline} />
-                        </IonButton>
-                        <IonButton>
-                          <IonIcon slot="icon-only" icon={attachOutline} />
-                        </IonButton>
-                      </IonButtons>
-                    </IonCol>
-                    <IonCol size="7" className="ion-no-padding d-flex ion-align-items-center message-col">
-                      <IonTextarea
-                        rows={1}
-                        className={"ion-no-margin" + touched.body && errors.body ? " has-error" : ""}
-                        name="body"
-                        onIonChange={handleChange}
-                        onIonBlur={handleBlur}
-                      />
-                    </IonCol>
-                    <IonCol size="2" className="ion-no-padding d-flex ion-align-items-center ion-justify-content-center">
-                      <IonButtons>
-                        <IonButton disabled={!isValid || isSubmitting} type="submit">
-                          <IonIcon slot="icon-only" icon={sendOutline} />
-                        </IonButton>
-                      </IonButtons>
-                    </IonCol>
-                  </IonRow>
-                </IonGrid>
-              </Form>
-            )}
-        </Formik>
-      </IonFooter>
+      <MessageBoxFooter
+        threadId={threadId}
+        currentUser={currentUser}
+        otherUser={state}
+        addMessage={addMessage}
+      />
     </IonPage>
   );
 };
@@ -116,12 +101,90 @@ function Message({ message }: any) {
       <IonCol size="7">
         <IonCard className="ion-padding">
           <IonText>
-            <h5 className="ion-no-margin">{message.sender.fullName}</h5>
+            <h5 className="ion-no-margin ion-text-capitalize">{message.sender.fullName}</h5>
             <p className="ion-no-margin">{message.body}</p>
           </IonText>
           <IonText color="medium"><small className="ion-float-right">{moment(message.createdAt).format('LT')}</small></IonText>
         </IonCard>
       </IonCol>
     </IonRow>
+  );
+}
+
+function MessageBoxFooter({ threadId, currentUser, otherUser, addMessage }: any) {
+  const { onError } = useToastManager();
+  const handleSubmit = async (values: any, { setSubmitting, resetForm }: any) => {
+    try {
+      const newMessage = {
+        sender: currentUser._id,
+        recipient: otherUser._id,
+        ...values,
+      };
+
+      if (threadId) {
+        newMessage.thread = threadId;
+      }
+
+      await sendMessage(newMessage, currentUser.token);
+      setSubmitting(false);
+      resetForm({});
+      addMessage(newMessage);
+    } catch (error) {
+      setSubmitting(false);
+      onError(error.message);
+    }
+  };
+  return (
+    <IonFooter>
+      <Formik
+        validationSchema={messageSchema}
+        onSubmit={handleSubmit}
+        initialValues={{}}
+      >
+        {({
+          handleChange,
+          handleBlur,
+          values,
+          errors,
+          touched,
+          isValid,
+          isSubmitting,
+        }: any) => (
+            <Form noValidate>
+              <IonGrid>
+                <IonRow>
+                  <IonCol size="3" className="ion-no-padding d-flex ion-align-items-center ion-justify-content-center">
+                    <IonButtons>
+                      <IonButton>
+                        <IonIcon slot="icon-only" icon={callOutline} />
+                      </IonButton>
+                      <IonButton>
+                        <IonIcon slot="icon-only" icon={attachOutline} />
+                      </IonButton>
+                    </IonButtons>
+                  </IonCol>
+                  <IonCol size="7" className="ion-no-padding d-flex ion-align-items-center message-col">
+                    <IonTextarea
+                      value={values.body}
+                      rows={1}
+                      className={"ion-no-margin" + touched.body && errors.body ? " has-error" : ""}
+                      name="body"
+                      onIonChange={handleChange}
+                      onIonBlur={handleBlur}
+                    />
+                  </IonCol>
+                  <IonCol size="2" className="ion-no-padding d-flex ion-align-items-center ion-justify-content-center">
+                    <IonButtons>
+                      <IonButton color="secondary" disabled={!isValid || isSubmitting} type="submit">
+                        <IonIcon slot="icon-only" icon={sendOutline} />
+                      </IonButton>
+                    </IonButtons>
+                  </IonCol>
+                </IonRow>
+              </IonGrid>
+            </Form>
+          )}
+      </Formik>
+    </IonFooter>
   );
 }

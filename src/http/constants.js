@@ -20,3 +20,5 @@ export const USER = {
     PATIENT: "PATIENT",
   },
 };
+
+export const STORAGE_KEY = "afyamedex-storage";

@@ -1,0 +1,7 @@
+.appointments-page .datetime-grid {
+  font-size: 0.85em;
+}
+
+.appointments-page .d-col {
+  gap: 0.25em;
+}

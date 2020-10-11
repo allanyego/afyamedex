@@ -13,7 +13,7 @@ export async function getUsers({ username, patient = false }) {
     queryParams += `?patient=true`;
   }
 
-  return await request(`${BASE_URL}/${queryParams}`);
+  return await request(`${BASE_URL}/${queryParams}`, {});
 }
 
 export async function signIn(username, password) {
@@ -43,5 +43,5 @@ export async function editUser(userId, token, data) {
 }
 
 export async function getById(userId) {
-  return await request(`${BASE_URL}/${userId}`);
+  return await request(`${BASE_URL}/${userId}`, {});
 }
