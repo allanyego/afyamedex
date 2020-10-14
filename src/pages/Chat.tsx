@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { IonPage, IonContent, IonItem, IonAvatar, IonList, IonLabel, IonText } from "@ionic/react";
+import { IonPage, IonContent, IonItem, IonAvatar, IonList, IonLabel, IonText, useIonViewDidEnter, useIonViewWillLeave } from "@ionic/react";
 
 import defaultAvatar from "../assets/img/default_avatar.jpg";
 import { useRouteMatch, useHistory } from "react-router";
@@ -14,15 +14,15 @@ export default function Chat() {
   const { currentUser } = useAppContext() as any;
   const { onError } = useToastManager();
 
-  useEffect(() => {
+  useIonViewDidEnter(() => {
     getUserThreads(currentUser._id, currentUser.token).then(({ data }) => {
       setThreads(data);
     }).catch(error => onError(error.message));
-
-    return () => {
-      setThreads = () => { };
-    }
   }, []);
+
+  useIonViewWillLeave(() => {
+    setThreads = () => null;
+  });
 
   return (
     <IonPage>

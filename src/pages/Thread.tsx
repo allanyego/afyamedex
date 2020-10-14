@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { IonPage, IonContent, IonFooter, IonButtons, IonButton, IonIcon, IonHeader, IonBackButton, IonToolbar, IonTitle, IonGrid, IonRow, IonCard, IonCol, IonText, IonTextarea } from "@ionic/react";
+import { IonPage, IonContent, IonFooter, IonButtons, IonButton, IonIcon, IonHeader, IonBackButton, IonToolbar, IonTitle, IonGrid, IonRow, IonCard, IonCol, IonText, IonTextarea, useIonViewWillLeave, useIonViewDidEnter } from "@ionic/react";
 import { attachOutline, callOutline, sendOutline } from "ionicons/icons";
 import moment from "moment";
 import { Formik, Form } from "formik";
@@ -40,7 +40,7 @@ const Thread: React.FC = () => {
     ]);
   };
 
-  useEffect(() => {
+  useIonViewDidEnter(() => {
     if (state && !state.fullName) {
       history.replace("/app/chat");
       return;
@@ -61,11 +61,11 @@ const Thread: React.FC = () => {
       history.replace("/app/chat");
       return;
     }
-
-    return () => {
-      setMessages = () => { };
-    };
   }, []);
+
+  useIonViewWillLeave(() => {
+    setMessages = () => null;
+  });
 
   return (
     <IonPage>

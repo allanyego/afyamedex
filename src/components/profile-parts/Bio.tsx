@@ -3,23 +3,23 @@ import withEditableFeatures from "./withEditableFeatures";
 import { IonText, IonTextarea, IonItem, IonButton } from "@ionic/react";
 import { useAppContext } from "../../lib/context-lib";
 import { EditableProps } from "./withEditableFeatures";
+import { ProfileData } from "../UserDetails";
 
-const Bio: React.FC<EditableProps> = ({ user, isEditting }) => {
-  return isEditting ?
-    <>
-      <IonItem>
-        <IonTextarea rows={2} value={user.bio} />
-      </IonItem>
-      <div className="d-flex ion-justify-content-end">
-        <IonButton
-          color="success"
-          size="small"
-        >Save</IonButton>
-      </div>
-    </> :
+export interface PartProps {
+  user: ProfileData,
+  currentUserId: string,
+}
+
+const Bio: React.FC<PartProps> = ({ user, currentUserId }) => {
+  if (currentUserId !== user._id && !user.bio) {
+    return null;
+  }
+
+  return (
     <IonText>
       <p>{user.bio ? user.bio : "No bio"}</p>
-    </IonText>;
+    </IonText>
+  );
 };
 
-export default withEditableFeatures(Bio);
+export default Bio;

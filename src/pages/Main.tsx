@@ -1,18 +1,18 @@
 import React from "react";
 import { useRouteMatch, Route, Redirect } from "react-router";
-import { IonTabs, IonTabBar, IonTabButton, IonIcon, IonLabel, IonBadge, IonRouterOutlet } from "@ionic/react";
-import { informationCircle, personCircle, chatbubbles, fileTrayFull } from "ionicons/icons";
-import InfoCenter from "./Conditions";
+import { IonTabs, IonTabBar, IonTabButton, IonIcon, IonLabel, IonRouterOutlet } from "@ionic/react";
+import { helpCircleSharp, peopleCircleSharp, chatbubblesSharp, fileTrayFullSharp } from "ionicons/icons";
+import Conditions from "./Conditions";
 import Chat from "./Chat";
 import Listing from "./Listing";
 import Thread from "./Thread";
 import Condition from "./Condition";
-import Profile from "./Profile";
 import BookAppointment from "./BookAppointment";
 import NewCondition from "./NewCondition";
 import Appointments from "./Appointments";
 import { useAppContext } from "../lib/context-lib";
 import { USER } from "../http/constants";
+import Profile from "./Profile";
 
 const Main: React.FC = () => {
   const { url, path } = useRouteMatch();
@@ -22,37 +22,33 @@ const Main: React.FC = () => {
     <IonTabs>
       <IonRouterOutlet>
         <Route path={path} exact={true} render={() => <Redirect to={`${path}/info`} />} />
-        <Route path={`${path}/info`} component={InfoCenter} />
-        <Route path={`${path}/info/:conditionId`} component={Condition} exact />
-        <Route path={`${path}/info/new`} component={NewCondition} exact />
-        <Route path={`${path}/chat`} component={Chat} exact={true} />
-        <Route path={`${path}/chat/:threadId`} component={Thread} exact />
-        <Route path={`${path}/book/:professionalId`} component={BookAppointment} exact />
-        <Route path={`${path}/professionals`} component={Listing} exact={true} />
+        <Route path={`${path}/info`} component={ConditionsRouter} />
+        <Route path={`${path}/chat`} component={ChatRouter} />
+        <Route path={`${path}/professionals`} component={ProfessionalsRouter} />
         <Route path={`${path}/appointments`} component={Appointments} exact />
-        <Route path={`${path}/profile/:userId?`} component={Profile} />
+        <Route path={`${path}/profile`} component={Profile} />
       </IonRouterOutlet>
       <IonTabBar slot="bottom">
         <IonTabButton tab="info" href={`${url}/info`}>
-          <IonIcon icon={informationCircle} />
+          <IonIcon icon={helpCircleSharp} />
           <IonLabel>Info Center</IonLabel>
         </IonTabButton>
 
         {currentUser.accountType === USER.ACCOUNT_TYPES.PATIENT ? (
           <IonTabButton tab="professionals" href="/app/professionals">
-            <IonIcon icon={personCircle} />
-            <IonLabel>Professionals</IonLabel>
+            <IonIcon icon={peopleCircleSharp} />
+            <IonLabel>Browse</IonLabel>
           </IonTabButton>
         ) : (
             <IonTabButton tab="appointments" href="/app/appointments">
-              <IonIcon icon={fileTrayFull} />
+              <IonIcon icon={fileTrayFullSharp} />
               <IonLabel>Appointments</IonLabel>
             </IonTabButton>
           )
         }
 
         <IonTabButton tab="chat" href="/app/chat">
-          <IonIcon icon={chatbubbles} />
+          <IonIcon icon={chatbubblesSharp} />
           <IonLabel>Chat</IonLabel>
         </IonTabButton>
       </IonTabBar>
@@ -61,3 +57,34 @@ const Main: React.FC = () => {
 };
 
 export default Main;
+
+function ChatRouter() {
+  const { path } = useRouteMatch();
+  return (
+    <IonRouterOutlet>
+      <Route path={path} component={Chat} exact />
+      <Route path={`${path}/:threadId`} component={Thread} exact />
+    </IonRouterOutlet>
+  );
+}
+
+function ConditionsRouter() {
+  const { path } = useRouteMatch();
+  return (
+    <IonRouterOutlet>
+      <Route path={path} component={Conditions} exact />
+      <Route path={`${path}/new`} component={NewCondition} exact />
+      <Route path={`${path}/:conditionId`} component={Condition} exact />
+    </IonRouterOutlet>
+  );
+}
+
+function ProfessionalsRouter() {
+  const { path } = useRouteMatch();
+  return (
+    <IonRouterOutlet>
+      <Route path={path} component={Listing} exact />
+      <Route path={`${path}/:professionalId/book`} component={BookAppointment} exact />
+    </IonRouterOutlet>
+  );
+}

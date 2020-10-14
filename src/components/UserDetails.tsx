@@ -60,14 +60,16 @@ export default function UserDetails({ user }: { user: ProfileData }) {
       <IonText className="ion-text-center">
         <Names user={user} currentUserId={currentUser._id} />
         {user.accountType !== USER.ACCOUNT_TYPES.PATIENT && (
-          <p>
+          <>
             <Experience user={user} currentUserId={currentUser._id} />
-            {user.rating ? (
-              <Rating rating={user.rating} />
-            ) : (
-                <IonText>No ratings</IonText>
-              )}
-          </p>
+            <p>
+              {user.rating ? (
+                <Rating rating={user.rating} />
+              ) : (
+                  <IonText>No ratings</IonText>
+                )}
+            </p>
+          </>
         )}
       </IonText>
       <Bio user={user} currentUserId={currentUser._id} />

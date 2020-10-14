@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { IonPage, IonContent, IonHeader, IonToolbar, IonButtons, IonBackButton, IonTitle, IonText, IonItem, IonDatetime, IonLabel, IonRow, IonCol, IonButton, IonInput, IonList, IonRadioGroup, IonListHeader, IonRadio } from "@ionic/react";
+import { IonPage, IonContent, IonHeader, IonToolbar, IonButtons, IonBackButton, IonTitle, IonText, IonItem, IonDatetime, IonLabel, IonRow, IonCol, IonButton, IonInput, IonList, IonRadioGroup, IonListHeader, IonRadio, useIonViewDidEnter, useIonViewWillLeave } from "@ionic/react";
 import { useHistory, useParams } from "react-router";
 import { Formik, Form } from "formik";
 import * as Yup from "yup";
@@ -24,12 +24,12 @@ const appointmentSchema = Yup.object({
 
 export default function BookAppointment() {
   const { professionalId } = useParams();
-  const [professional, setProfessional] = useState<any>(null);
+  let [professional, setProfessional] = useState<any>(null);
   const history = useHistory();
   const { currentUser } = useAppContext() as any;
   const { onError, onSuccess } = useToastManager();
 
-  useEffect(() => {
+  useIonViewDidEnter(() => {
     if (!professionalId) {
       history.push("/app/professionals");
       return;
@@ -53,6 +53,10 @@ export default function BookAppointment() {
       history.replace("/app/professionals");
     });
   }, []);
+
+  useIonViewWillLeave(() => {
+    setProfessional = () => null;
+  });
 
   const handleSubmit = async (values: any, { setSubmitting }: any) => {
     try {

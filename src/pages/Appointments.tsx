@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { IonPage, IonContent, IonList, IonItem, IonLabel, IonRow, IonIcon, IonText, IonGrid, IonCol, IonItemSliding, IonItemOptions, IonItemOption } from "@ionic/react";
+import { IonPage, IonContent, IonList, IonItem, IonLabel, IonRow, IonIcon, IonText, IonGrid, IonCol, IonItemSliding, IonItemOptions, IonItemOption, useIonViewDidEnter, useIonViewWillLeave } from "@ionic/react";
 import moment from "moment";
 
 import UserHeader from "../components/UserHeader";
@@ -25,12 +25,13 @@ export default function Appointments() {
     }
   };
 
-  useEffect(() => {
+  useIonViewDidEnter(() => {
     fetchAppointments().then();
-    return () => {
-      setAppointments = () => null;
-    }
-  }, [])
+  }, []);
+
+  useIonViewWillLeave(() => {
+    setAppointments = () => null;
+  });
 
   return (
     <IonPage>

@@ -1,5 +1,7 @@
 {
   "name": "afyamedex",
-  "integrations": {},
+  "integrations": {
+    "capacitor": {}
+  },
   "type": "react"
 }

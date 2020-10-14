@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { IonPage, IonContent, IonCardTitle, IonCardContent, IonCard, IonCardHeader, IonCardSubtitle, IonButton, IonIcon } from "@ionic/react";
+import { IonPage, IonContent, IonCardTitle, IonCardContent, IonCard, IonCardHeader, IonCardSubtitle, IonButton, IonIcon, useIonViewDidEnter, useIonViewDidLeave, IonItem, IonLabel, IonList } from "@ionic/react";
 import { useRouteMatch } from "react-router";
 import moment from "moment";
 
@@ -12,17 +12,21 @@ import { useAppContext } from "../lib/context-lib";
 import { USER } from "../http/constants";
 
 export default function Conditions() {
-  const [conditions, setConditions] = useState<null | any[]>(null);
+  let [conditions, setConditions] = useState<null | any[]>(null);
   const { onError } = useToastManager();
   const { currentUser } = useAppContext() as any;
 
-  useEffect(() => {
+  useIonViewDidEnter(() => {
     getConditions().then(({ data }: any) => {
       setConditions(data);
     }).catch(error => {
       onError(error.message);
     });
   }, []);
+
+  useIonViewDidLeave(() => {
+    setConditions = () => null;
+  });
 
   return (
     <IonPage>
@@ -35,11 +39,11 @@ export default function Conditions() {
         {!conditions ? (
           <LoadingFallback />
         ) : (
-            <>
+            <IonList>
               {conditions!.map((condition: any) => (
-                <ConditionCard key={condition._id} condition={condition} />
+                <ConditionItem key={condition._id} condition={condition} />
               ))}
-            </>
+            </IonList>
           )}
       </IonContent>
     </IonPage>
@@ -55,21 +59,19 @@ type ConditionCardProps = {
   }
 };
 
-function ConditionCard({ condition }: ConditionCardProps) {
+function ConditionItem({ condition }: ConditionCardProps) {
   const { url } = useRouteMatch();
 
   return (
-    <IonCard routerLink={`${url}/${condition._id}`}>
-      <IonCardHeader>
-        <IonCardTitle>{condition.name}</IonCardTitle>
-        <IonCardSubtitle>
-          <small>{moment(condition.createdAt).format("LT")}</small>
-        </IonCardSubtitle>
-      </IonCardHeader>
-      <IonCardContent>
-        {condition.description.slice(0, 150) + "..."}
-      </IonCardContent>
-    </IonCard>
+    <IonItem routerLink={`${url}/${condition._id}`} className="listing-item">
+      <IonLabel>
+        <h3 className="ion-text-capitalize d-flex ion-align-items-center">
+          {condition.name}
+        </h3>
+        <p>{condition.description}</p>
+        <small>{moment(condition.createdAt).format("LT")}</small>
+      </IonLabel>
+    </IonItem>
   );
 }
 

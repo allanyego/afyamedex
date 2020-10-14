@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Redirect, Route } from 'react-router-dom';
-import { IonApp, IonRouterOutlet } from '@ionic/react';
+import { IonApp, IonRouterOutlet, IonMenu, IonHeader, IonToolbar, IonTitle, IonContent, IonList, IonItem, IonIcon, IonLabel } from '@ionic/react';
 import { IonReactRouter } from '@ionic/react-router';
 
 /* Core CSS required for Ionic components to work properly */
@@ -30,14 +30,17 @@ import Main from './pages/Main';
 import { AppContext } from './lib/context-lib';
 import "./App.css";
 import ToastManager from './components/ToastManager';
-import { getObject } from './lib/storage';
+import { getObject, clear } from './lib/storage';
 import { STORAGE_KEY } from './http/constants';
 import LoadingFallback from './components/LoadingFallback';
+import { exit, person } from 'ionicons/icons';
+import useToastManager from './lib/toast-hook';
 
 const App: React.FC = () => {
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [notifications, setNotifications] = useState([]);
   const [isAuthenticating, setAuthenticating] = useState(true);
+  const { onError } = useToastManager();
 
   useEffect(() => {
     getObject(STORAGE_KEY).then(data => {
@@ -49,6 +52,15 @@ const App: React.FC = () => {
     });
   }, []);
 
+  const handleLogout = async () => {
+    try {
+      await clear();
+      setCurrentUser(null);
+    } catch (error) {
+      onError(error.message);
+    }
+  };
+
   return (
     <IonApp>
       <AppContext.Provider value={{
@@ -57,25 +69,52 @@ const App: React.FC = () => {
         notifications,
         setNotifications,
       }}>
+        {currentUser && (
+          <IonMenu side="start" menuId="super-cool-menu" contentId="router-outlet"
+            swipeGesture={false}
+          >
+            <IonHeader>
+              <IonToolbar color="secondary">
+                <IonTitle className="ion-text-capitalize">{currentUser.fullName}</IonTitle>
+              </IonToolbar>
+            </IonHeader>
+            <IonContent>
+              <IonList lines="full">
+                <IonItem routerLink="/app/profile">
+                  <IonIcon slot="start" icon={person} />
+                  <IonLabel>Profile</IonLabel>
+                </IonItem>
+                <IonItem onClick={handleLogout}>
+                  <IonIcon color="danger" slot="start" icon={exit} />
+                  <IonLabel color="danger">Logout</IonLabel>
+                </IonItem>
+              </IonList>
+            </IonContent>
+          </IonMenu>
+        )}
         <IonReactRouter>
           <ToastManager />
           {isAuthenticating ? (
             <LoadingFallback />
           ) : (
-              <IonRouterOutlet>
-                <Route path="/home" render={redirectToApp(Home, currentUser)} exact />
-                <Route path="/sign-in" render={redirectToApp(SignIn, currentUser)} exact={true} />
-                <Route path="/sign-up" render={redirectToApp(SignUp, currentUser)} exact={true} />
-                <Route path="/app" render={() => currentUser ? <Main /> : redirect("/sign-in")} />
-                <Route
-                  path="/account-type"
-                  exact
-                  render={() => currentUser ?
-                    currentUser!.accountType ? redirect("/app") : <AccountType />
-                    : redirect("/sign-in")}
-                />
-                <Route path="/" render={() => redirect("/home")} exact />
-              </IonRouterOutlet>
+              <>
+
+
+                <IonRouterOutlet id="router-outlet">
+                  <Route path="/home" render={redirectToApp(Home, currentUser)} exact />
+                  <Route path="/sign-in" render={redirectToApp(SignIn, currentUser)} exact={true} />
+                  <Route path="/sign-up" render={redirectToApp(SignUp, currentUser)} exact={true} />
+                  <Route path="/app" render={() => currentUser ? <Main /> : redirect("/sign-in")} />
+                  <Route
+                    path="/account-type"
+                    exact
+                    render={() => currentUser ?
+                      currentUser!.accountType ? redirect("/app") : <AccountType />
+                      : redirect("/sign-in")}
+                  />
+                  <Route path="/" render={() => redirect("/home")} exact />
+                </IonRouterOutlet>
+              </>
             )}
         </IonReactRouter>
       </AppContext.Provider>

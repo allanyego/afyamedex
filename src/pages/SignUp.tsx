@@ -29,6 +29,7 @@ const SignUp: React.FC = () => {
 
   const handleSubmit = async (values: any, { setSubmitting }: any) => {
     try {
+      delete values.confirmPassword;
       const { data } = await signUp(values);
       setCurrentUser(data);
       setSubmitting(false);

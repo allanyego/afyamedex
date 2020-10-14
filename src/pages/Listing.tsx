@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { IonButton, IonContent, IonHeader, IonPage, IonTitle, IonToolbar, IonRow, IonCol, IonText, IonIcon, IonButtons, IonBackButton, IonSearchbar, IonGrid, IonItem, IonLabel, IonRange, IonCheckbox, IonInput, IonToggle, IonSelectOption, IonSelect, IonDatetime, IonThumbnail, IonAvatar, IonList, IonChip, IonBadge } from '@ionic/react';
+import { IonButton, IonContent, IonHeader, IonPage, IonTitle, IonToolbar, IonRow, IonCol, IonText, IonIcon, IonButtons, IonBackButton, IonSearchbar, IonGrid, IonItem, IonLabel, IonRange, IonCheckbox, IonInput, IonToggle, IonSelectOption, IonSelect, IonDatetime, IonThumbnail, IonAvatar, IonList, IonChip, IonBadge, useIonViewDidEnter, useIonViewWillLeave } from '@ionic/react';
 import { caretBackCircle, search, personCircle, ellipsisHorizontal, ellipsisVertical, checkmarkCircle, shuffle, star, informationCircle, navigate, home, closeCircle, person, businessOutline, close } from 'ionicons/icons';
 
 import './Listing.css';
@@ -13,7 +13,7 @@ import UserHeader from '../components/UserHeader';
 
 const Listing: React.FC = () => {
   const [showSearchBar, setShowSearchBar] = useState(false);
-  const [professionals, setProfessionals] = useState<any[] | null>(null);
+  let [professionals, setProfessionals] = useState<any[] | null>(null);
   const [listMargin, setListMargin] = useState(0);
   const { onError } = useToastManager();
 
@@ -26,9 +26,13 @@ const Listing: React.FC = () => {
     }
   };
 
-  useEffect(() => {
+  useIonViewDidEnter(() => {
     fetchProfessionals({}).then();
   }, []);
+
+  useIonViewWillLeave(() => {
+    setProfessionals = () => null;
+  });
 
   const onToggle = () => setShowSearchBar(!showSearchBar);
   const closeSearchBar = () => setShowSearchBar(false);

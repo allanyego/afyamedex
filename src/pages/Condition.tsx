@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { IonContent, IonPage, IonHeader, IonToolbar, IonButtons, IonBackButton, IonTitle, IonText, IonList, IonItem, IonLabel, IonSpinner, IonListHeader } from "@ionic/react";
+import { IonContent, IonPage, IonHeader, IonToolbar, IonButtons, IonBackButton, IonTitle, IonText, IonList, IonItem, IonLabel, IonSpinner, IonListHeader, useIonViewWillLeave, useIonViewDidEnter } from "@ionic/react";
 import { useParams, useHistory } from "react-router";
 import moment from "moment";
 
@@ -10,7 +10,7 @@ import LoadingFallback from "../components/LoadingFallback";
 export default function Condition() {
   const { conditionId } = useParams();
   const history = useHistory();
-  const [condition, setCondition] = useState<any>(null);
+  let [condition, setCondition] = useState<any>(null);
   const { onError } = useToastManager();
 
   const getConditionDetails = async () => {
@@ -27,9 +27,13 @@ export default function Condition() {
     }
   };
 
-  useEffect(() => {
+  useIonViewDidEnter(() => {
     getConditionDetails().then();
   }, []);
+
+  useIonViewWillLeave(() => {
+    setCondition = () => null;
+  });
 
   return (
     <IonPage>
