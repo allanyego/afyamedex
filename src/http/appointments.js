@@ -17,7 +17,7 @@ export async function post(userId, token, data) {
   });
 }
 
-export async function edit(appointmentId, token, data) {
+export async function editAppointment(appointmentId, token, data) {
   return await request(`${BASE_URL}/${appointmentId}`, {
     method: "PUT",
     headers: constructAuthHeader(token),

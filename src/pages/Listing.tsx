@@ -10,18 +10,25 @@ import useToastManager from '../lib/toast-hook';
 import LoadingFallback from '../components/LoadingFallback';
 import { USER } from '../http/constants';
 import UserHeader from '../components/UserHeader';
+import debounce from '../lib/debounce';
+import useMounted from '../lib/mounted-hook';
+import ErrorFallback from '../components/ErrorFallback';
 
 const Listing: React.FC = () => {
   const [showSearchBar, setShowSearchBar] = useState(false);
+  const [isSearching, setSearching] = useState(false);
   let [professionals, setProfessionals] = useState<any[] | null>(null);
+  const [loadError, setLoadError] = useState(false);
   const [listMargin, setListMargin] = useState(0);
   const { onError } = useToastManager();
+  const { isMounted, setMounted } = useMounted();
 
   const fetchProfessionals = async (opts?: any) => {
     try {
       const { data } = await getUsers(opts);
-      setProfessionals(data);
+      isMounted && setProfessionals(data);
     } catch (error) {
+      isMounted && setLoadError(true);
       onError(error.message);
     }
   };
@@ -31,7 +38,7 @@ const Listing: React.FC = () => {
   }, []);
 
   useIonViewWillLeave(() => {
-    setProfessionals = () => null;
+    setMounted(false);
   });
 
   const onToggle = () => setShowSearchBar(!showSearchBar);
@@ -48,18 +55,20 @@ const Listing: React.FC = () => {
       />
       <IonContent fullscreen className="listing-page">
         {showSearchBar && (
-          <SearchBar {...{ fetchProfessionals, closeSearchBar, setListMargin }} />
+          <SearchBar {...{ fetchProfessionals, closeSearchBar, setListMargin, setSearching }} />
         )}
 
-        {!professionals ? (
+        {loadError ? (
+          <ErrorFallback />
+        ) : (!professionals || isSearching) ? (
           <LoadingFallback />
         ) : (
-            <IonList lines="full" style={{
-              marginTop: listMargin,
-            }}>
-              {professionals.map((prof: any) => <ListingItem key={prof._id} prof={prof} />)}
-            </IonList>
-          )}
+              <IonList lines="full" style={{
+                marginTop: listMargin,
+              }}>
+                {professionals.map((prof: any) => <ListingItem key={prof._id} prof={prof} />)}
+              </IonList>
+            )}
       </IonContent>
     </IonPage >
   );
@@ -99,11 +108,10 @@ interface SearchBarProps {
   fetchProfessionals: (args: any) => Promise<any>
   closeSearchBar: (args: any) => void
   setListMargin: (args: any) => any
+  setSearching: (args: any) => any
 }
 
-function SearchBar({ fetchProfessionals, closeSearchBar, setListMargin }: SearchBarProps) {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [isSearching, setSearching] = useState(false);
+function SearchBar({ fetchProfessionals, closeSearchBar, setListMargin, setSearching }: SearchBarProps) {
   const { onError } = useToastManager() as any;
   const searchBarRef = useRef(null);
 
@@ -113,10 +121,8 @@ function SearchBar({ fetchProfessionals, closeSearchBar, setListMargin }: Search
     return () => setListMargin(0);
   }, [])
 
-  const handleChange = (e: any) => {
-    setSearchTerm(e.target.value.trim());
-  };
-  const handleSearch = async () => {
+  const handleSearch = async (e: any) => {
+    const searchTerm = e.target.value;
     if (!searchTerm) {
       return;
     }
@@ -140,20 +146,12 @@ function SearchBar({ fetchProfessionals, closeSearchBar, setListMargin }: Search
         <IonRow>
           <IonCol className="ion-no-padding">
             <IonSearchbar
-              value={searchTerm}
-              onIonChange={handleChange}
+              value=""
+              onIonChange={debounce(handleSearch, 1500)}
               showCancelButton="focus"
               cancelButtonText="Custom Cancel"
               onIonCancel={closeSearchBar}
             />
-          </IonCol>
-          <IonCol
-            className="ion-no-padding d-flex ion-align-items-center"
-            size="2">
-            <IonButton expand="block" onClick={handleSearch}
-              disabled={isSearching}>
-              Go
-          </IonButton>
           </IonCol>
         </IonRow>
       </IonGrid>

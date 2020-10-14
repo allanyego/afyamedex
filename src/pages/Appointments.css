@@ -5,3 +5,24 @@
 .appointments-page .d-col {
   gap: 0.25em;
 }
+
+.appointments-page .appointment-status {
+  position: absolute;
+  width: 0.5em;
+  height: 0.5em;
+  border-radius: 50%;
+  right: 1.5rem;
+  top: 20%;
+}
+
+.appointments-page .appointment-status.rejected {
+  background: var(--ion-color-medium-tint);
+}
+
+.appointments-page .appointment-status.unapproved {
+  background: var(--ion-color-warning-tint);
+}
+
+.appointments-page .appointment-status.success {
+  background: var(--ion-color-success);
+}

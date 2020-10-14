@@ -2,6 +2,7 @@ import React from "react";
 import { useRouteMatch, Route, Redirect } from "react-router";
 import { IonTabs, IonTabBar, IonTabButton, IonIcon, IonLabel, IonRouterOutlet } from "@ionic/react";
 import { helpCircleSharp, peopleCircleSharp, chatbubblesSharp, fileTrayFullSharp } from "ionicons/icons";
+
 import Conditions from "./Conditions";
 import Chat from "./Chat";
 import Listing from "./Listing";
@@ -19,7 +20,7 @@ const Main: React.FC = () => {
   const { currentUser } = useAppContext() as any;
 
   return (
-    <IonTabs>
+    <IonTabs className="page-tabs">
       <IonRouterOutlet>
         <Route path={path} exact={true} render={() => <Redirect to={`${path}/info`} />} />
         <Route path={`${path}/info`} component={ConditionsRouter} />
@@ -28,7 +29,7 @@ const Main: React.FC = () => {
         <Route path={`${path}/appointments`} component={Appointments} exact />
         <Route path={`${path}/profile`} component={Profile} />
       </IonRouterOutlet>
-      <IonTabBar slot="bottom">
+      <IonTabBar slot="bottom" className="page-tab-bar">
         <IonTabButton tab="info" href={`${url}/info`}>
           <IonIcon icon={helpCircleSharp} />
           <IonLabel>Info Center</IonLabel>
@@ -74,7 +75,7 @@ function ConditionsRouter() {
     <IonRouterOutlet>
       <Route path={path} component={Conditions} exact />
       <Route path={`${path}/new`} component={NewCondition} exact />
-      <Route path={`${path}/:conditionId`} component={Condition} exact />
+      <Route path={`${path}/:conditionId/details`} component={Condition} exact />
     </IonRouterOutlet>
   );
 }

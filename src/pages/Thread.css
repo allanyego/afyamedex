@@ -1,3 +1,9 @@
 .message-col textarea.native-textarea {
   background-color: var(--ion-color-light-tint);
 }
+
+.message-bubble {
+  background: var(--ion-color-dark);
+  color: var(--ion-color-dark-contrast);
+  padding: 0.75em;
+}

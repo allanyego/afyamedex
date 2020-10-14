@@ -31,13 +31,15 @@ import { AppContext } from './lib/context-lib';
 import "./App.css";
 import ToastManager from './components/ToastManager';
 import { getObject, clear } from './lib/storage';
-import { STORAGE_KEY } from './http/constants';
+import { STORAGE_KEY, USER } from './http/constants';
 import LoadingFallback from './components/LoadingFallback';
-import { exit, person } from 'ionicons/icons';
+import { exit, person, peopleOutline } from 'ionicons/icons';
 import useToastManager from './lib/toast-hook';
+import { ProfileData } from './components/UserDetails';
+import { Detector } from 'react-detect-offline';
 
 const App: React.FC = () => {
-  const [currentUser, setCurrentUser] = useState<any>(null);
+  const [currentUser, setCurrentUser] = useState<ProfileData | null>(null);
   const [notifications, setNotifications] = useState([]);
   const [isAuthenticating, setAuthenticating] = useState(true);
   const { onError } = useToastManager();
@@ -84,10 +86,19 @@ const App: React.FC = () => {
                   <IonIcon slot="start" icon={person} />
                   <IonLabel>Profile</IonLabel>
                 </IonItem>
+
+                {currentUser.accountType !== USER.ACCOUNT_TYPES.PATIENT && (
+                  <IonItem routerLink="/app/professionals">
+                    <IonIcon slot="start" icon={peopleOutline} />
+                    <IonLabel color="danger">Professionals</IonLabel>
+                  </IonItem>
+                )}
+
                 <IonItem onClick={handleLogout}>
                   <IonIcon color="danger" slot="start" icon={exit} />
                   <IonLabel color="danger">Logout</IonLabel>
                 </IonItem>
+
               </IonList>
             </IonContent>
           </IonMenu>
@@ -109,13 +120,19 @@ const App: React.FC = () => {
                     path="/account-type"
                     exact
                     render={() => currentUser ?
-                      currentUser!.accountType ? redirect("/app") : <AccountType />
+                      currentUser.accountType ? redirect("/app") : <AccountType />
                       : redirect("/sign-in")}
                   />
                   <Route path="/" render={() => redirect("/home")} exact />
                 </IonRouterOutlet>
               </>
             )}
+
+          <Detector render={(props) => {
+            return props.online ?
+              null : <div
+                className="network-detector-status">Seems you're offline</div>
+          }} />
         </IonReactRouter>
       </AppContext.Provider>
     </IonApp>

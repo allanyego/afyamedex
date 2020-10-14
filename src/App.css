@@ -25,3 +25,18 @@ form .has-error {
 .section-title {
   margin-bottom: 0;
 }
+
+.page-tabs .page-tab-bar ion-tab-button {
+  --color-selected: var(--ion-color-secondary);
+  --ripple-color: var(--ion-color-secondary);
+}
+
+.network-detector-status {
+  position: fixed;
+  bottom: 52px;
+  width: 100%;
+  text-align: center;
+  background: var(--ion-color-danger-tint);
+  color: var(--ion-color-danger-contrast);
+  padding: 0.15em;
+}

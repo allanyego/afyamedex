@@ -6,7 +6,7 @@ import { USER } from "../http/constants";
 import Rating from "./Rating";
 import defaultAvatar from "../assets/img/default_avatar.jpg";
 import ContactCard from "./ContactCard";
-import { chatbubbleEllipses, calendar, heartOutline, createSharp } from "ionicons/icons";
+import { chatbubbleEllipses, calendar, heartOutline, pencilSharp } from "ionicons/icons";
 import { useHistory } from "react-router";
 import "./UserDetails.css";
 import Education from "./profile-parts/Education";
@@ -15,6 +15,8 @@ import Bio from "./profile-parts/Bio";
 import Experience from "./profile-parts/Experience";
 import Names from "./profile-parts/Names";
 import LoadingFallback from "./LoadingFallback";
+import EditProfileModal from "./profile-parts/EditProfileModal";
+import ErrorFallback from "./ErrorFallback";
 
 export interface ProfileData {
   _id?: string,
@@ -39,8 +41,12 @@ export interface ProfileData {
   rating?: number,
 };
 
-export default function UserProfile({ user }: { user: ProfileData | null }) {
+export default function UserProfile({ user, loadError = false }: {
+  user: ProfileData | null,
+  loadError?: boolean
+}) {
   const [isModalOpen, setModalOpen] = useState(false);
+  const { currentUser } = useAppContext() as any;
   const onClose = () => setModalOpen(false);
   const onOpen = () => setModalOpen(true);
 
@@ -52,22 +58,26 @@ export default function UserProfile({ user }: { user: ProfileData | null }) {
             <IonBackButton defaultHref="/app" />
           </IonButtons>
           <IonTitle>Profile</IonTitle>
-          <IonButtons slot="end">
-            <IonButton onClick={onOpen}>
-              <IonIcon slot="icon-only" icon={createSharp} />
-            </IonButton>
-          </IonButtons>
+          {(user && currentUser._id === user._id) && (
+            <IonButtons slot="end">
+              <IonButton onClick={onOpen}>
+                <IonIcon slot="icon-only" icon={pencilSharp} />
+              </IonButton>
+            </IonButtons>
+          )}
         </IonToolbar>
       </IonHeader>
       <IonContent fullscreen>
-        {!user ? (
+        {loadError ? (
+          <ErrorFallback />
+        ) : !user ? (
           <LoadingFallback />
         ) : (
-            <>
-              <UserDetails user={user} />
-              <EditProfileModal isOpen={isModalOpen} onClose={onClose} />
-            </>
-          )}
+              <>
+                <UserDetails user={user} />
+                <EditProfileModal isOpen={isModalOpen} onClose={onClose} />
+              </>
+            )}
       </IonContent>
     </IonPage>
   );
@@ -168,28 +178,6 @@ function UserDetails({ user }: { user: ProfileData }) {
           </IonCol>
         </IonRow>
       </IonGrid>
-    </>
-  );
-}
-
-interface EditProfileModalProps {
-  isOpen: boolean
-  onClose: (arg: any) => any
-}
-
-function EditProfileModal({ isOpen, onClose }: EditProfileModalProps) {
-  const { currentUser, setCurrentUser } = useAppContext() as any;
-
-  return (
-    <>
-      <IonModal isOpen={isOpen}>
-        <IonToolbar>
-          <IonButtons slot="end">
-            <IonButton onClick={onClose}>Cancel</IonButton>
-          </IonButtons>
-          <IonTitle className="ion-text-capitalize">Edit your profile</IonTitle>
-        </IonToolbar>
-      </IonModal>
     </>
   );
 }

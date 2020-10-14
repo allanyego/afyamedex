@@ -1,11 +1,10 @@
 import React, { useState, useEffect } from "react";
-import { IonPage, IonContent, IonRow, IonGrid, IonButtons, IonBackButton, IonHeader, IonToolbar, IonTitle, useIonViewDidEnter, useIonViewWillLeave, IonRouterOutlet } from "@ionic/react";
-import { useParams, useRouteMatch, Router, Route, useHistory } from "react-router";
+import { useIonViewDidEnter, useIonViewWillLeave, IonRouterOutlet } from "@ionic/react";
+import { useParams, useRouteMatch, Route, useHistory } from "react-router";
 
 import { getById } from "../http/users";
 import { useAppContext } from "../lib/context-lib";
-import UserDetails, { ProfileData } from "../components/UserDetails";
-import LoadingFallback from "../components/LoadingFallback";
+import { ProfileData } from "../components/UserDetails";
 import useToastManager from "../lib/toast-hook";
 import "./Profile.css";
 import UserProfile from "../components/UserProfile";
@@ -15,6 +14,10 @@ const ProfileCurrentUser: React.FC = () => {
   const [user, setUser] = useState<ProfileData | null>(null);
   const { currentUser } = useAppContext() as any;
   const { isMounted, setMounted } = useMounted();
+
+  useEffect(() => {
+    isMounted && setUser(currentUser);
+  }, [currentUser]);
 
   useIonViewDidEnter(() => {
     isMounted && setUser(currentUser);
@@ -29,6 +32,7 @@ const ProfileCurrentUser: React.FC = () => {
 
 const ProfileOtherUser: React.FC = () => {
   const [user, setUser] = useState<ProfileData | null>(null);
+  const [loadError, setLoadError] = useState(false);
   const { userId } = useParams();
   const history = useHistory();
   const { onError } = useToastManager();
@@ -46,14 +50,17 @@ const ProfileOtherUser: React.FC = () => {
         onError("No user by that id found");
         history.replace("/app/profile");
       }
-    }).catch(error => onError(error.message));
+    }).catch(error => {
+      isMounted && setLoadError(true);
+      onError(error.message);
+    });
   });
 
   useIonViewWillLeave(() => {
     setMounted(false);
   });
 
-  return <UserProfile user={user} />
+  return <UserProfile user={user} loadError={loadError} />
 };
 
 const Profile: React.FC = () => {

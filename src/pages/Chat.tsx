@@ -8,20 +8,27 @@ import { getUserThreads } from "../http/messages";
 import UserHeader from "../components/UserHeader";
 import useToastManager from "../lib/toast-hook";
 import LoadingFallback from "../components/LoadingFallback";
+import useMounted from "../lib/mounted-hook";
+import ErrorFallback from "../components/ErrorFallback";
 
 export default function Chat() {
   let [threads, setThreads] = useState<any[] | null>(null);
+  const [loadError, setLoadError] = useState(false);
   const { currentUser } = useAppContext() as any;
   const { onError } = useToastManager();
+  const { isMounted, setMounted } = useMounted();
 
   useIonViewDidEnter(() => {
     getUserThreads(currentUser._id, currentUser.token).then(({ data }) => {
-      setThreads(data);
-    }).catch(error => onError(error.message));
+      isMounted && setThreads(data);
+    }).catch(error => {
+      isMounted && setLoadError(true);
+      onError(error.message)
+    });
   }, []);
 
   useIonViewWillLeave(() => {
-    setThreads = () => null;
+    setMounted(false);
   });
 
   return (
@@ -29,13 +36,15 @@ export default function Chat() {
       <UserHeader title="Chat" />
       <IonContent fullscreen>
 
-        {!threads ? (
+        {loadError ? (
+          <ErrorFallback />
+        ) : !threads ? (
           <LoadingFallback />
         ) : (
-            <IonList>
-              {threads.map((thread: any) => <ThreadRibbon key={thread._id} thread={thread} />)}
-            </IonList>
-          )}
+              <IonList>
+                {threads.map((thread: any) => <ThreadRibbon key={thread._id} thread={thread} />)}
+              </IonList>
+            )}
       </IonContent>
     </IonPage>
   );

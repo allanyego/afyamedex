@@ -9,6 +9,8 @@ import { useAppContext } from "../lib/context-lib";
 import { post } from "../http/appointments";
 import useToastManager from "../lib/toast-hook";
 import LoadingFallback from "../components/LoadingFallback";
+import useMounted from "../lib/mounted-hook";
+import ErrorFallback from "../components/ErrorFallback";
 
 const { ONSITE_CONSULTATION, VIRTUAL_CONSULTATION, ONSITE_TESTS } = APPOINTMENT.TYPES;
 const appointmentSchema = Yup.object({
@@ -25,9 +27,11 @@ const appointmentSchema = Yup.object({
 export default function BookAppointment() {
   const { professionalId } = useParams();
   let [professional, setProfessional] = useState<any>(null);
+  const [loadError, setLoadError] = useState(false);
   const history = useHistory();
   const { currentUser } = useAppContext() as any;
   const { onError, onSuccess } = useToastManager();
+  const { isMounted, setMounted } = useMounted();
 
   useIonViewDidEnter(() => {
     if (!professionalId) {
@@ -36,6 +40,10 @@ export default function BookAppointment() {
     }
 
     getById(professionalId).then(({ data }) => {
+      if (!isMounted) {
+        return;
+      }
+
       if (data && data.username) {
         if (data.accountType === USER.ACCOUNT_TYPES.PATIENT) {
           onError("User is not a professional.");
@@ -49,13 +57,13 @@ export default function BookAppointment() {
       }
 
     }).catch(error => {
+      isMounted && setLoadError(true);
       onError(error.message);
-      history.replace("/app/professionals");
     });
   }, []);
 
   useIonViewWillLeave(() => {
-    setProfessional = () => null;
+    setMounted(false);
   });
 
   const handleSubmit = async (values: any, { setSubmitting }: any) => {
@@ -64,11 +72,11 @@ export default function BookAppointment() {
         patient: currentUser._id,
         ...values,
       });
-      setSubmitting(false);
+      isMounted && setSubmitting(false);
       onSuccess("Nice! You've reserved your place");
       history.goBack();
     } catch (error) {
-      setSubmitting(false);
+      isMounted && setSubmitting(false);
       onError(error.message);
     }
   };
@@ -84,80 +92,82 @@ export default function BookAppointment() {
         </IonToolbar>
       </IonHeader>
       <IonContent fullscreen>
-        {!professional ? (
+        {loadError ? (
+          <ErrorFallback />
+        ) : !professional ? (
           <LoadingFallback />
         ) : (
-            <div>
-              <Formik
-                validationSchema={appointmentSchema}
-                onSubmit={handleSubmit}
-                initialValues={{}}
-              >
-                {({
-                  handleChange,
-                  handleBlur,
-                  errors,
-                  touched,
-                  isValid,
-                  isSubmitting,
-                }: any) => (
-                    <Form noValidate>
-                      <IonItem className={touched.subject && errors.subject ? "has-error" : ""}>
-                        <IonLabel position="floating">Subject</IonLabel>
-                        <IonInput type="text" name="subject" onIonChange={handleChange} onIonBlur={handleBlur} />
-                      </IonItem>
-                      <IonText>
-                        <p>Choose a date you would like to see <strong className="ion-text-capitalize">
-                          {professional.fullName}
-                        </strong></p>
-                      </IonText>
-                      <IonItem className={touched.date && errors.date ? "has-error" : ""}>
-                        <IonLabel>Select date</IonLabel>
-                        <IonDatetime displayFormat="MM DD YY" name="date" onIonChange={handleChange} onIonBlur={handleBlur} />
-                      </IonItem>
-                      <IonItem className={touched.time && errors.time ? "has-error" : ""}>
-                        <IonLabel>Time</IonLabel>
-                        <IonDatetime displayFormat="hh:mm"
-                          name="time" onIonChange={handleChange} onIonBlur={handleBlur}
-                        />
-                      </IonItem>
-                      <IonList>
-                        <IonRadioGroup className={touched.type && errors.type ? "has-error" : ""}
-                          name="type" onIonChange={handleChange} onBlur={handleBlur}
-                        >
-                          <IonListHeader>
-                            <IonLabel>Appointment type</IonLabel>
-                          </IonListHeader>
+              <div>
+                <Formik
+                  validationSchema={appointmentSchema}
+                  onSubmit={handleSubmit}
+                  initialValues={{}}
+                >
+                  {({
+                    handleChange,
+                    handleBlur,
+                    errors,
+                    touched,
+                    isValid,
+                    isSubmitting,
+                  }: any) => (
+                      <Form noValidate>
+                        <IonItem className={touched.subject && errors.subject ? "has-error" : ""}>
+                          <IonLabel position="floating">Subject</IonLabel>
+                          <IonInput type="text" name="subject" onIonChange={handleChange} onIonBlur={handleBlur} />
+                        </IonItem>
+                        <IonText>
+                          <p>Choose a date you would like to see <strong className="ion-text-capitalize">
+                            {professional.fullName}
+                          </strong></p>
+                        </IonText>
+                        <IonItem className={touched.date && errors.date ? "has-error" : ""}>
+                          <IonLabel>Select date</IonLabel>
+                          <IonDatetime displayFormat="MM DD YY" name="date" onIonChange={handleChange} onIonBlur={handleBlur} />
+                        </IonItem>
+                        <IonItem className={touched.time && errors.time ? "has-error" : ""}>
+                          <IonLabel>Time</IonLabel>
+                          <IonDatetime displayFormat="hh:mm"
+                            name="time" onIonChange={handleChange} onIonBlur={handleBlur}
+                          />
+                        </IonItem>
+                        <IonList>
+                          <IonRadioGroup className={touched.type && errors.type ? "has-error" : ""}
+                            name="type" onIonChange={handleChange} onBlur={handleBlur}
+                          >
+                            <IonListHeader>
+                              <IonLabel>Appointment type</IonLabel>
+                            </IonListHeader>
 
-                          <IonItem>
-                            <IonLabel>Onsite consultation</IonLabel>
-                            <IonRadio slot="start" value={ONSITE_CONSULTATION} />
-                          </IonItem>
-                          <IonItem>
-                            <IonLabel>Virtual consultation</IonLabel>
-                            <IonRadio slot="start" value={VIRTUAL_CONSULTATION} />
-                          </IonItem>
-                          <IonItem>
-                            <IonLabel>Onsite tests</IonLabel>
-                            <IonRadio slot="start" value={ONSITE_TESTS} />
-                          </IonItem>
-                        </IonRadioGroup>
-                      </IonList>
-                      <IonRow>
-                        <IonCol>
-                          <IonButton
-                            color="secondary"
-                            expand="block"
-                            type="submit"
-                            disabled={!isValid || isSubmitting}
-                          >{isSubmitting ? "Booking..." : "Book"}</IonButton>
-                        </IonCol>
-                      </IonRow>
-                    </Form>
-                  )}
-              </Formik>
-            </div>
-          )}
+                            <IonItem>
+                              <IonLabel>Onsite consultation</IonLabel>
+                              <IonRadio slot="start" value={ONSITE_CONSULTATION} />
+                            </IonItem>
+                            <IonItem>
+                              <IonLabel>Virtual consultation</IonLabel>
+                              <IonRadio slot="start" value={VIRTUAL_CONSULTATION} />
+                            </IonItem>
+                            <IonItem>
+                              <IonLabel>Onsite tests</IonLabel>
+                              <IonRadio slot="start" value={ONSITE_TESTS} />
+                            </IonItem>
+                          </IonRadioGroup>
+                        </IonList>
+                        <IonRow>
+                          <IonCol>
+                            <IonButton
+                              color="secondary"
+                              expand="block"
+                              type="submit"
+                              disabled={!isValid || isSubmitting}
+                            >{isSubmitting ? "Booking..." : "Book"}</IonButton>
+                          </IonCol>
+                        </IonRow>
+                      </Form>
+                    )}
+                </Formik>
+              </div>
+            )}
       </IonContent>
     </IonPage>
   );

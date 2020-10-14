@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { IonPage, IonContent, IonFooter, IonButtons, IonButton, IonIcon, IonHeader, IonBackButton, IonToolbar, IonTitle, IonGrid, IonRow, IonCard, IonCol, IonText, IonTextarea, useIonViewWillLeave, useIonViewDidEnter } from "@ionic/react";
-import { attachOutline, callOutline, sendOutline } from "ionicons/icons";
+import { attachOutline, callOutline, sendOutline, personAddSharp, personSharp } from "ionicons/icons";
 import moment from "moment";
 import { Formik, Form } from "formik";
 import * as Yup from "yup";
@@ -75,7 +75,7 @@ const Thread: React.FC = () => {
             <IonBackButton defaultHref="/app/chat" />
           </IonButtons>
           <IonTitle className="ion-text-capitalize">
-            {otherUser.fullName}
+            {otherUser && otherUser.fullName}
           </IonTitle>
         </IonToolbar>
       </IonHeader>
@@ -106,7 +106,7 @@ function Message({ message }: any) {
   return (
     <IonRow className={message.sender._id === currentUser._id ? "ion-justify-content-end" : ""}>
       <IonCol size="7">
-        <IonCard className="ion-padding">
+        <IonCard className="ion-padding message-bubble">
           <IonText>
             <h5 className="ion-no-margin ion-text-capitalize">{message.sender.fullName}</h5>
             <p className="ion-no-margin">{message.body}</p>

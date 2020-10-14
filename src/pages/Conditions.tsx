@@ -10,22 +10,27 @@ import LoadingFallback from "../components/LoadingFallback";
 import { add } from "ionicons/icons";
 import { useAppContext } from "../lib/context-lib";
 import { USER } from "../http/constants";
+import useMounted from "../lib/mounted-hook";
+import ErrorFallback from "../components/ErrorFallback";
 
 export default function Conditions() {
   let [conditions, setConditions] = useState<null | any[]>(null);
+  const [loadError, setLoadError] = useState(false);
   const { onError } = useToastManager();
   const { currentUser } = useAppContext() as any;
+  const { isMounted, setMounted } = useMounted();
 
   useIonViewDidEnter(() => {
     getConditions().then(({ data }: any) => {
-      setConditions(data);
+      isMounted && setConditions(data);
     }).catch(error => {
+      isMounted && setLoadError(true);
       onError(error.message);
     });
   }, []);
 
   useIonViewDidLeave(() => {
-    setConditions = () => null;
+    setMounted(false);
   });
 
   return (
@@ -36,15 +41,18 @@ export default function Conditions() {
         ) : null
       } />
       <IonContent fullscreen>
-        {!conditions ? (
+        {loadError ? (
+          <ErrorFallback />
+        ) : !conditions ? (
           <LoadingFallback />
         ) : (
-            <IonList>
-              {conditions!.map((condition: any) => (
-                <ConditionItem key={condition._id} condition={condition} />
-              ))}
-            </IonList>
-          )}
+              <IonList>
+                {conditions!.map((condition: any) => (
+                  <ConditionItem key={condition._id} condition={condition} />
+                ))}
+              </IonList>
+
+            )}
       </IonContent>
     </IonPage>
   );
@@ -63,7 +71,7 @@ function ConditionItem({ condition }: ConditionCardProps) {
   const { url } = useRouteMatch();
 
   return (
-    <IonItem routerLink={`${url}/${condition._id}`} className="listing-item">
+    <IonItem routerLink={`${url}/${condition._id}/details`} className="listing-item">
       <IonLabel>
         <h3 className="ion-text-capitalize d-flex ion-align-items-center">
           {condition.name}

@@ -6,12 +6,16 @@ import moment from "moment";
 import useToastManager from "../lib/toast-hook";
 import { getById } from "../http/conditions";
 import LoadingFallback from "../components/LoadingFallback";
+import useMounted from "../lib/mounted-hook";
+import ErrorFallback from "../components/ErrorFallback";
 
 export default function Condition() {
   const { conditionId } = useParams();
   const history = useHistory();
   let [condition, setCondition] = useState<any>(null);
+  const [loadError, setLoadError] = useState(false);
   const { onError } = useToastManager();
+  const { isMounted, setMounted } = useMounted();
 
   const getConditionDetails = async () => {
     try {
@@ -20,9 +24,10 @@ export default function Condition() {
         onError("No condition details found");
         history.replace("/app/info");
       } else {
-        setCondition(data);
+        isMounted && setCondition(data);
       }
     } catch (error) {
+      isMounted && setLoadError(true);
       onError(error.message);
     }
   };
@@ -32,7 +37,7 @@ export default function Condition() {
   }, []);
 
   useIonViewWillLeave(() => {
-    setCondition = () => null;
+    setMounted(false);
   });
 
   return (
@@ -46,43 +51,45 @@ export default function Condition() {
         </IonToolbar>
       </IonHeader>
       <IonContent fullscreen>
-        <div className="ion-padding-horizontal">
-          {!condition ? (
-            <LoadingFallback />
-          ) : (
-              <IonText>
-                <h2 className="ion-text-capitalize">{condition.name}</h2>
-                <small>Posted on {moment(condition.createdAt).format("LT")}</small>
-                <p>{condition.description}</p>
+        {loadError ? (
+          <ErrorFallback />
+        ) : !condition ? (
+          <LoadingFallback />
+        ) : (
+              <div className="ion-padding-horizontal">
+                <IonText>
+                  <h2 className="ion-text-capitalize">{condition.name}</h2>
+                  <small>Posted on {moment(condition.createdAt).format("LT")}</small>
+                  <p>{condition.description}</p>
 
-                <IonList>
-                  <IonListHeader>
-                    <IonLabel>
-                      <strong>Symptoms</strong>
-                    </IonLabel>
-                  </IonListHeader>
-                  {condition.symptoms.split('\n').map((symp: string, index: number) => (
-                    <IonItem key={index}>
-                      <IonLabel>{symp}</IonLabel>
-                    </IonItem>
-                  ))}
-                </IonList>
+                  <IonList>
+                    <IonListHeader>
+                      <IonLabel>
+                        <strong>Symptoms</strong>
+                      </IonLabel>
+                    </IonListHeader>
+                    {condition.symptoms.split('\n').map((symp: string, index: number) => (
+                      <IonItem key={index}>
+                        <IonLabel>{symp}</IonLabel>
+                      </IonItem>
+                    ))}
+                  </IonList>
 
-                <IonList>
-                  <IonListHeader>
-                    <IonLabel>
-                      <strong>Possible remedies</strong>
-                    </IonLabel>
-                  </IonListHeader>
-                  {condition.remedies.split('\n').map((remedy: string, index: number) => (
-                    <IonItem key={index}>
-                      <IonLabel>{remedy}</IonLabel>
-                    </IonItem>
-                  ))}
-                </IonList>
-              </IonText>
+                  <IonList>
+                    <IonListHeader>
+                      <IonLabel>
+                        <strong>Possible remedies</strong>
+                      </IonLabel>
+                    </IonListHeader>
+                    {condition.remedies.split('\n').map((remedy: string, index: number) => (
+                      <IonItem key={index}>
+                        <IonLabel>{remedy}</IonLabel>
+                      </IonItem>
+                    ))}
+                  </IonList>
+                </IonText>
+              </div>
             )}
-        </div>
       </IonContent>
     </IonPage>
   );
