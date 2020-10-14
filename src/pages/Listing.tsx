@@ -13,6 +13,8 @@ import UserHeader from '../components/UserHeader';
 import debounce from '../lib/debounce';
 import useMounted from '../lib/mounted-hook';
 import ErrorFallback from '../components/ErrorFallback';
+import { useAppContext } from '../lib/context-lib';
+import { ProfileData } from '../components/UserDetails';
 
 const Listing: React.FC = () => {
   const [showSearchBar, setShowSearchBar] = useState(false);
@@ -21,12 +23,16 @@ const Listing: React.FC = () => {
   const [loadError, setLoadError] = useState(false);
   const [listMargin, setListMargin] = useState(0);
   const { onError } = useToastManager();
+  const { currentUser } = useAppContext() as any;
   const { isMounted, setMounted } = useMounted();
 
   const fetchProfessionals = async (opts?: any) => {
+    setProfessionals(null);
     try {
       const { data } = await getUsers(opts);
-      isMounted && setProfessionals(data);
+      isMounted && setProfessionals(data.filter(
+        (user: ProfileData) => user._id !== currentUser._id)
+      );
     } catch (error) {
       isMounted && setLoadError(true);
       onError(error.message);
@@ -42,7 +48,11 @@ const Listing: React.FC = () => {
   });
 
   const onToggle = () => setShowSearchBar(!showSearchBar);
-  const closeSearchBar = () => setShowSearchBar(false);
+  const closeSearchBar = async () => {
+    setShowSearchBar(false);
+    console.log("Fetching");
+    await fetchProfessionals();
+  };
 
 
   return (
@@ -119,7 +129,7 @@ function SearchBar({ fetchProfessionals, closeSearchBar, setListMargin, setSearc
     setListMargin((searchBarRef.current as any).getBoundingClientRect().height);
 
     return () => setListMargin(0);
-  }, [])
+  }, []);
 
   const handleSearch = async (e: any) => {
     const searchTerm = e.target.value;
@@ -146,7 +156,6 @@ function SearchBar({ fetchProfessionals, closeSearchBar, setListMargin, setSearc
         <IonRow>
           <IonCol className="ion-no-padding">
             <IonSearchbar
-              value=""
               onIonChange={debounce(handleSearch, 1500)}
               showCancelButton="focus"
               cancelButtonText="Custom Cancel"

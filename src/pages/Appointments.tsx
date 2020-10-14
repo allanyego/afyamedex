@@ -22,6 +22,7 @@ export default function Appointments() {
   const { isMounted, setMounted } = useMounted();
 
   const fetchAppointments = async () => {
+    setAppointments(null);
     try {
       const { data } = await getAppointments(currentUser._id, currentUser.token);
       isMounted && setAppointments(data);

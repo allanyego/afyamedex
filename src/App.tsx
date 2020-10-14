@@ -33,7 +33,7 @@ import ToastManager from './components/ToastManager';
 import { getObject, clear } from './lib/storage';
 import { STORAGE_KEY, USER } from './http/constants';
 import LoadingFallback from './components/LoadingFallback';
-import { exit, person, peopleOutline } from 'ionicons/icons';
+import { exit, person, peopleOutline, personSharp, peopleSharp, exitSharp } from 'ionicons/icons';
 import useToastManager from './lib/toast-hook';
 import { ProfileData } from './components/UserDetails';
 import { Detector } from 'react-detect-offline';
@@ -83,19 +83,19 @@ const App: React.FC = () => {
             <IonContent>
               <IonList lines="full">
                 <IonItem routerLink="/app/profile">
-                  <IonIcon slot="start" icon={person} />
+                  <IonIcon slot="start" icon={personSharp} />
                   <IonLabel>Profile</IonLabel>
                 </IonItem>
 
                 {currentUser.accountType !== USER.ACCOUNT_TYPES.PATIENT && (
                   <IonItem routerLink="/app/professionals">
-                    <IonIcon slot="start" icon={peopleOutline} />
-                    <IonLabel color="danger">Professionals</IonLabel>
+                    <IonIcon slot="start" icon={peopleSharp} />
+                    <IonLabel>Professionals</IonLabel>
                   </IonItem>
                 )}
 
                 <IonItem onClick={handleLogout}>
-                  <IonIcon color="danger" slot="start" icon={exit} />
+                  <IonIcon color="danger" slot="start" icon={exitSharp} />
                   <IonLabel color="danger">Logout</IonLabel>
                 </IonItem>
 

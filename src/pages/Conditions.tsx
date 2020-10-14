@@ -21,6 +21,7 @@ export default function Conditions() {
   const { isMounted, setMounted } = useMounted();
 
   useIonViewDidEnter(() => {
+    setConditions(null);
     getConditions().then(({ data }: any) => {
       isMounted && setConditions(data);
     }).catch(error => {
@@ -86,7 +87,7 @@ function ConditionItem({ condition }: ConditionCardProps) {
 function AddButton() {
   const { url } = useRouteMatch();
   return (
-    <IonButton color="secondary" routerLink={`${url}/new`}>
+    <IonButton color="success" routerLink={`${url}/new`}>
       <IonIcon slot="icon-only" icon={add} />
     </IonButton>
   );
