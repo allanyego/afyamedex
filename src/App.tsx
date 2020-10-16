@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Redirect, Route } from 'react-router-dom';
+import { Redirect, Route, useHistory } from 'react-router-dom';
 import { IonApp, IonRouterOutlet, IonMenu, IonHeader, IonToolbar, IonTitle, IonContent, IonList, IonItem, IonIcon, IonLabel } from '@ionic/react';
 import { IonReactRouter } from '@ionic/react-router';
 
@@ -33,7 +33,7 @@ import ToastManager from './components/ToastManager';
 import { getObject, clear } from './lib/storage';
 import { STORAGE_KEY, USER } from './http/constants';
 import LoadingFallback from './components/LoadingFallback';
-import { exit, person, peopleOutline, personSharp, peopleSharp, exitSharp } from 'ionicons/icons';
+import { personSharp, peopleSharp, exitSharp, helpCircleSharp, fileTrayFullSharp, chatbubblesSharp } from 'ionicons/icons';
 import useToastManager from './lib/toast-hook';
 import { ProfileData } from './components/UserDetails';
 import { Detector } from 'react-detect-offline';
@@ -41,6 +41,8 @@ import { Detector } from 'react-detect-offline';
 const App: React.FC = () => {
   const [currentUser, setCurrentUser] = useState<ProfileData | null>(null);
   const [notifications, setNotifications] = useState([]);
+  const [socket, setSocket] = useState(null);
+  const history = useHistory();
   const [isAuthenticating, setAuthenticating] = useState(true);
   const { onError } = useToastManager();
 
@@ -58,6 +60,7 @@ const App: React.FC = () => {
     try {
       await clear();
       setCurrentUser(null);
+      history.replace("/sign-in");
     } catch (error) {
       onError(error.message);
     }
@@ -70,6 +73,8 @@ const App: React.FC = () => {
         setCurrentUser,
         notifications,
         setNotifications,
+        socket,
+        setSocket,
       }}>
         {currentUser && (
           <IonMenu side="start" menuId="super-cool-menu" contentId="router-outlet"
@@ -87,12 +92,27 @@ const App: React.FC = () => {
                   <IonLabel>Profile</IonLabel>
                 </IonItem>
 
+                <IonItem routerLink="/app/info">
+                  <IonIcon slot="start" icon={helpCircleSharp} />
+                  <IonLabel>Info Center</IonLabel>
+                </IonItem>
+
+                <IonItem routerLink="/app/professionals">
+                  <IonIcon slot="start" icon={peopleSharp} />
+                  <IonLabel>Browse</IonLabel>
+                </IonItem>
+
                 {currentUser.accountType !== USER.ACCOUNT_TYPES.PATIENT && (
-                  <IonItem routerLink="/app/professionals">
-                    <IonIcon slot="start" icon={peopleSharp} />
-                    <IonLabel>Professionals</IonLabel>
+                  <IonItem routerLink="/app/appointments">
+                    <IonIcon slot="start" icon={fileTrayFullSharp} />
+                    <IonLabel>Appointments</IonLabel>
                   </IonItem>
                 )}
+
+                <IonItem routerLink="/app/chat">
+                  <IonIcon slot="start" icon={chatbubblesSharp} />
+                  <IonLabel>Chat</IonLabel>
+                </IonItem>
 
                 <IonItem onClick={handleLogout}>
                   <IonIcon color="danger" slot="start" icon={exitSharp} />
@@ -109,8 +129,6 @@ const App: React.FC = () => {
             <LoadingFallback />
           ) : (
               <>
-
-
                 <IonRouterOutlet id="router-outlet">
                   <Route path="/home" render={redirectToApp(Home, currentUser)} exact />
                   <Route path="/sign-in" render={redirectToApp(SignIn, currentUser)} exact={true} />

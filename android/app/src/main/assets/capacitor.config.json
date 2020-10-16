@@ -1,6 +1,6 @@
 {
-  "appId": "io.ionic.starter",
-  "appName": "afyamedex",
+  "appId": "io.ionic.afyamedex",
+  "appName": "Afyamedex",
   "bundledWebRuntime": false,
   "npmClient": "npm",
   "webDir": "build",

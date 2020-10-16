@@ -1,7 +1,8 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { useRouteMatch, Route, Redirect } from "react-router";
-import { IonTabs, IonTabBar, IonTabButton, IonIcon, IonLabel, IonRouterOutlet } from "@ionic/react";
+import { IonTabs, IonTabBar, IonTabButton, IonIcon, IonLabel, IonRouterOutlet, useIonViewDidEnter, useIonViewDidLeave, useIonViewWillLeave, IonPage } from "@ionic/react";
 import { helpCircleSharp, peopleCircleSharp, chatbubblesSharp, fileTrayFullSharp } from "ionicons/icons";
+import io from "socket.io-client";
 
 import Conditions from "./Conditions";
 import Chat from "./Chat";
@@ -12,49 +13,92 @@ import BookAppointment from "./BookAppointment";
 import NewCondition from "./NewCondition";
 import Appointments from "./Appointments";
 import { useAppContext } from "../lib/context-lib";
-import { USER } from "../http/constants";
+import { USER, ROOT_URL } from "../http/constants";
 import Profile from "./Profile";
+import useMounted from "../lib/mounted-hook";
 
 const Main: React.FC = () => {
   const { url, path } = useRouteMatch();
-  const { currentUser } = useAppContext() as any;
+  const { currentUser, socket, setSocket } = useAppContext() as any;
+  const { isMounted, setMounted } = useMounted();
+
+  const handleSocketErr = (err: Error) => {
+    console.log("Socket error", err);
+  };
+
+  useEffect(() => {
+    const _socket = io(ROOT_URL, {
+      query: {
+        userId: currentUser._id,
+      },
+      forceNew: true,
+    });
+
+    _socket.on("error", handleSocketErr);
+    _socket.on("connect_error", handleSocketErr);
+    _socket.on("connect_timeout", handleSocketErr);
+
+    setSocket(_socket);
+
+    return () => {
+      socket && socket.close();
+      isMounted && setSocket(null);
+    }
+  }, []);
+
+  useIonViewWillLeave(() => {
+    setMounted(false);
+  });
 
   return (
-    <IonTabs className="page-tabs">
+    <IonPage>
       <IonRouterOutlet>
         <Route path={path} exact={true} render={() => <Redirect to={`${path}/info`} />} />
+        <Route path={`${path}/appointments`} component={Appointments} exact />
         <Route path={`${path}/info`} component={ConditionsRouter} />
         <Route path={`${path}/chat`} component={ChatRouter} />
         <Route path={`${path}/professionals`} component={ProfessionalsRouter} />
-        <Route path={`${path}/appointments`} component={Appointments} exact />
         <Route path={`${path}/profile`} component={Profile} />
       </IonRouterOutlet>
-      <IonTabBar slot="bottom" className="page-tab-bar">
-        <IonTabButton tab="info" href={`${url}/info`}>
-          <IonIcon icon={helpCircleSharp} />
-          <IonLabel>Info Center</IonLabel>
-        </IonTabButton>
-
-        {currentUser.accountType === USER.ACCOUNT_TYPES.PATIENT ? (
-          <IonTabButton tab="professionals" href="/app/professionals">
-            <IonIcon icon={peopleCircleSharp} />
-            <IonLabel>Browse</IonLabel>
-          </IonTabButton>
-        ) : (
-            <IonTabButton tab="appointments" href="/app/appointments">
-              <IonIcon icon={fileTrayFullSharp} />
-              <IonLabel>Appointments</IonLabel>
-            </IonTabButton>
-          )
-        }
-
-        <IonTabButton tab="chat" href="/app/chat">
-          <IonIcon icon={chatbubblesSharp} />
-          <IonLabel>Chat</IonLabel>
-        </IonTabButton>
-      </IonTabBar>
-    </IonTabs>
+    </IonPage>
   );
+
+  // return (
+  //   <IonTabs className="page-tabs">
+  //     <IonRouterOutlet>
+  //       <Route path={path} exact={true} render={() => <Redirect to={`${path}/info`} />} />
+  //       <Route path={`${path}/appointments`} component={Appointments} exact />
+  //       <Route path={`${path}/info`} component={ConditionsRouter} />
+  //       <Route path={`${path}/chat`} component={ChatRouter} />
+  //       <Route path={`${path}/professionals`} component={ProfessionalsRouter} />
+  //       <Route path={`${path}/profile`} component={Profile} />
+  //     </IonRouterOutlet>
+  //     <IonTabBar slot="bottom" className="page-tab-bar">
+  //       <IonTabButton tab="info" href={`${url}/info`}>
+  //         <IonIcon icon={helpCircleSharp} />
+  //         <IonLabel>Info Center</IonLabel>
+  //       </IonTabButton>
+
+  //       {currentUser.accountType === USER.ACCOUNT_TYPES.PATIENT ? (
+  //         <IonTabButton tab="professionals" href="/app/professionals">
+  //           <IonIcon icon={peopleCircleSharp} />
+  //           <IonLabel>Browse</IonLabel>
+  //         </IonTabButton>
+  //       ) : (
+  //           <IonTabButton tab="appointments" href="/app/appointments">
+  //             <IonIcon icon={fileTrayFullSharp} />
+  //             <IonLabel>Appointments</IonLabel>
+  //           </IonTabButton>
+  //         )
+  //       }
+
+  //       <IonTabButton tab="chat" href="/app/chat">
+  //         <IonIcon icon={chatbubblesSharp} />
+  //         <IonLabel>Chat</IonLabel>
+  //       </IonTabButton>
+  //     </IonTabBar>
+  //   </IonTabs>
+  // );
 };
 
 export default Main;
@@ -62,30 +106,36 @@ export default Main;
 function ChatRouter() {
   const { path } = useRouteMatch();
   return (
-    <IonRouterOutlet>
-      <Route path={path} component={Chat} exact />
-      <Route path={`${path}/:threadId`} component={Thread} exact />
-    </IonRouterOutlet>
+    <IonPage>
+      <IonRouterOutlet>
+        <Route path={path} component={Chat} exact />
+        <Route path={`${path}/:threadId`} component={Thread} exact />
+      </IonRouterOutlet>
+    </IonPage>
   );
 }
 
 function ConditionsRouter() {
   const { path } = useRouteMatch();
   return (
-    <IonRouterOutlet>
-      <Route path={path} component={Conditions} exact />
-      <Route path={`${path}/new`} component={NewCondition} exact />
-      <Route path={`${path}/:conditionId/details`} component={Condition} exact />
-    </IonRouterOutlet>
+    <IonPage>
+      <IonRouterOutlet>
+        <Route path={path} component={Conditions} exact />
+        <Route path={`${path}/new`} component={NewCondition} exact />
+        <Route path={`${path}/:conditionId/details`} component={Condition} exact />
+      </IonRouterOutlet>
+    </IonPage>
   );
 }
 
 function ProfessionalsRouter() {
   const { path } = useRouteMatch();
   return (
-    <IonRouterOutlet>
-      <Route path={path} component={Listing} exact />
-      <Route path={`${path}/:professionalId/book`} component={BookAppointment} exact />
-    </IonRouterOutlet>
+    <IonPage>
+      <IonRouterOutlet>
+        <Route path={path} component={Listing} exact />
+        <Route path={`${path}/:professionalId/book`} component={BookAppointment} exact />
+      </IonRouterOutlet>
+    </IonPage>
   );
 }

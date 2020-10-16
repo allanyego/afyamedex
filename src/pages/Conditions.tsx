@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { IonPage, IonContent, IonCardTitle, IonCardContent, IonCard, IonCardHeader, IonCardSubtitle, IonButton, IonIcon, useIonViewDidEnter, useIonViewDidLeave, IonItem, IonLabel, IonList } from "@ionic/react";
+import { IonPage, IonContent, IonCardTitle, IonCardContent, IonCard, IonCardHeader, IonCardSubtitle, IonButton, IonIcon, useIonViewDidEnter, useIonViewDidLeave, IonItem, IonLabel, IonList, useIonViewWillLeave } from "@ionic/react";
 import { useRouteMatch } from "react-router";
 import moment from "moment";
 
@@ -21,7 +21,6 @@ export default function Conditions() {
   const { isMounted, setMounted } = useMounted();
 
   useIonViewDidEnter(() => {
-    setConditions(null);
     getConditions().then(({ data }: any) => {
       isMounted && setConditions(data);
     }).catch(error => {
@@ -30,7 +29,7 @@ export default function Conditions() {
     });
   }, []);
 
-  useIonViewDidLeave(() => {
+  useIonViewWillLeave(() => {
     setMounted(false);
   });
 

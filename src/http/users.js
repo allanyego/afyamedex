@@ -1,7 +1,6 @@
 import request, { constructAuthHeader } from "./request";
-import { SERVER_URL_DEV } from "./constants";
 
-const BASE_URL = SERVER_URL_DEV + "/users";
+const BASE_URL = "/users";
 
 export async function getUsers({ username, patient = false }) {
   let queryParams = "";

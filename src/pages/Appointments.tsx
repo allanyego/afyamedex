@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { IonPage, IonContent, IonList, IonItem, IonLabel, IonRow, IonIcon, IonText, IonGrid, IonCol, IonItemSliding, IonItemOptions, IonItemOption, useIonViewDidEnter, useIonViewWillLeave } from "@ionic/react";
+import { IonPage, IonContent, IonList, IonItem, IonLabel, IonRow, IonIcon, IonText, IonGrid, IonCol, IonItemSliding, IonItemOptions, IonItemOption, useIonViewDidEnter, useIonViewWillLeave, IonLoading } from "@ionic/react";
 import moment from "moment";
 
 import UserHeader from "../components/UserHeader";
@@ -112,54 +112,75 @@ function AppointmentItem({ appointment }: { appointment: any }) {
     }
   };
 
+  const Inner = () => (
+    <IonItem>
+      <div
+        className={"appointment-status " + statusClasses[_appointment.status]}
+      ></div>
+      <IonLabel>
+        <h2 className="ion-text-capitalize">
+          {
+            currentUser.accountType === USER.ACCOUNT_TYPES.PATIENT ? (
+              _appointment.professional.fullName
+            ) : (
+                _appointment.patient.fullName
+              )}
+        </h2>
+        <IonText color="medium">{_appointment.subject}</IonText>
+        <IonGrid
+          className="ion-no-padding datetime-grid"
+        >
+          <IonRow>
+            <IonCol className="d-flex ion-align-items-center ion-no-padding d-col">
+              <IonIcon icon={calendarOutline} />{" "} {moment(_appointment.date).format("MMM Do YYYY")}
+            </IonCol>
+            <IonCol className="d-flex ion-align-items-center ion-no-padding ion-padding-start d-col">
+              <IonIcon icon={timeOutline} />{" "} {moment(_appointment.time).format("LT")}
+            </IonCol>
+          </IonRow>
+        </IonGrid>
+      </IonLabel>
+    </IonItem>
+  );
+
   return (
-    <IonItemSliding key={_appointment._id}>
-      {currentUser.accountType !== USER.ACCOUNT_TYPES.PATIENT && (
-        <IonItemOptions side="start">
-          {isUpdating ? (
-            <LoadingFallback />
-          ) : (
-              <>
+    <>
+      {currentUser.accountType !== USER.ACCOUNT_TYPES.PATIENT &&
+        _appointment.status === APPOINTMENT.STATUSES.UNAPPROVED ? (
+          <>
+            <Loader isOpen={isUpdating} message="Responding" />
+            <IonItemSliding key={_appointment._id}>
+              <IonItemOptions side="start">
                 <IonItemOption color="success" onClick={onApprove}>
                   <IonIcon slot="icon-only" icon={checkmarkCircle} />
                 </IonItemOption>
                 <IonItemOption color="danger" onClick={onReject}>
                   <IonIcon slot="icon-only" icon={closeCircle} />
                 </IonItemOption>
-              </>
-            )}
-        </IonItemOptions>
-      )}
+              </IonItemOptions>
+              <Inner key="appointment-inner" />
 
-      <IonItem>
-        <div
-          className={"appointment-status " + statusClasses[_appointment.status]}
-        ></div>
-        <IonLabel>
-          <h2 className="ion-text-capitalize">
-            {
-              currentUser.accountType === USER.ACCOUNT_TYPES.PATIENT ? (
-                _appointment.professional.fullName
-              ) : (
-                  _appointment.patient.fullName
-                )}
-          </h2>
-          <IonText color="medium">{_appointment.subject}</IonText>
-          <IonGrid
-            className="ion-no-padding datetime-grid"
-          >
-            <IonRow>
-              <IonCol className="d-flex ion-align-items-center ion-no-padding d-col">
-                <IonIcon icon={calendarOutline} />{" "} {moment(_appointment.date).format("MMM Do YYYY")}
-              </IonCol>
-              <IonCol className="d-flex ion-align-items-center ion-no-padding ion-padding-start d-col">
-                <IonIcon icon={timeOutline} />{" "} {moment(_appointment.time).format("LT")}
-              </IonCol>
-            </IonRow>
-          </IonGrid>
-        </IonLabel>
-      </IonItem>
+            </IonItemSliding>
+          </>
+        ) : (
+          <Inner key="appointment-inner" />
+        )}
 
-    </IonItemSliding>
+    </>
+  );
+}
+
+interface LoaderProps {
+  isOpen: boolean
+  message: string
+  duration?: number
+};
+
+function Loader({ isOpen, message }: LoaderProps) {
+  return (
+    <IonLoading
+      mode="ios"
+      {...{ isOpen, message }}
+    />
   );
 }

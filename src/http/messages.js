@@ -1,7 +1,6 @@
-import { SERVER_URL_DEV } from "./constants";
 import request, { constructAuthHeader } from "./request";
 
-const BASE_URL = SERVER_URL_DEV + "/messages";
+const BASE_URL = "/messages";
 
 export async function getUserThreads(userId, token) {
   return request(`${BASE_URL}/user-threads/${userId}`, {

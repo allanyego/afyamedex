@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">afyamedex</string>
-    <string name="title_activity_main">afyamedex</string>
-    <string name="package_name">io.ionic.starter</string>
-    <string name="custom_url_scheme">io.ionic.starter</string>
+    <string name="app_name">Afyamedex</string>
+    <string name="title_activity_main">Afyamedex</string>
+    <string name="package_name">io.ionic.afyamedex</string>
+    <string name="custom_url_scheme">io.ionic.afyamedex</string>
 </resources>

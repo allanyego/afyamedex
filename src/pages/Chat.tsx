@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import { IonPage, IonContent, IonItem, IonAvatar, IonList, IonLabel, IonText, useIonViewDidEnter, useIonViewWillLeave } from "@ionic/react";
 
 import defaultAvatar from "../assets/img/default_avatar.jpg";
-import { useRouteMatch, useHistory } from "react-router";
+import { useHistory } from "react-router";
 import { useAppContext } from "../lib/context-lib";
 import { getUserThreads } from "../http/messages";
 import UserHeader from "../components/UserHeader";
@@ -10,6 +10,7 @@ import useToastManager from "../lib/toast-hook";
 import LoadingFallback from "../components/LoadingFallback";
 import useMounted from "../lib/mounted-hook";
 import ErrorFallback from "../components/ErrorFallback";
+import useSocket from "../lib/socket-hook";
 
 export default function Chat() {
   let [threads, setThreads] = useState<any[] | null>(null);
@@ -17,9 +18,16 @@ export default function Chat() {
   const { currentUser } = useAppContext() as any;
   const { onError } = useToastManager();
   const { isMounted, setMounted } = useMounted();
+  const socket = useSocket();
+
+  useEffect(() => {
+    // Join all of our rooms once online
+    threads && socket && threads.forEach((thread: any) => socket.emit("join", {
+      room: thread._id,
+    }));
+  }, [threads]);
 
   useIonViewDidEnter(() => {
-    setThreads(null);
     getUserThreads(currentUser._id, currentUser.token).then(({ data }) => {
       isMounted && setThreads(data);
     }).catch(error => {

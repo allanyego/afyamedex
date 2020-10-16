@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { IonPage, IonContent, IonText, IonCard, IonCardContent, IonIcon, IonSpinner } from '@ionic/react';
+import { IonPage, IonContent, IonText, IonIcon, IonButton, IonSpinner } from '@ionic/react';
 import { businessOutline, personOutline, person } from 'ionicons/icons';
 import { useAppContext } from '../lib/context-lib';
 import { useHistory } from 'react-router';
@@ -32,11 +32,11 @@ export default function AccountType() {
         <div className="d-flex ion-justify-content-center ion-align-items-center" style={{
           height: '100%'
         }}>
-          <div className="ion-text-center">
+          <div className="ion-text-center ion-padding-horizontal">
             <IonText>
               <h1>Select how you'd like to use Afyamedex</h1>
             </IonText>
-            {accountTypes.map(type => <AccountTypeCard {...{ settingUp, setSettingUp, userId: currentUser._id }} {...type} />)}
+            {accountTypes.map((type, index) => <AccountTypeCard key={index} {...{ settingUp, setSettingUp, userId: currentUser._id }} {...type} />)}
           </div>
         </div>
       </IonContent>
@@ -58,7 +58,11 @@ function AccountTypeCard({ accountType, icon, userId, settingUp, setSettingUp }:
   const history = useHistory();
   const { onError, onSuccess } = useToastManager();
 
-  const setAccountType = settingUp ? null : async () => {
+  const setAccountType = async (e: MouseEvent) => {
+    if (settingUp) {
+      return;
+    }
+
     setSettingUp(true);
     try {
       await editUser(userId, currentUser.token, {
@@ -80,15 +84,17 @@ function AccountTypeCard({ accountType, icon, userId, settingUp, setSettingUp }:
     }
   };
   return (
-    <IonCard button onClick={setAccountType as any}>
-      <IonCardContent>
-        <div className="ion-justify-content-center">
-          {loading ? <IonSpinner name="crescent" /> : <IonIcon icon={icon} />}
-        </div>
-        <IonText>
-          <p>{accountType}</p>
-        </IonText>
-      </IonCardContent>
-    </IonCard>
+    <IonButton size="large" color="secondary"
+      expand="block"
+      onClick={setAccountType as any}
+      disabled={settingUp}
+    >
+      {loading ? "Setting up..." : accountType}
+      {loading ? (
+        <IonSpinner />
+      ) : (
+          <IonIcon icon={icon} slot="end" />
+        )}
+    </IonButton>
   );
 }

@@ -1,3 +1,5 @@
+import { SERVER_URL } from "./constants";
+
 export default async function (url, { method = "GET", data, headers = {} }) {
   const opts = {
     method,
@@ -11,7 +13,7 @@ export default async function (url, { method = "GET", data, headers = {} }) {
     opts.body = JSON.stringify(data);
   }
 
-  const resp = await fetch(url, opts);
+  const resp = await fetch(SERVER_URL + url, opts);
 
   if (resp.status === 500) {
     throw new Error(resp.statusText);

@@ -1,7 +1,6 @@
-import { SERVER_URL_DEV } from "./constants";
 import request, { constructAuthHeader } from "./request";
 
-const BASE_URL = SERVER_URL_DEV + "/appointments";
+const BASE_URL = "/appointments";
 
 export async function getAppointments(userId, token) {
   return await request(`${BASE_URL}/${userId}`, {

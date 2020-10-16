@@ -80,7 +80,7 @@ const Listing: React.FC = () => {
               </IonList>
             )}
       </IonContent>
-    </IonPage >
+    </IonPage>
   );
 };
 

@@ -59,7 +59,7 @@ export default function Condition() {
               <div className="ion-padding-horizontal">
                 <IonText>
                   <h2 className="ion-text-capitalize">{condition.name}</h2>
-                  <small>Posted on {moment(condition.createdAt).format("LT")}</small>
+                  <small>Posted on <strong>{moment(condition.createdAt).format("LT")}</strong></small>
                   <p>{condition.description}</p>
 
                   <IonList>

@@ -1,7 +1,6 @@
-import { SERVER_URL_DEV } from "./constants";
 import request from "./request";
 
-const BASE_URL = SERVER_URL_DEV + "/conditions";
+const BASE_URL = "/conditions";
 
 export async function getConditions() {
   return await request(BASE_URL, {});
