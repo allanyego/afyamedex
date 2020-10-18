@@ -16,6 +16,8 @@ import { useAppContext } from "../lib/context-lib";
 import { USER, ROOT_URL } from "../http/constants";
 import Profile from "./Profile";
 import useMounted from "../lib/mounted-hook";
+import Checkout from "./Checkout";
+import Feed from "./Feed";
 
 const Main: React.FC = () => {
   const { url, path } = useRouteMatch();
@@ -53,8 +55,10 @@ const Main: React.FC = () => {
   return (
     <IonPage>
       <IonRouterOutlet>
-        <Route path={path} exact={true} render={() => <Redirect to={`${path}/info`} />} />
+        <Route path={path} exact={true} render={() => <Redirect to={`${path}/feed`} />} />
+        <Route path={`${path}/feed`} component={Feed} exact />
         <Route path={`${path}/appointments`} component={Appointments} exact />
+        <Route path={`${path}/checkout/:appointmentId`} component={Checkout} exact />
         <Route path={`${path}/info`} component={ConditionsRouter} />
         <Route path={`${path}/chat`} component={ChatRouter} />
         <Route path={`${path}/professionals`} component={ProfessionalsRouter} />

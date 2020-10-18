@@ -23,3 +23,11 @@ export async function editAppointment(appointmentId, token, data) {
     data,
   });
 }
+
+export async function checkout(appointmentId, token, data) {
+  return await request(`${BASE_URL}/checkout/${appointmentId}`, {
+    method: "POST",
+    headers: constructAuthHeader(token),
+    data,
+  });
+}

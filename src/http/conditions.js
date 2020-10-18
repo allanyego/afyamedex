@@ -2,8 +2,11 @@ import request from "./request";
 
 const BASE_URL = "/conditions";
 
-export async function getConditions() {
-  return await request(BASE_URL, {});
+export async function getConditions(search) {
+  return await request(
+    `${BASE_URL + (!!search ? "?search=" + search : "")}`,
+    {}
+  );
 }
 
 export async function getById(id) {

@@ -1,9 +1,10 @@
 import React, { useState } from "react";
-import { IonHeader, IonToolbar, IonAvatar, IonTitle, IonButtons } from "@ionic/react";
+import { IonHeader, IonToolbar, IonAvatar, IonTitle, IonButtons, IonButton, IonIcon } from "@ionic/react";
 import { menuController } from "@ionic/core"
 
 import { useAppContext } from "../lib/context-lib";
 import defaultAvatar from "../assets/img/default_avatar.jpg";
+import { menuSharp } from "ionicons/icons";
 
 interface HeaderProps {
   title: string
@@ -27,15 +28,21 @@ export default function UserHeader({ title, secondary }: HeaderProps) {
   return (
     <IonHeader>
       <IonToolbar>
-        <IonAvatar slot="start" className="ion-padding" onClick={toggleMenu}>
-          <img src={defaultAvatar} alt={currentUser.fullName} />
-        </IonAvatar>
+        <IonButtons slot="start">
+          <IonButton onClick={toggleMenu}>
+            <IonIcon slot="icon-only" icon={menuSharp} />
+          </IonButton>
+        </IonButtons>
         <IonTitle>{title}</IonTitle>
-        {secondary && (
+        {secondary ? (
           <IonButtons slot="end">
             {secondary}
           </IonButtons>
-        )}
+        ) : (
+            <IonAvatar slot="end" className="ion-padding">
+              <img src={defaultAvatar} alt={currentUser.fullName} />
+            </IonAvatar>
+          )}
       </IonToolbar>
     </IonHeader>
   );

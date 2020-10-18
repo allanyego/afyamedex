@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useAppContext } from "../../lib/context-lib";
 import { IonModal, IonToolbar, IonButtons, IonButton, IonTitle, IonGrid, IonRow, IonCol, IonItem, IonLabel, IonInput, IonTextarea, IonText, IonBadge, IonList, IonItemSliding, IonItemOptions, IonItemOption, IonIcon, IonDatetime } from "@ionic/react";
 import { Formik, Form, FormikValues, FormikHelpers } from "formik";
@@ -9,6 +9,9 @@ import FormFieldFeedback from "../FormFieldFeedback";
 import { USER } from "../../http/constants";
 import { trash, addSharp } from "ionicons/icons";
 import "./EditProfileModal.css";
+import { editUser } from "../../http/users";
+import useToastManager from "../../lib/toast-hook";
+import useMounted from "../../lib/mounted-hook";
 
 interface EditProfileModalProps {
   isOpen: boolean
@@ -25,9 +28,17 @@ export default function EditProfileModal({ isOpen, onClose }: EditProfileModalPr
   const [speciality, setSpeciality] = useState(currentUser.speciality);
   const [conditions, setConditions] = useState(currentUser.conditions);
   const [education, setEducation] = useState(currentUser.education);
+  const { onError, onSuccess } = useToastManager();
+  const { isMounted, setMounted } = useMounted();
 
   const handleSubmit = async (values: FormikValues, { setSubmitting }: FormikHelpers<any>) => {
-    setTimeout(() => {
+    try {
+      // await editUser(currentUser._id, currentUser.token, {
+      //   ...values,
+      //   speciality,
+      //   conditions,
+      //   education,
+      // });
       setCurrentUser({
         ...currentUser,
         fullName: values.fullName.trim(),
@@ -37,10 +48,20 @@ export default function EditProfileModal({ isOpen, onClose }: EditProfileModalPr
         education,
       });
 
-      setSubmitting(false);
+      isMounted && setSubmitting(false);
       onClose();
-    }, 2500);
+      onSuccess("Details updated");
+    } catch (error) {
+      isMounted && setSubmitting(false);
+      onError(error.message);
+    }
   };
+
+  useEffect(() => {
+    return () => {
+      setMounted(false);
+    }
+  }, [])
 
   return (
     <>
@@ -59,7 +80,10 @@ export default function EditProfileModal({ isOpen, onClose }: EditProfileModalPr
               <Formik
                 validationSchema={userSchema}
                 onSubmit={handleSubmit}
-                initialValues={currentUser}
+                initialValues={{
+                  fullName: currentUser.fullName,
+                  bio: currentUser.bio || ""
+                }}
               >
                 {({
                   handleChange,

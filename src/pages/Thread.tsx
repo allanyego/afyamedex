@@ -67,6 +67,12 @@ const Thread: React.FC = () => {
         state._id,
       ], currentUser.token).then(({ data }: any) => {
         setMessages(data);
+        // Subscribe to thread now
+        if (data.length) {
+          socket.emit("join", {
+            room: data[0].thread,
+          });
+        }
         scrollBottomToView();
       }).catch(error => onError(error.message));
     } else {
@@ -84,7 +90,7 @@ const Thread: React.FC = () => {
       <IonHeader>
         <IonToolbar>
           <IonButtons slot="start">
-            <IonBackButton defaultHref="/app/chat" />
+            <IonBackButton defaultHref="/app" />
           </IonButtons>
           <IonTitle className="ion-text-capitalize">
             {otherUser && otherUser.fullName}
@@ -137,13 +143,14 @@ function MessageBoxFooter({ threadId, currentUser, otherUser, addMessage }: any)
 
   const handleSubmit = async (values: any, { setSubmitting, resetForm }: any) => {
     try {
+      const noThread = threadId !== "no-thread";
       const newMessage = {
         sender: currentUser._id,
         recipient: otherUser._id,
         ...values,
       };
 
-      if (threadId !== "no-thread") {
+      if (noThread) {
         newMessage.thread = threadId;
       }
 
@@ -156,6 +163,12 @@ function MessageBoxFooter({ threadId, currentUser, otherUser, addMessage }: any)
           fullName: currentUser.fullName,
           _id: currentUser._id,
         },
+      }
+      if (noThread) {
+        // Join room if it is a new thread
+        socket.emit("join", {
+          room: data._id,
+        });
       }
       // Notify room of new message
       socket.emit("new-message", {

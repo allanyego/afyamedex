@@ -2,7 +2,7 @@ import request, { constructAuthHeader } from "./request";
 
 const BASE_URL = "/users";
 
-export async function getUsers({ username, patient = false }) {
+export async function getUsers({ username = undefined, patient = false }) {
   let queryParams = "";
   if (username && patient) {
     queryParams += `?username=${encodeURIComponent(username)}&patient=true`;

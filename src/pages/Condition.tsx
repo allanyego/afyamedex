@@ -45,7 +45,7 @@ export default function Condition() {
       <IonHeader>
         <IonToolbar>
           <IonButtons slot="start">
-            <IonBackButton defaultHref="/app/info" />
+            <IonBackButton defaultHref="/app" />
           </IonButtons>
           <IonTitle>Condition Details</IonTitle>
         </IonToolbar>

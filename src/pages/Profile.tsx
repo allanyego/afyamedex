@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useIonViewDidEnter, useIonViewWillLeave, IonRouterOutlet } from "@ionic/react";
+import { useIonViewDidEnter, useIonViewWillLeave, IonRouterOutlet, IonPage } from "@ionic/react";
 import { useParams, useRouteMatch, Route, useHistory } from "react-router";
 
 import { getById } from "../http/users";
@@ -67,10 +67,12 @@ const Profile: React.FC = () => {
   const { path } = useRouteMatch();
 
   return (
-    <IonRouterOutlet>
-      <Route path={path} component={ProfileCurrentUser} exact />
-      <Route path={`${path}/:userId`} component={ProfileOtherUser} exact />
-    </IonRouterOutlet>
+    <IonPage>
+      <IonRouterOutlet>
+        <Route path={path} component={ProfileCurrentUser} exact />
+        <Route path={`${path}/:userId`} component={ProfileOtherUser} exact />
+      </IonRouterOutlet>
+    </IonPage>
   );
 }
 
