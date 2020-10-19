@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useIonViewDidEnter, useIonViewWillLeave, IonRouterOutlet, IonPage } from "@ionic/react";
-import { useParams, useRouteMatch, Route, useHistory } from "react-router";
+import { useParams, useRouteMatch, Route, useHistory, Redirect } from "react-router";
 
 import { getById } from "../http/users";
 import { useAppContext } from "../lib/context-lib";
@@ -65,6 +65,9 @@ const ProfileOtherUser: React.FC = () => {
 
 const Profile: React.FC = () => {
   const { path } = useRouteMatch();
+  // useIonViewDidEnter(() => {
+  //   console.log("Profile matched", path);
+  // });
 
   return (
     <IonPage>

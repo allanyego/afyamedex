@@ -44,6 +44,9 @@ export default function BookAppointment() {
         return;
       }
 
+      setProfessional(null);
+      setLoadError(false);
+
       if (data && data.username) {
         if (data.accountType === USER.ACCOUNT_TYPES.PATIENT) {
           onError("User is not a professional.");

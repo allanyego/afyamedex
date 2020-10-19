@@ -1,7 +1,7 @@
 import React from 'react';
 import { CardElement } from '@stripe/react-stripe-js';
 import './CardSection.css'
-import { IonText } from '@ionic/react';
+import { IonText, IonCard, IonCardContent } from '@ionic/react';
 
 const CARD_ELEMENT_OPTIONS = {
   style: {
@@ -23,12 +23,17 @@ const CARD_ELEMENT_OPTIONS = {
 
 function CardSection({ amount }: { amount: number }) {
   return (
-    <label>
-      <IonText className="ion-text-center">
-        <p>Enter card details to complete payment of <strong>${amount}</strong></p>
-      </IonText>
-      <CardElement options={CARD_ELEMENT_OPTIONS} />
-    </label>
+    <IonCard>
+      <IonCardContent>
+        <IonText className="ion-text-center">
+          <p>
+            Enter card details to complete payment of:<br />
+            <strong>KES{amount}</strong>
+          </p>
+        </IonText>
+        <CardElement options={CARD_ELEMENT_OPTIONS} />
+      </IonCardContent>
+    </IonCard>
   );
 };
 

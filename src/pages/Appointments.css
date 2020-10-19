@@ -27,25 +27,42 @@
   background: var(--ion-color-success);
 }
 
-.meeting-feed {
-  height: 100%;
+.appointments-page .appointment-status.closed {
+  background: var(--ion-color-secondary);
+}
+
+.meeting-screen {
+  height: 100vh;
   display: flex;
   flex-direction: column;
+  background: var(--ion-color-dark);
+}
+
+.meeting-feed {
+  display: grid;
+  grid-auto-flow: row;
+  grid-template-rows: repeat(auto-fit, minmax(50%, 1fr));
 }
 
 .meeting-feed,
 .meeting-feed > div {
   flex-grow: 1;
-  padding: 8px;
   position: relative;
 }
 
-.meeting-feed > div small {
+.meeting-feed > div .controls {
   position: absolute;
-  bottom: 1em;
-  left: 1em;
+  bottom: 0;
+  left: 0;
+  padding: 1em;
   color: #fff;
   font-weight: bold;
+  background: var(--ion-color-dark);
+  opacity: 0.75;
+}
+
+.meeting-feed > div .controls {
+  width: 100%;
 }
 
 .meeting-feed .duration-badge {
@@ -60,4 +77,8 @@
   height: 100%;
   width: 100%;
   object-fit: cover;
+}
+
+.meeting-feed .meeting-btn-footer {
+  background: var(--ion-color-dark);
 }

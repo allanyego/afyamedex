@@ -55,7 +55,7 @@ export default function UserProfile({ user, loadError = false }: {
       <IonHeader>
         <IonToolbar>
           <IonButtons slot="start">
-            <IonBackButton defaultHref="/app" />
+            <IonBackButton defaultHref="/app/feed" />
           </IonButtons>
           <IonTitle>Profile</IonTitle>
           {(user && currentUser._id === user._id) && (

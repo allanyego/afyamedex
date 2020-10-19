@@ -91,7 +91,7 @@ type ConditionCardProps = {
   }
 };
 
-export function ConditionItem({ condition }: ConditionCardProps) {
+function ConditionItem({ condition }: ConditionCardProps) {
   const { url } = useRouteMatch();
 
   return (

@@ -57,7 +57,7 @@ const Thread: React.FC = () => {
     });
 
     if (state && !state.fetch) {
-      getThreadMessages(threadId, currentUser.token).then(({ data }: any) => {
+      getThreadMessages(threadId, currentUser.token, !state.username).then(({ data }: any) => {
         setMessages(data);
         scrollBottomToView();
       }).catch(error => onError(error.message));
@@ -144,11 +144,16 @@ function MessageBoxFooter({ threadId, currentUser, otherUser, addMessage }: any)
   const handleSubmit = async (values: any, { setSubmitting, resetForm }: any) => {
     try {
       const noThread = threadId !== "no-thread";
+      const isPublicThread = !otherUser.username;
+
       const newMessage = {
         sender: currentUser._id,
-        recipient: otherUser._id,
         ...values,
       };
+
+      if (!isPublicThread) {
+        newMessage.recipient = otherUser._id;
+      }
 
       if (noThread) {
         newMessage.thread = threadId;

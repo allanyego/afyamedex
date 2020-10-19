@@ -12,6 +12,7 @@ import Condition from "./Condition";
 import BookAppointment from "./BookAppointment";
 import NewCondition from "./NewCondition";
 import Appointments from "./Appointments";
+import Meeting from "./Meeting";
 import { useAppContext } from "../lib/context-lib";
 import { USER, ROOT_URL } from "../http/constants";
 import Profile from "./Profile";
@@ -55,14 +56,15 @@ const Main: React.FC = () => {
   return (
     <IonPage>
       <IonRouterOutlet>
-        <Route path={path} exact={true} render={() => <Redirect to={`${path}/feed`} />} />
         <Route path={`${path}/feed`} component={Feed} exact />
         <Route path={`${path}/appointments`} component={Appointments} exact />
+        <Route path={`${path}/meet`} component={Meeting} exact />
         <Route path={`${path}/checkout/:appointmentId`} component={Checkout} exact />
         <Route path={`${path}/info`} component={ConditionsRouter} />
         <Route path={`${path}/chat`} component={ChatRouter} />
-        <Route path={`${path}/professionals`} component={ProfessionalsRouter} />
         <Route path={`${path}/profile`} component={Profile} />
+        <Route path={`${path}/professionals`} component={ProfessionalsRouter} />
+        <Route render={() => <Redirect to={`${path}/feed`} />} />
       </IonRouterOutlet>
     </IonPage>
   );

@@ -36,7 +36,7 @@ import ToastManager from './components/ToastManager';
 import { getObject, clear } from './lib/storage';
 import { STORAGE_KEY, USER } from './http/constants';
 import LoadingFallback from './components/LoadingFallback';
-import { personSharp, peopleSharp, exitSharp, helpCircleSharp, fileTrayFullSharp, chatbubblesSharp, homeSharp } from 'ionicons/icons';
+import { personSharp, peopleSharp, exitSharp, fileTrayFullSharp, chatbubblesSharp, homeSharp } from 'ionicons/icons';
 import useToastManager from './lib/toast-hook';
 import { ProfileData } from './components/UserDetails';
 import { Detector } from 'react-detect-offline';
@@ -51,7 +51,6 @@ const App: React.FC = () => {
   const [isAlertOpen, setAlertOpen] = useState(false);
   const history = useHistory();
   const [isAuthenticating, setAuthenticating] = useState(true);
-  const { onError } = useToastManager();
   const { isMounted, setMounted } = useMounted();
 
   const closeAlert = () => setAlertOpen(false)
@@ -83,9 +82,8 @@ const App: React.FC = () => {
     try {
       await clear();
       setCurrentUser(null);
-      history.replace("/sign-in");
     } catch (error) {
-      onError(error.message);
+      console.error(error);
     }
   };
 
@@ -103,7 +101,7 @@ const App: React.FC = () => {
               text: 'Stay',
               role: 'cancel',
               cssClass: 'danger',
-              handler: () => true
+              handler: window.history.back,
             },
             {
               text: 'Leave',
@@ -137,7 +135,7 @@ const App: React.FC = () => {
 
                   <IonItem routerLink="/app/feed">
                     <IonIcon slot="start" icon={homeSharp} />
-                    <IonLabel>Feed</IonLabel>
+                    <IonLabel>Home</IonLabel>
                   </IonItem>
 
                   {currentUser.accountType === USER.ACCOUNT_TYPES.PATIENT && (
@@ -184,7 +182,7 @@ const App: React.FC = () => {
                         currentUser.accountType ? redirect("/app") : <AccountType />
                         : redirect("/sign-in")}
                     />
-                    <Route path="/" render={() => redirect("/home")} exact />
+                    <Route render={() => redirect("/home")} exact />
                   </IonRouterOutlet>
                 </>
               )}

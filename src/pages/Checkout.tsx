@@ -1,14 +1,17 @@
 import React, { useState } from "react";
-import { IonPage, IonContent, IonButton, useIonViewDidEnter } from "@ionic/react";
+import { IonPage, IonIcon, IonContent, IonText, IonButton, useIonViewDidEnter, useIonViewWillLeave, IonSpinner } from "@ionic/react";
 import { useParams, useLocation, useHistory } from "react-router";
 import { useStripe, useElements, CardElement } from "@stripe/react-stripe-js";
+import { arrowBackSharp, cardSharp } from 'ionicons/icons';
 
 import CardSection from "../components/CardSection";
-import { checkout } from "../http/appointments";
+import { checkout, editAppointment } from "../http/appointments";
 import { useAppContext } from "../lib/context-lib";
 import useToastManager from "../lib/toast-hook";
 import LoadingFallback from "../components/LoadingFallback";
 import ErrorFallback from "../components/ErrorFallback";
+import useMounted from "../lib/mounted-hook";
+import Centered from "../components/Centered";
 
 
 const Checkout: React.FC = () => {
@@ -17,6 +20,8 @@ const Checkout: React.FC = () => {
     amount: number,
   } | null>(null);
   const [loadError, setLoadError] = useState(false);
+  const [isPaymentComplete, setPaymentComplete] = useState(false);
+  const [isSubmitting, setSubmitting] = useState(false);
   const stripe = useStripe();
   const elements = useElements();
   const { appointmentId } = useParams();
@@ -24,20 +29,28 @@ const Checkout: React.FC = () => {
   const history = useHistory();
   const { currentUser } = useAppContext() as any;
   const { onError, onSuccess } = useToastManager();
+  const { isMounted, setMounted } = useMounted();
 
   useIonViewDidEnter(async () => {
-    if (!state || !state.duration) {
-      history.replace("/app/appointments");
+    if (!state || state.duration == undefined) {
+      return;
     }
+
     try {
-      const { data } = await checkout(appointmentId, currentUser.token, {
-        duration: 30,
-      });
-      setData(data);
+      const resp = await checkout(appointmentId, currentUser.token);
+
+      isMounted && setData(resp.data);
     } catch (error) {
-      setLoadError(true);
+      isMounted && setLoadError(true);
       onError(error.message);
     }
+  });
+
+  useIonViewWillLeave(() => {
+    setData(null);
+    setLoadError(false);
+    setPaymentComplete(false);
+    setMounted(false);
   });
 
   const handleSubmit = async (event: any) => {
@@ -50,7 +63,7 @@ const Checkout: React.FC = () => {
       // Make sure to disable form submission until Stripe.js has loaded.
       return;
     }
-
+    setSubmitting(true);
     try {
       const result = await stripe.confirmCardPayment(data!.clientSecret, {
         payment_method: {
@@ -64,7 +77,6 @@ const Checkout: React.FC = () => {
       if (result.error) {
         // Show error to your customer (e.g., insufficient funds)
         onError(result.error.message);
-        console.log(result.error.message);
       } else {
         // The payment has been processed!
         if (result.paymentIntent!.status === 'succeeded') {
@@ -73,29 +85,103 @@ const Checkout: React.FC = () => {
           // execution. Set up a webhook or plugin to listen for the
           // payment_intent.succeeded event that handles any business critical
           // post-payment actions.
-          onSuccess(`Payment of $${data!.amount}completed successfully.`);
+          onSuccess(`Payment of KES.${data!.amount} completed successfully.`);
+          setPaymentComplete(true);
+          try {
+            await editAppointment(appointmentId, currentUser.token, {
+              hasBeenBilled: true,
+              paymentId: result.paymentIntent!.id,
+            })
+          } catch (error) {
+            onError("There was an error uploading payment details");
+          };
         }
       }
     } catch (error) {
       onError(error.message);
+    } finally {
+      setSubmitting(false);
     }
   };
 
   return (
     <IonPage>
       <IonContent fullscreen>
-        {!data ? (
+        {(!data && !loadError) ? (
           <LoadingFallback />
         ) : loadError ? (
-          <ErrorFallback />
-        ) : (
-              <div className="d-flex ion-justify-align-items-center">
-                <form onSubmit={handleSubmit}>
-                  <CardSection amount={data.amount} />
-                  <IonButton type="submit" disabled={!stripe}>Pay ${data.amount}</IonButton>
-                </form>
+          <ErrorFallback>
+            <IonText className="ion-text-center">
+              <h5 className="ion-margin-horizontal">Something didn't go right. Try again later.</h5>
+              <div className="d-flex ion-justify-content-center">
+                <IonButton
+                  fill="clear"
+                  color="medium"
+                  size="small"
+                  routerLink="/app/feed">
+                  Back home
+                  <IonIcon slot="start" icon={arrowBackSharp} />
+                </IonButton>
               </div>
-            )}
+            </IonText>
+          </ErrorFallback>
+        ) : (
+              <Centered fullHeight>
+                {isPaymentComplete ? (
+                  <div>
+                    <p className="ion-text-center">
+                      Your payment was proccessed <strong>successfully</strong>.<br />
+                      Amount: <strong>KES{data!.amount}</strong>
+                    </p>
+                    <div className="h100 d-flex ion-justify-content-center ion-align-items-center">
+                      <IonButton
+                        fill="clear"
+                        color="medium"
+                        routerLink="/app/feed">
+                        home
+                          <IonIcon icon={arrowBackSharp} slot="end" />
+                      </IonButton>
+                    </div>
+                  </div>
+                ) : (
+                    <div>
+                      <form onSubmit={handleSubmit}>
+                        <CardSection amount={data!.amount} />
+                        <div className="d-flex ion-justify-content-center ion-margin-top">
+                          <IonButton
+                            type="submit"
+                            disabled={!stripe || isSubmitting}
+                          >
+
+                            {isSubmitting ? (
+                              <>
+                                <IonSpinner name="lines-small" />
+                            Paying
+                            </>
+                            ) : (
+                                <>
+                                  Pay {data!.amount}
+                                </>
+                              )}
+                          </IonButton>
+                        </div>
+                      </form>
+                      <Centered>
+                        <IonButton
+                          fill="clear"
+                          color="medium"
+                          size="small"
+                          routerLink="/app/feed">
+                          <IonIcon slot="start" icon={arrowBackSharp} />
+                        Later
+                    </IonButton>
+                      </Centered>
+                    </div>
+                  )}
+
+              </Centered>
+            )
+        }
       </IonContent>
     </IonPage>
   );

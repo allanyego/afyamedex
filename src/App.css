@@ -7,7 +7,7 @@ form .has-error {
 }
 
 .d-flex {
-  display: flex;
+  display: flex !important;
 }
 
 .d-block {
