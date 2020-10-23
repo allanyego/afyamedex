@@ -15,6 +15,7 @@ import useMounted from '../lib/mounted-hook';
 import ErrorFallback from '../components/ErrorFallback';
 import { useAppContext } from '../lib/context-lib';
 import { ProfileData } from '../components/UserDetails';
+import RatingInfo from '../components/RatingInfo';
 
 const Listing: React.FC = () => {
   const [showSearchBar, setShowSearchBar] = useState(false);
@@ -103,11 +104,7 @@ function ListingItem({ prof }: any) {
           />
         </h3>
         <p>{prof.bio || "No bio."}</p>
-        {prof.rating ? (
-          <>
-            <Rating rating={prof.rating} /><br />
-          </>
-        ) : "No rating."}
+        <RatingInfo userId={prof._id} />
         {prof.speciality.map((s: any) => <IonBadge color="secondary">{s}</IonBadge>)}
       </IonLabel>
     </IonItem>

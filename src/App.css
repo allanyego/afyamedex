@@ -40,3 +40,7 @@ form .has-error {
   color: var(--ion-color-danger-contrast);
   padding: 0.15em;
 }
+
+.rating-container {
+  color: var(--ion-color-warning-shade);
+}

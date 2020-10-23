@@ -20,7 +20,7 @@ const SignIn: React.FC = () => {
   const { setCurrentUser } = useAppContext() as any;
   const history = useHistory();
   const { onError } = useToastManager();
-  const {isMounted, setMounted} = useMounted();
+  const { isMounted, setMounted } = useMounted();
 
   const handleSubmit = async (values: any, { setSubmitting }: any) => {
     try {
@@ -91,6 +91,9 @@ const SignIn: React.FC = () => {
                 </Form>
               )}</Formik>
             <IonText className="ion-text-center">
+              <p>
+                <IonRouterLink href="/reset-password">Forgot password?</IonRouterLink>
+              </p>
               <p className="ion-no-margin">
                 Don't have an account? <IonRouterLink href="/sign-up">Sign up</IonRouterLink>
               </p>

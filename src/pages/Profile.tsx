@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { useIonViewDidEnter, useIonViewWillLeave, IonRouterOutlet, IonPage } from "@ionic/react";
-import { useParams, useRouteMatch, Route, useHistory, Redirect } from "react-router";
+import { useIonViewDidEnter, useIonViewWillLeave, IonRouterOutlet, IonPage, useIonViewDidLeave } from "@ionic/react";
+import { useParams, useRouteMatch, Route, useHistory } from "react-router";
 
 import { getById } from "../http/users";
 import { useAppContext } from "../lib/context-lib";
@@ -11,20 +11,22 @@ import UserProfile from "../components/UserProfile";
 import useMounted from "../lib/mounted-hook";
 
 const ProfileCurrentUser: React.FC = () => {
-  const [user, setUser] = useState<ProfileData | null>(null);
   const { currentUser } = useAppContext() as any;
+  const [user, setUser] = useState<ProfileData | null>(currentUser);
   const { isMounted, setMounted } = useMounted();
 
   useEffect(() => {
     isMounted && setUser(currentUser);
   }, [currentUser]);
 
-  useIonViewDidEnter(() => {
-    isMounted && setUser(currentUser);
-  });
+  useEffect(() => {
+    return () => {
+      setMounted(false);
+    };
+  }, []);
 
-  useIonViewWillLeave(() => {
-    setMounted(false);
+  useIonViewDidEnter(() => {
+    setUser(currentUser);
   });
 
   return <UserProfile user={user} />
@@ -65,9 +67,6 @@ const ProfileOtherUser: React.FC = () => {
 
 const Profile: React.FC = () => {
   const { path } = useRouteMatch();
-  // useIonViewDidEnter(() => {
-  //   console.log("Profile matched", path);
-  // });
 
   return (
     <IonPage>

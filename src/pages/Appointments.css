@@ -50,8 +50,29 @@
   position: relative;
 }
 
+.meeting-feed > div .video-placeholder,
 .meeting-feed > div .controls {
   position: absolute;
+}
+
+.meeting-feed > div .video-placeholder {
+  --dims: 4em;
+  --offsets: calc(50% - (var(--dims) / 2));
+  height: var(--dims);
+  width: var(--dims);
+  border-radius: 50%;
+  top: var(--offsets);
+  left: var(--offsets);
+  background: var(--background);
+  font-weight: 900;
+  font-size: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.meeting-feed > div .controls {
   bottom: 0;
   left: 0;
   padding: 1em;

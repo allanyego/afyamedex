@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Redirect, Route, useHistory } from 'react-router-dom';
-import { IonApp, IonRouterOutlet, IonMenu, IonHeader, IonToolbar, IonTitle, IonContent, IonList, IonItem, IonIcon, IonLabel, IonAlert } from '@ionic/react';
+import { IonApp, IonMenu, IonHeader, IonToolbar, IonTitle, IonContent, IonList, IonItem, IonIcon, IonLabel } from '@ionic/react';
 import { IonReactRouter } from '@ionic/react-router';
 import { Elements } from "@stripe/react-stripe-js";
 import { loadStripe } from "@stripe/stripe-js"
-import { Plugins, Capacitor } from '@capacitor/core';
+import { Capacitor, SplashScreen } from '@capacitor/core';
 
 /* Core CSS required for Ionic components to work properly */
 import '@ionic/react/css/core.css';
@@ -25,63 +24,70 @@ import '@ionic/react/css/display.css';
 /* Theme variables */
 import './theme/variables.css';
 
-import Home from './pages/Home';
-import SignIn from './pages/SignIn';
-import SignUp from './pages/SignUp';
-import AccountType from './pages/AccountType';
-import Main from './pages/Main';
 import { AppContext } from './lib/context-lib';
 import "./App.css";
 import ToastManager from './components/ToastManager';
-import { getObject, clear } from './lib/storage';
+import { getObject, clear, setObject } from './lib/storage';
 import { STORAGE_KEY, USER } from './http/constants';
 import LoadingFallback from './components/LoadingFallback';
 import { personSharp, peopleSharp, exitSharp, fileTrayFullSharp, chatbubblesSharp, homeSharp } from 'ionicons/icons';
-import useToastManager from './lib/toast-hook';
 import { ProfileData } from './components/UserDetails';
 import { Detector } from 'react-detect-offline';
-import useMounted from './lib/mounted-hook';
+import AppRoutes from './AppRoutes';
 
 const stripePromise = loadStripe("pk_test_lx1Waow5lgsLqWZfGakpklYO00rvf5kGYa");
 
 const App: React.FC = () => {
-  const [currentUser, setCurrentUser] = useState<ProfileData | null>(null);
+  const [currentUser, setCurrUser] = useState<ProfileData | null>(null);
   const [notifications, setNotifications] = useState([]);
   const [socket, setSocket] = useState(null);
-  const [isAlertOpen, setAlertOpen] = useState(false);
-  const history = useHistory();
+  // const [isAlertOpen, setAlertOpen] = useState(false);
   const [isAuthenticating, setAuthenticating] = useState(true);
-  const { isMounted, setMounted } = useMounted();
+  // const { isMounted, setMounted } = useMounted();
 
-  const closeAlert = () => setAlertOpen(false)
   // Close app is there is nothing left in the stack
-  const hardwareBackButtonHandler = () => {
-    isMounted && setAlertOpen(true);
+  // const hardwareBackButtonHandler = () => {
+  //   isMounted && setAlertOpen(true);
+  // };
+
+  const setCurrentUser = async (currUser: ProfileData) => {
+    const newDetails = {
+      ...currentUser,
+      ...currUser,
+    };
+    await setObject(STORAGE_KEY, {
+      currentUser: newDetails,
+    });
+
+    setCurrUser(newDetails);
   };
 
   useEffect(() => {
+    // Hide splashscreen if app loads in under 4s
+    SplashScreen.hide();
+
     if (Capacitor.isNative) {
-      Plugins.App.addListener("backButton", hardwareBackButtonHandler);
+      // Plugins.App.addListener("backButton", hardwareBackButtonHandler);
     }
 
     getObject(STORAGE_KEY).then(data => {
       if (data && data.currentUser) {
-        setCurrentUser(data.currentUser);
+        setCurrUser(data.currentUser);
       }
 
       setAuthenticating(false);
     });
 
     return () => {
-      Plugins.App.removeAllListeners();
-      setMounted(false);
+      // Plugins.App.removeAllListeners();
+      // setMounted(false);
     };
   }, []);
 
   const handleLogout = async () => {
     try {
       await clear();
-      setCurrentUser(null);
+      setCurrUser(null);
     } catch (error) {
       console.error(error);
     }
@@ -90,25 +96,6 @@ const App: React.FC = () => {
   return (
     <Elements stripe={stripePromise}>
       <IonApp>
-        <IonAlert
-          isOpen={isAlertOpen}
-          onDidDismiss={closeAlert}
-          cssClass="exit-app-alert"
-          header={"Leaving?"}
-          message="Are you you sure you want to leave?"
-          buttons={[
-            {
-              text: 'Stay',
-              role: 'cancel',
-              cssClass: 'danger',
-              handler: window.history.back,
-            },
-            {
-              text: 'Leave',
-              handler: Plugins.App.exitApp
-            }
-          ]}
-        />
         <AppContext.Provider value={{
           currentUser,
           setCurrentUser,
@@ -169,22 +156,7 @@ const App: React.FC = () => {
             {isAuthenticating ? (
               <LoadingFallback />
             ) : (
-                <>
-                  <IonRouterOutlet id="router-outlet">
-                    <Route path="/home" render={redirectToApp(Home, currentUser)} exact />
-                    <Route path="/sign-in" render={redirectToApp(SignIn, currentUser)} exact={true} />
-                    <Route path="/sign-up" render={redirectToApp(SignUp, currentUser)} exact={true} />
-                    <Route path="/app" render={() => currentUser ? <Main /> : redirect("/sign-in")} />
-                    <Route
-                      path="/account-type"
-                      exact
-                      render={() => currentUser ?
-                        currentUser.accountType ? redirect("/app") : <AccountType />
-                        : redirect("/sign-in")}
-                    />
-                    <Route render={() => redirect("/home")} exact />
-                  </IonRouterOutlet>
-                </>
+                <AppRoutes />
               )}
 
             <Detector render={(props) => {
@@ -198,13 +170,5 @@ const App: React.FC = () => {
     </Elements>
   );
 };
-
-function redirect(path: string) {
-  return <Redirect to={path} />
-}
-
-function redirectToApp(Comp: React.FC, currentUser: any) {
-  return () => !currentUser ? <Comp /> : redirect("/app");
-}
 
 export default App;

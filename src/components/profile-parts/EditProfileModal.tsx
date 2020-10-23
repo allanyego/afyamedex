@@ -12,6 +12,7 @@ import "./EditProfileModal.css";
 import { editUser } from "../../http/users";
 import useToastManager from "../../lib/toast-hook";
 import useMounted from "../../lib/mounted-hook";
+import trimLowerCase from "../../lib/trim-lowercase";
 
 interface EditProfileModalProps {
   isOpen: boolean
@@ -19,34 +20,39 @@ interface EditProfileModalProps {
 }
 
 const userSchema = Yup.object({
-  fullName: Yup.string().required("This shouldn't be empty."),
+  fullName: Yup.string().required("This shouldn't be empty"),
   bio: Yup.string(),
+  experience: Yup.number().min(1, "Can't be less that 1 year").max(65, "Really? Seems a bit much"),
 });
 
 export default function EditProfileModal({ isOpen, onClose }: EditProfileModalProps) {
   const { currentUser, setCurrentUser } = useAppContext() as any;
   const [speciality, setSpeciality] = useState(currentUser.speciality);
+  const [showModal, setShowModal] = useState(isOpen);
   const [conditions, setConditions] = useState(currentUser.conditions);
   const [education, setEducation] = useState(currentUser.education);
   const { onError, onSuccess } = useToastManager();
   const { isMounted, setMounted } = useMounted();
 
+  useEffect(() => {
+    setShowModal(isOpen);
+  }, [isOpen]);
+
   const handleSubmit = async (values: FormikValues, { setSubmitting }: FormikHelpers<any>) => {
     try {
-      // await editUser(currentUser._id, currentUser.token, {
-      //   ...values,
-      //   speciality,
-      //   conditions,
-      //   education,
-      // });
-      setCurrentUser({
-        ...currentUser,
-        fullName: values.fullName.trim(),
-        bio: values.bio.trim(),
+      const newDetails = {
+        ...values,
+        fullName: trimLowerCase(values.fullName),
         speciality,
         conditions,
         education,
+      };
+
+      await editUser(currentUser._id, currentUser.token, {
+        ...newDetails
       });
+
+      setCurrentUser(newDetails);
 
       isMounted && setSubmitting(false);
       onClose();
@@ -57,15 +63,16 @@ export default function EditProfileModal({ isOpen, onClose }: EditProfileModalPr
     }
   };
 
-  useEffect(() => {
-    return () => {
-      setMounted(false);
-    }
-  }, [])
+  const tearDown = () => {
+    onClose()
+    setMounted(false);
+  };
 
   return (
     <>
-      <IonModal isOpen={isOpen}>
+      <IonModal isOpen={showModal}
+        onDidDismiss={tearDown}
+      >
         <IonToolbar>
           <IonButtons slot="end">
             <IonButton onClick={onClose}>Cancel</IonButton>
@@ -82,7 +89,8 @@ export default function EditProfileModal({ isOpen, onClose }: EditProfileModalPr
                 onSubmit={handleSubmit}
                 initialValues={{
                   fullName: currentUser.fullName,
-                  bio: currentUser.bio || ""
+                  bio: currentUser.bio || "",
+                  experience: currentUser.experience || "",
                 }}
               >
                 {({
@@ -118,16 +126,26 @@ export default function EditProfileModal({ isOpen, onClose }: EditProfileModalPr
                             setConditions={setConditions}
                           />
                         ) : (
-                            <EditSpeciality
-                              speciality={speciality}
-                              setSpeciality={setSpeciality}
-                            />
-                          )}
+                            <>
+                              <IonItem className={touched.experience && errors.experience ? "has-error" : ""}>
+                                <IonLabel position="floating">Experience (years)</IonLabel>
+                                <IonInput
+                                  value={values.experience}
+                                  type="text" name="experience" onIonChange={handleChange} onIonBlur={handleBlur} />
+                              </IonItem>
+                              <FormFieldFeedback {...{ errors, touched, fieldName: "experience" }} />
 
-                        <EditEducation
-                          education={education}
-                          setEducation={setEducation}
-                        />
+                              <EditSpeciality
+                                speciality={speciality}
+                                setSpeciality={setSpeciality}
+                              />
+
+                              <EditEducation
+                                education={education}
+                                setEducation={setEducation}
+                              />
+                            </>
+                          )}
 
                         <IonRow>
                           <IonCol>
@@ -360,6 +378,7 @@ function EditEducation({ education, setEducation }: {
     setStart(undefined);
     setEnd(undefined);
   };
+
   return (
     <div>
       <IonLabel>

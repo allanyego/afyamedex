@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { IonButton, IonContent, IonPage, IonRow, IonCol, IonText, IonList, IonItem, IonLabel, IonCardContent, IonAvatar, IonCard, useIonViewWillEnter, IonIcon, IonChip, IonRouterLink } from '@ionic/react';
+import { IonButton, IonContent, IonPage, IonText, IonList, IonItem, IonLabel, IonCardContent, IonAvatar, IonCard, IonIcon, IonChip } from '@ionic/react';
 import { useAppContext } from '../lib/context-lib';
 import { useHistory } from 'react-router';
-import { caretForwardSharp, arrowForwardSharp, timeSharp } from 'ionicons/icons';
+import { arrowForwardSharp, timeSharp } from 'ionicons/icons';
 import moment from "moment";
 
 import useToastManager from '../lib/toast-hook';
@@ -15,13 +15,18 @@ import UserHeader from '../components/UserHeader';
 import { getUsers } from '../http/users';
 import { getPublicThreads } from "../http/messages";
 import "./Feed.css";
+import { USER } from '../http/constants';
+import useMounted from '../lib/mounted-hook';
 
 const Feed: React.FC = () => {
+  const { currentUser } = useAppContext() as any;
   return (
     <IonPage>
       <UserHeader title="Home" />
       <IonContent fullscreen className="ion-padding-horizontal">
-        <Users />
+        {currentUser.accountType === USER.ACCOUNT_TYPES.PATIENT && (
+          <Users />
+        )}
         <Conditions />
         <PublicThreads />
       </IonContent>
@@ -35,63 +40,49 @@ function Users() {
   const [professionals, setProfessionals] = useState<any[] | null>(null);
   const { onError } = useToastManager();
   const { currentUser } = useAppContext() as any;
+  const { isMounted, setMounted } = useMounted();
 
   useEffect(() => {
-    getUsers({}).then(({ data }) => {
-      setProfessionals(data.splice(0, 6).filter((pro: ProfileData) => pro._id !== currentUser._id));
-    }).catch(err => {
-      onError(err.message);
-    });
+    // getUsers({}).then(({ data }) => {
+    //   isMounted && setProfessionals(data.splice(0, 6).filter((pro: ProfileData) => pro._id !== currentUser._id));
+    // }).catch(err => {
+    //   onError(err.message);
+    // });
+
+    return () => setMounted(false);
   }, []);
+
   return (
     <>
       <h6>Professionals</h6>
       <div>
         {!professionals ? (
           <LoadingFallback />
+        ) : !professionals.length ? (
+          <IonText className="ion-text-center">
+            <p className="ion-no-margin">Nothing here yet</p>
+          </IonText>
         ) : (
-            <>
-              <div className="d-flex profession-card-feed">
-                {professionals && professionals.map((pro: ProfileData) => (
-                  <div key={pro._id} className="ion-align-self-center ion-align-items-center">
-                    <IonCard routerLink={`/app/profile/${pro._id}`}>
-                      <IonCardContent>
-                        <div className="d-flex ion-justify-content-center ion-align-items-center">
-                          <div>
-                            <IonAvatar>
-                              <img src={defaultAvatar} alt={pro.fullName} />
-                            </IonAvatar>
-                            <IonText className="ion-text-center">
-                              <h4 className="ion-text-capitalize">{pro.fullName}</h4>
-                              <p className="ion-no-margin">
-                                <small>
-                                  <strong>
-                                    {pro.rating ? (
-                                      <Rating rating={pro.rating} />
-                                    ) : "No rating"}
-                                  </strong>
-                                </small>
-                              </p>
-                            </IonText>
-                          </div>
-                        </div>
-                      </IonCardContent>
-                    </IonCard>
-                  </div>
-                ))}
-              </div>
-              <div className="d-flex ion-justify-content-center">
-                <IonButton
-                  fill="clear"
-                  color="medium"
-                  size="small"
-                  routerLink="/app/professionals">
-                  Discover more
+              <>
+                <div className="d-flex profession-card-feed">
+                  {professionals && professionals.map((pro: ProfileData) => (
+                    <ProfessionalCard professional={pro} />
+                  ))}
+                </div>
+                {currentUser.accountType === USER.ACCOUNT_TYPES.PATIENT && (
+                  <div className="d-flex ion-justify-content-center">
+                    <IonButton
+                      fill="clear"
+                      color="medium"
+                      size="small"
+                      routerLink="/app/professionals">
+                      Discover more
                     <IonIcon slot="end" icon={arrowForwardSharp} />
-                </IonButton>
-              </div>
-            </>
-          )}
+                    </IonButton>
+                  </div>
+                )}
+              </>
+            )}
       </div>
     </>
   );
@@ -100,13 +91,16 @@ function Users() {
 function Conditions() {
   const [conditions, setConditions] = useState<any[] | null>(null);
   const { onError } = useToastManager();
+  const { isMounted, setMounted } = useMounted();
 
   useEffect(() => {
     getConditions().then(({ data }) => {
-      setConditions(data);
+      isMounted && setConditions(data);
     }).catch(err => {
       onError(err.message);
     });
+
+    return () => setMounted(false);
   }, []);
 
   return (
@@ -115,46 +109,50 @@ function Conditions() {
       <div>
         {!conditions ? (
           <LoadingFallback />
+        ) : !conditions.length ? (
+          <IonText className="ion-text-center">
+            <p className="ion-no-margin">Nothing here yet</p>
+          </IonText>
         ) : (
-            <>
-              <IonList lines="full">
-                {conditions && conditions!.map((condition: any) => (
-                  // <ConditionItem key={condition._id} condition={condition} />
-                  <IonItem
-                    key={condition._id}
-                    routerLink={`/app/${condition._id}/details`}
-                    className="listing-item"
-                  >
-                    <IonLabel>
-                      <h3 className="ion-text-capitalize d-flex ion-align-items-center">
-                        {condition.name}
-                      </h3>
-                      <p>{condition.description}</p>
-                    </IonLabel>
-                    <IonLabel
-                      slot="end"
-                      className="d-flex ion-justify-content-end ion-align-items-center"
-                      style={{
-                        gap: "0.15em",
-                      }}
+              <>
+                <IonList lines="full">
+                  {conditions && conditions!.map((condition: any) => (
+                    // <ConditionItem key={condition._id} condition={condition} />
+                    <IonItem
+                      key={condition._id}
+                      routerLink={`/app/${condition._id}/details`}
+                      className="listing-item"
                     >
-                      <IonIcon icon={timeSharp} /><small>{moment(condition.createdAt).format("LT")}</small>
-                    </IonLabel>
-                  </IonItem>
-                ))}
-              </IonList>
-              <div className="d-flex ion-justify-content-center">
-                <IonButton
-                  fill="clear"
-                  color="medium"
-                  size="small"
-                  routerLink="/app/info">
-                  Discover more
+                      <IonLabel>
+                        <h3 className="ion-text-capitalize d-flex ion-align-items-center">
+                          {condition.name}
+                        </h3>
+                        <p>{condition.description}</p>
+                      </IonLabel>
+                      <IonLabel
+                        slot="end"
+                        className="d-flex ion-justify-content-end ion-align-items-center"
+                        style={{
+                          gap: "0.15em",
+                        }}
+                      >
+                        <IonIcon icon={timeSharp} /><small>{moment(condition.createdAt).format("LT")}</small>
+                      </IonLabel>
+                    </IonItem>
+                  ))}
+                </IonList>
+                <div className="d-flex ion-justify-content-center">
+                  <IonButton
+                    fill="clear"
+                    color="medium"
+                    size="small"
+                    routerLink="/app/info">
+                    Discover more
                   <IonIcon slot="end" icon={arrowForwardSharp} />
-                </IonButton>
-              </div>
-            </>
-          )}
+                  </IonButton>
+                </div>
+              </>
+            )}
       </div>
     </>
   );
@@ -166,13 +164,16 @@ function PublicThreads() {
   const [threads, setThreads] = useState<any[] | null>(null);
   const { currentUser } = useAppContext() as any;
   const { onError } = useToastManager();
+  const { isMounted, setMounted } = useMounted();
 
   useEffect(() => {
     getPublicThreads(currentUser.token).then(({ data }) => {
-      setThreads(data);
+      isMounted && setThreads(data);
     }).catch(err => {
       onError(err.message);
     });
+
+    return () => setMounted(false);
   }, []);
 
   const toThread = (thread: any) => () => {
@@ -187,6 +188,10 @@ function PublicThreads() {
       <div>
         {!threads ? (
           <LoadingFallback />
+        ) : !threads.length ? (
+          <IonText className="ion-text-center">
+            <p className="ion-no-margin">Nothing here yet</p>
+          </IonText>
         ) : threads?.map(thread => (
           <IonChip
             onClick={toThread(thread)}
@@ -198,5 +203,37 @@ function PublicThreads() {
         ))}
       </div>
     </>
+  );
+}
+
+function ProfessionalCard({ professional }: {
+  professional: any,
+}) {
+  return (
+    <div className="ion-align-self-center ion-align-items-center">
+      <IonCard routerLink={`/app/profile/${professional._id}`}>
+        <IonCardContent>
+          <div className="d-flex ion-justify-content-center ion-align-items-center">
+            <div>
+              <IonAvatar>
+                <img src={defaultAvatar} alt={professional.fullName} />
+              </IonAvatar>
+              <IonText className="ion-text-center">
+                <h4 className="ion-text-capitalize">{professional.fullName}</h4>
+                <p className="ion-no-margin">
+                  <small>
+                    <strong>
+                      {professional.rating ? (
+                        <Rating rating={professional.rating} />
+                      ) : "No rating"}
+                    </strong>
+                  </small>
+                </p>
+              </IonText>
+            </div>
+          </div>
+        </IonCardContent>
+      </IonCard>
+    </div>
   );
 }

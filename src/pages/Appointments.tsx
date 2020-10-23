@@ -33,17 +33,28 @@ export default function Appointments() {
 
     if (isClosed) {
       const isUnbilled = !appointment.hasBeenBilled;
-      if (isUnbilled) {
-        return history.push("/app/checkout/" + appointment._id, {
+      if (isUnbilled && (appointment.patient._id === currentUser._id)) {
+        return history.push("/app/appointments/checkout/" + appointment._id, {
           duration: appointment.minutesBilled,
         });
       }
 
-      return;
-    } else {
-      history.push("/app/meet", {
+      return history.push("/app/appointments/review", {
         ...appointment,
       });
+    } else {
+      if (appointment.type === APPOINTMENT.TYPES.VIRTUAL_CONSULTATION) {
+        history.push("/app/appointments/virtual", {
+          ...appointment,
+        });
+      } else if (appointment.type === APPOINTMENT.TYPES.ONSITE_CONSULTATION) {
+        history.push("/app/appointments/on-site", {
+          ...appointment,
+        });
+        // TODO: handle onsite tests
+      } else {
+        return;
+      }
     }
   }
 

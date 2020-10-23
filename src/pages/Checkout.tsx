@@ -171,7 +171,7 @@ const Checkout: React.FC = () => {
                           fill="clear"
                           color="medium"
                           size="small"
-                          routerLink="/app/feed">
+                          routerLink="/app/appointments">
                           <IonIcon slot="start" icon={arrowBackSharp} />
                         Later
                     </IonButton>

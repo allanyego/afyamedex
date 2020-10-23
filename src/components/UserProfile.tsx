@@ -1,12 +1,12 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 
 import { useAppContext } from "../lib/context-lib";
-import { IonCol, IonRow, IonText, IonButton, IonIcon, IonGrid, IonPage, IonHeader, IonToolbar, IonButtons, IonBackButton, IonTitle, IonContent, IonModal } from "@ionic/react";
+import { IonCol, IonRow, IonText, IonButton, IonIcon, IonGrid, IonPage, IonHeader, IonToolbar, IonButtons, IonBackButton, IonTitle, IonContent, IonModal, IonSpinner } from "@ionic/react";
 import { USER } from "../http/constants";
 import Rating from "./Rating";
 import defaultAvatar from "../assets/img/default_avatar.jpg";
 import ContactCard from "./ContactCard";
-import { chatbubbleEllipses, calendar, heartOutline, pencilSharp } from "ionicons/icons";
+import { chatbubbleEllipses, calendar, heartOutline, pencilSharp, heart } from "ionicons/icons";
 import { useHistory } from "react-router";
 import "./UserDetails.css";
 import Education from "./profile-parts/Education";
@@ -17,6 +17,13 @@ import Names from "./profile-parts/Names";
 import LoadingFallback from "./LoadingFallback";
 import EditProfileModal from "./profile-parts/EditProfileModal";
 import ErrorFallback from "./ErrorFallback";
+import Conditions from "./profile-parts/Conditions";
+import useToastManager from "../lib/toast-hook";
+import useMounted from "../lib/mounted-hook";
+import { checkIfFavorited, favorite } from "../http/favorites";
+import { getUserRating } from "../http/reviews";
+import Centered from "./Centered";
+import RatingInfo from "./RatingInfo";
 
 export interface ProfileData {
   _id?: string,
@@ -43,7 +50,7 @@ export interface ProfileData {
 
 export default function UserProfile({ user, loadError = false }: {
   user: ProfileData | null,
-  loadError?: boolean
+  loadError?: boolean,
 }) {
   const [isModalOpen, setModalOpen] = useState(false);
   const { currentUser } = useAppContext() as any;
@@ -136,12 +143,7 @@ function UserDetails({ user }: { user: ProfileData }) {
                     </IonButton>
                   </IonCol>
                   <IonCol size="2" className="d-flex ion-justify-content-center ion-align-items-center">
-                    <IonIcon
-                      color="danger"
-                      icon={heartOutline} style={{
-                        fontSize: "1.5em"
-                      }}
-                    />
+                    <FavButton userId={user._id as string} />
                   </IonCol>
                 </IonRow>
               )}
@@ -157,27 +159,80 @@ function UserDetails({ user }: { user: ProfileData }) {
                   <p className="ion-no-margin">
                     <Experience user={user} currentUserId={currentUser._id} />
                   </p>
-                  <p className="ion-no-margin">
-                    {user.rating ? (
-                      <Rating rating={user.rating} />
-                    ) : (
-                        <IonText>No ratings</IonText>
-                      )}
-                  </p>
+                  <RatingInfo userId={user._id as string} />
                 </>
               )}
             </IonText>
             <Bio user={user} currentUserId={currentUser._id} />
-            {user.accountType === USER.ACCOUNT_TYPES.PATIENT && (
-              <div>
-                <ContactCard phone={user.phone} email={user.email} />
-              </div>
-            )}
-            <Speciality user={user} currentUserId={currentUser._id} />
-            <Education user={user} currentUserId={currentUser._id} />
+            {user.accountType === USER.ACCOUNT_TYPES.PATIENT ? (
+              <Conditions user={user} currentUserId={currentUser._id} />
+            ) : (
+                <>
+                  <div>
+                    <ContactCard phone={user.phone} email={user.email} />
+                  </div>
+                  <Speciality user={user} currentUserId={currentUser._id} />
+                  <Education user={user} currentUserId={currentUser._id} />
+                </>
+              )}
           </IonCol>
         </IonRow>
       </IonGrid>
     </>
   );
+}
+
+function FavButton({ userId }: {
+  userId: string,
+}) {
+  const [isFetching, setFetching] = useState(true);
+  const [isFavorite, setFavorite] = useState(false);
+  const { currentUser } = useAppContext() as any;
+  const { onError, onSuccess } = useToastManager();
+  const { isMounted, setMounted } = useMounted();
+
+  useEffect(() => {
+    checkIfFavorited(userId, currentUser.token).then(({ data }) => {
+      if (!isMounted) {
+        return;
+      }
+      setFetching(false);
+      if (data) {
+        setFavorite(true);
+      } else {
+        setFavorite(false);
+      }
+    }).catch(error => onError(error.message));
+
+    return () => {
+      setMounted(false);
+    }
+  }, []);
+
+  const handleToggle = async () => {
+    setFetching(true);
+    try {
+      await favorite(userId, currentUser.token);
+      if (isMounted) {
+        setFavorite(!isFavorite);
+      }
+      onSuccess(`Successfully ${isFavorite ? 'unfavorited' : 'favorited'} user`);
+    } catch (error) {
+      onError(error.message);
+    } finally {
+      isMounted && setFetching(false);
+    }
+  };
+
+  return isFetching ? (
+    <IonSpinner name="lines-small" />
+  ) : (
+      <IonIcon
+        color="danger"
+        onClick={handleToggle}
+        icon={isFavorite ? heart : heartOutline} style={{
+          fontSize: "1.5em"
+        }}
+      />
+    );
 }

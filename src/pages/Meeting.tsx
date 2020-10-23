@@ -1,7 +1,7 @@
-import React, { useState, useRef, useEffect, PropsWithChildren } from 'react';
-import { IonButton, IonContent, IonPage, IonRow, IonCol, IonText, IonList, IonCardContent, IonAvatar, IonCard, useIonViewWillEnter, IonIcon, IonChip, useIonViewDidEnter, useIonViewDidLeave, IonAlert, IonBadge, IonGrid, IonPopover, IonToggle, IonLabel, IonItem, IonSpinner } from '@ionic/react';
+import React, { useState, useRef, useEffect } from 'react';
+import { IonButton, IonContent, IonPage, IonRow, IonCol, IonList, IonIcon, useIonViewDidLeave, IonAlert, IonBadge, IonGrid, IonPopover, IonToggle, IonLabel, IonItem, IonSpinner } from '@ionic/react';
 import { useHistory, useLocation } from 'react-router';
-import { micSharp, cogSharp, arrowBackSharp, settingsSharp, micOffSharp } from 'ionicons/icons';
+import { micSharp, arrowBackSharp, settingsSharp, micOffSharp } from 'ionicons/icons';
 import Peer from "peerjs";
 
 import { useAppContext } from '../lib/context-lib';
@@ -19,11 +19,11 @@ const Meeting: React.FC = () => {
   const [hasMeetingEnded, setMeetingEnded] = useState(false);
   const [duration, setDuration] = useState(0);
   let [isUpdating, setUpdating] = useState(false);
-  const { state: selectedAppointment } = useLocation<any>();
   const [audioOn, setAudioOn] = useState(true);
   const [videoOn, setVideoOn] = useState(true);
   const [popoverOpen, setPopoverOpen] = useState(false);
   const [popoverEvent, setPopoverEvent] = useState<any>(null);
+  const { state: selectedAppointment } = useLocation<any>();
   const history = useHistory();
   const { currentUser } = useAppContext() as any;
 
@@ -59,7 +59,6 @@ const Meeting: React.FC = () => {
   });
 
   if (!selectedAppointment || !selectedAppointment.professional) {
-    // history.replace("/app/appointments");
     return null;
   }
 
@@ -70,7 +69,7 @@ const Meeting: React.FC = () => {
           <div className="h100 d-flex ion-justify-content-center ion-align-items-center">
             <div>
               <div>
-                {!hasMeetingEnded && (
+                {(hasMeetingEnded || !hasMeetingStarted) && (
                   <IonButton
                     fill="clear"
                     color="medium"
@@ -98,7 +97,7 @@ const Meeting: React.FC = () => {
                   </>
                 ) : selectedAppointment.patient._id === currentUser._id ? (
                   <>
-                    <p>Your session lasted <strong>{duration}mins</strong>. Proceed to payment...</p>
+                    <p>Your session lasted <strong>{duration}mins (billed: 10min)</strong>. Proceed to payment...</p>
                     <div className="h100 d-flex ion-justify-content-center ion-align-items-center">
                       <IonButton color="secondary" onClick={toCheckout} disabled={isUpdating}>
                         {isUpdating ? (
@@ -110,16 +109,6 @@ const Meeting: React.FC = () => {
                 ) : (
                       <>
                         <p>Your session lasted <strong>{duration}mins.</strong></p>
-                        <div className="h100 d-flex ion-justify-content-center ion-align-items-center">
-                          <IonButton
-                            fill="clear"
-                            color="medium"
-                            size="small"
-                            routerLink="/app/appointments">
-                            Appointments
-                  <IonIcon slot="start" icon={arrowBackSharp} />
-                          </IonButton>
-                        </div>
                       </>
                     )}
               </div>
@@ -175,7 +164,7 @@ function addVideoStream(video: HTMLVideoElement, stream: MediaStream) {
   video.srcObject = stream;
 }
 
-function extractForDisplay(current: any, other: any) {
+export function extractForDisplay(current: any, other: any) {
   if (current._id === other.patient._id) {
     return other.professional;
   }
@@ -198,9 +187,6 @@ function MeetingScreen({ selectedAppointment, setDuration, duration, stopMeeting
   const [isAudioEnabled, setAudioEnabled] = useState(true);
   const [peerAudioOn, setPeerAudioOn] = useState(true);
   const [peerVideoOn, setPeerVideoOn] = useState(true);
-  const [peerVideoTrack, setPeerVideoTrack] = useState<MediaStreamTrack | null>(null);
-  const [peerAudioTrack, setPeerAudioTrack] = useState<MediaStreamTrack | null>(null);
-  const [peerStream, setPeerStream] = useState<MediaStream | null>(null);
   const [isAlertOpen, setAlertOpen] = useState(false);
   const { socket, currentUser } = useAppContext() as any;
   const { isMounted, setMounted } = useMounted();
@@ -212,14 +198,29 @@ function MeetingScreen({ selectedAppointment, setDuration, duration, stopMeeting
   } = {};
 
   const setupPeerStream = (s: MediaStream) => {
-    console.log("Got stream", s.getTracks());
-    s.getTracks().forEach(track => {
-      if (track.kind === "audio") {
-        setPeerAudioTrack(track);
-      } else {
-        setPeerVideoTrack(track);
+    socket.on("video-off", ({ userId }: any) => {
+      if (peers[userId]) {
+        setPeerVideoOn(false);
       }
-    })
+    });
+
+    socket.on("video-on", ({ userId }: any) => {
+      if (peers[userId]) {
+        setPeerVideoOn(true);
+      }
+    });
+
+    socket.on("audio-off", ({ userId }: any) => {
+      if (peers[userId]) {
+        setPeerAudioOn(false);
+      }
+    });
+
+    socket.on("audio-on", ({ userId }: any) => {
+      if (peers[userId]) {
+        setPeerAudioOn(true);
+      }
+    });
   }
 
   // Start session timer
@@ -240,21 +241,13 @@ function MeetingScreen({ selectedAppointment, setDuration, duration, stopMeeting
   const closeAlert = () => isMounted && setAlertOpen(false);
   // Toggle video and audio tracks
   const toggleAudio = () => {
-    const audios = stream?.getAudioTracks();
-    if (!audios?.length) {
-      return;
-    }
-    audios[0].enabled = isAudioEnabled ? false : true;
     isMounted && setAudioEnabled(!isAudioEnabled);
+    socket.emit(isAudioEnabled ? "audio-off" : "audio-on");
   };
 
   const toggleVideo = () => {
-    const videos = stream?.getVideoTracks();
-    if (!videos?.length) {
-      return;
-    }
-    videos[0].enabled = isVideoEnabled ? false : true;
     isMounted && setVideoEnabled(!isVideoEnabled);
+    socket.emit(isVideoEnabled ? "video-off" : "video-on");
   };
   // Receive stream from peer
   const receiveStream = (stream: MediaStream) => {
@@ -269,7 +262,6 @@ function MeetingScreen({ selectedAppointment, setDuration, duration, stopMeeting
 
     call.on("close", () => {
       endMeeting();
-      console.log("closing stream");
     });
 
     peers[userId] = call;
@@ -293,7 +285,6 @@ function MeetingScreen({ selectedAppointment, setDuration, duration, stopMeeting
     if (isMounted) {
       stopTimer();
       setPeerJoined(false);
-      setPeerStream(null);
     }
 
     try {
@@ -326,27 +317,24 @@ function MeetingScreen({ selectedAppointment, setDuration, duration, stopMeeting
   useEffect(() => {
     myPeer = new Peer();
     myPeer.on("open", (peerId) => {
-      console.log("Connected peer", peerId);
       window.navigator.mediaDevices.getUserMedia({
         video: true,
         audio: true,
       }).then(stream => {
         addVideoStream(myVideoFeed.current as any, stream);
         setStream(stream);
-        console.log("joining", stream, selectedAppointment);
+
         socket.emit("join", {
           room: selectedAppointment._id,
           peer: peerId,
         });
 
         myPeer.on("call", (call) => {
-          console.log("someone called us", call.peer);
           call.answer(stream);
           !interval && startTimer();
           call.on("stream", receiveStream);
           call.on("close", () => {
             endMeeting();
-            console.log("caller closed");
           });
           const peerUId = extractForDisplay(currentUser, selectedAppointment)._id;
           peers[peerUId] = call;
@@ -399,12 +387,25 @@ function MeetingScreen({ selectedAppointment, setDuration, duration, stopMeeting
 
         {peerHasJoined && (
           <div>
+            {!peerVideoOn && (
+              <VideoPlaceholder username={extractForDisplay(currentUser, selectedAppointment).fullName} />
+            )}
             <video ref={otherVideoFeed} onLoadedMetadata={onLoadedMetadata}></video>
-            <Controls disabled={true} user={extractForDisplay(currentUser, selectedAppointment)} />
+            <Controls
+              disabled={true}
+              user={extractForDisplay(currentUser, selectedAppointment)}
+              video={false}
+              isAudioEnabled={peerAudioOn}
+              isVideoEnabled={peerVideoOn}
+            />
           </div>
         )
         }
+
         <div>
+          {!isVideoEnabled && (
+            <VideoPlaceholder username={currentUser.fullName} />
+          )}
           <video ref={myVideoFeed} playsInline onLoadedMetadata={onLoadedMetadata} muted></video>
           <Controls
             user={currentUser}
@@ -437,6 +438,7 @@ interface ControlProps {
   user: ProfileData,
   toggleVideo?: ((arg?: any) => any) | null,
   toggleAudio?: ((arg?: any) => any) | null,
+  video?: boolean,
 }
 
 function Controls({
@@ -446,29 +448,32 @@ function Controls({
   toggleAudio = null,
   toggleVideo = null,
   user,
+  video = true,
 }: ControlProps) {
   return (
     <IonGrid className="ion-no-padding controls">
-      <IonRow className="ion-align-items-stretch">
+      <IonRow className="ion-align-items-stretch ion-justify-content-between">
         <IonCol size="4">
           <Centered horizontal={false} fullHeight>
             <small className="ion-text-capitalize">{user.fullName}</small>
           </Centered>
         </IonCol>
-        <IonCol size="4">
-          <Centered>
-            <IonButton
-              fill="clear"
-              size="small"
-              disabled={disabled}
-              onClick={toggleVideo as any}
-              color="light"
-            >
-              <IonIcon icon={isVideoEnabled ? videocamSharp : videocamOffSharp} slot="icon-only"
-              />
-            </IonButton>
-          </Centered>
-        </IonCol>
+        {video && (
+          <IonCol size="4">
+            <Centered>
+              <IonButton
+                fill="clear"
+                size="small"
+                disabled={disabled}
+                onClick={toggleVideo as any}
+                color="light"
+              >
+                <IonIcon icon={isVideoEnabled ? videocamSharp : videocamOffSharp} slot="icon-only"
+                />
+              </IonButton>
+            </Centered>
+          </IonCol>
+        )}
         <IonCol size="4">
           <Centered>
             <IonButton
@@ -485,5 +490,15 @@ function Controls({
         </IonCol>
       </IonRow>
     </IonGrid>
+  );
+}
+
+function VideoPlaceholder({ username }: {
+  username: string
+}) {
+  return (
+    <div className="video-placeholder ion-text-capitalize">
+      {username[0]}
+    </div>
   );
 }

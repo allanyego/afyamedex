@@ -1,27 +1,22 @@
-import React, { useEffect } from "react";
+import React, { Suspense, useEffect } from "react";
 import { useRouteMatch, Route, Redirect } from "react-router";
-import { IonTabs, IonTabBar, IonTabButton, IonIcon, IonLabel, IonRouterOutlet, useIonViewDidEnter, useIonViewDidLeave, useIonViewWillLeave, IonPage } from "@ionic/react";
-import { helpCircleSharp, peopleCircleSharp, chatbubblesSharp, fileTrayFullSharp } from "ionicons/icons";
+import { IonRouterOutlet, useIonViewWillLeave, IonPage } from "@ionic/react";
 import io from "socket.io-client";
 
-import Conditions from "./Conditions";
-import Chat from "./Chat";
-import Listing from "./Listing";
-import Thread from "./Thread";
-import Condition from "./Condition";
-import BookAppointment from "./BookAppointment";
-import NewCondition from "./NewCondition";
-import Appointments from "./Appointments";
-import Meeting from "./Meeting";
 import { useAppContext } from "../lib/context-lib";
-import { USER, ROOT_URL } from "../http/constants";
+import { ROOT_URL } from "../http/constants";
 import Profile from "./Profile";
 import useMounted from "../lib/mounted-hook";
-import Checkout from "./Checkout";
 import Feed from "./Feed";
+import SuspenseFallback from "../components/SuspenseFallback";
+
+const AppointmentsRouter = React.lazy(() => import("./routes/Appointments"));
+const ConditionsRouter = React.lazy(() => import("./routes/Conditions"));
+const ChatsRouter = React.lazy(() => import("./routes/Chats"));
+const ProfessionalsRouter = React.lazy(() => import("./routes/Professionals"));
 
 const Main: React.FC = () => {
-  const { url, path } = useRouteMatch();
+  const { path } = useRouteMatch();
   const { currentUser, socket, setSocket } = useAppContext() as any;
   const { isMounted, setMounted } = useMounted();
 
@@ -55,17 +50,17 @@ const Main: React.FC = () => {
 
   return (
     <IonPage>
-      <IonRouterOutlet>
-        <Route path={`${path}/feed`} component={Feed} exact />
-        <Route path={`${path}/appointments`} component={Appointments} exact />
-        <Route path={`${path}/meet`} component={Meeting} exact />
-        <Route path={`${path}/checkout/:appointmentId`} component={Checkout} exact />
-        <Route path={`${path}/info`} component={ConditionsRouter} />
-        <Route path={`${path}/chat`} component={ChatRouter} />
-        <Route path={`${path}/profile`} component={Profile} />
-        <Route path={`${path}/professionals`} component={ProfessionalsRouter} />
-        <Route render={() => <Redirect to={`${path}/feed`} />} />
-      </IonRouterOutlet>
+      <Suspense fallback={<SuspenseFallback />}>
+        <IonRouterOutlet>
+          <Route path={`${path}/feed`} component={Feed} exact />
+          <Route path={`${path}/appointments`} component={AppointmentsRouter} />
+          <Route path={`${path}/info`} component={ConditionsRouter} />
+          <Route path={`${path}/chat`} component={ChatsRouter} />
+          <Route path={`${path}/profile`} component={Profile} />
+          <Route path={`${path}/professionals`} component={ProfessionalsRouter} />
+          <Route render={() => <Redirect to={`${path}/feed`} />} />
+        </IonRouterOutlet>
+      </Suspense>
     </IonPage>
   );
 
@@ -108,40 +103,3 @@ const Main: React.FC = () => {
 };
 
 export default Main;
-
-function ChatRouter() {
-  const { path } = useRouteMatch();
-  return (
-    <IonPage>
-      <IonRouterOutlet>
-        <Route path={path} component={Chat} exact />
-        <Route path={`${path}/:threadId`} component={Thread} exact />
-      </IonRouterOutlet>
-    </IonPage>
-  );
-}
-
-function ConditionsRouter() {
-  const { path } = useRouteMatch();
-  return (
-    <IonPage>
-      <IonRouterOutlet>
-        <Route path={path} component={Conditions} exact />
-        <Route path={`${path}/new`} component={NewCondition} exact />
-        <Route path={`${path}/:conditionId/details`} component={Condition} exact />
-      </IonRouterOutlet>
-    </IonPage>
-  );
-}
-
-function ProfessionalsRouter() {
-  const { path } = useRouteMatch();
-  return (
-    <IonPage>
-      <IonRouterOutlet>
-        <Route path={path} component={Listing} exact />
-        <Route path={`${path}/:professionalId/book`} component={BookAppointment} exact />
-      </IonRouterOutlet>
-    </IonPage>
-  );
-}
