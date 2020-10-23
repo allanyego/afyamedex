@@ -34,6 +34,7 @@ import { personSharp, peopleSharp, exitSharp, fileTrayFullSharp, chatbubblesShar
 import { ProfileData } from './components/UserDetails';
 import { Detector } from 'react-detect-offline';
 import AppRoutes from './AppRoutes';
+import ErrorBoundary from './components/ErrorBoundary';
 
 const stripePromise = loadStripe("pk_test_lx1Waow5lgsLqWZfGakpklYO00rvf5kGYa");
 
@@ -94,80 +95,82 @@ const App: React.FC = () => {
   };
 
   return (
-    <Elements stripe={stripePromise}>
-      <IonApp>
-        <AppContext.Provider value={{
-          currentUser,
-          setCurrentUser,
-          notifications,
-          setNotifications,
-          socket,
-          setSocket,
-        }}>
-          {currentUser && (
-            <IonMenu side="start" menuId="super-cool-menu" contentId="router-outlet"
-              swipeGesture={false}
-            >
-              <IonHeader>
-                <IonToolbar color="secondary">
-                  <IonTitle className="ion-text-capitalize">{currentUser.fullName}</IonTitle>
-                </IonToolbar>
-              </IonHeader>
-              <IonContent>
-                <IonList lines="full">
-                  <IonItem routerLink="/app/profile">
-                    <IonIcon slot="start" icon={personSharp} />
-                    <IonLabel>Profile</IonLabel>
-                  </IonItem>
-
-                  <IonItem routerLink="/app/feed">
-                    <IonIcon slot="start" icon={homeSharp} />
-                    <IonLabel>Home</IonLabel>
-                  </IonItem>
-
-                  {currentUser.accountType === USER.ACCOUNT_TYPES.PATIENT && (
-                    <IonItem routerLink="/app/professionals">
-                      <IonIcon slot="start" icon={peopleSharp} />
-                      <IonLabel>Browse</IonLabel>
+    <ErrorBoundary>
+      <Elements stripe={stripePromise}>
+        <IonApp>
+          <AppContext.Provider value={{
+            currentUser,
+            setCurrentUser,
+            notifications,
+            setNotifications,
+            socket,
+            setSocket,
+          }}>
+            {currentUser && (
+              <IonMenu side="start" menuId="super-cool-menu" contentId="router-outlet"
+                swipeGesture={false}
+              >
+                <IonHeader>
+                  <IonToolbar color="secondary">
+                    <IonTitle className="ion-text-capitalize">{currentUser.fullName}</IonTitle>
+                  </IonToolbar>
+                </IonHeader>
+                <IonContent>
+                  <IonList lines="full">
+                    <IonItem routerLink="/app/profile">
+                      <IonIcon slot="start" icon={personSharp} />
+                      <IonLabel>Profile</IonLabel>
                     </IonItem>
-                  )}
 
-                  <IonItem routerLink="/app/appointments">
-                    <IonIcon slot="start" icon={fileTrayFullSharp} />
-                    <IonLabel>Appointments</IonLabel>
-                  </IonItem>
+                    <IonItem routerLink="/app/feed">
+                      <IonIcon slot="start" icon={homeSharp} />
+                      <IonLabel>Home</IonLabel>
+                    </IonItem>
 
-                  <IonItem routerLink="/app/chat">
-                    <IonIcon slot="start" icon={chatbubblesSharp} />
-                    <IonLabel>Chat</IonLabel>
-                  </IonItem>
+                    {currentUser.accountType === USER.ACCOUNT_TYPES.PATIENT && (
+                      <IonItem routerLink="/app/professionals">
+                        <IonIcon slot="start" icon={peopleSharp} />
+                        <IonLabel>Browse</IonLabel>
+                      </IonItem>
+                    )}
 
-                  <IonItem onClick={handleLogout}>
-                    <IonIcon color="danger" slot="start" icon={exitSharp} />
-                    <IonLabel color="danger">Logout</IonLabel>
-                  </IonItem>
+                    <IonItem routerLink="/app/appointments">
+                      <IonIcon slot="start" icon={fileTrayFullSharp} />
+                      <IonLabel>Appointments</IonLabel>
+                    </IonItem>
 
-                </IonList>
-              </IonContent>
-            </IonMenu>
-          )}
-          <IonReactRouter>
-            <ToastManager />
-            {isAuthenticating ? (
-              <LoadingFallback />
-            ) : (
-                <AppRoutes />
-              )}
+                    <IonItem routerLink="/app/chat">
+                      <IonIcon slot="start" icon={chatbubblesSharp} />
+                      <IonLabel>Chat</IonLabel>
+                    </IonItem>
 
-            <Detector render={(props) => {
-              return props.online ?
-                null : <div
-                  className="network-detector-status">Seems you're offline</div>
-            }} />
-          </IonReactRouter>
-        </AppContext.Provider>
-      </IonApp>
-    </Elements>
+                    <IonItem onClick={handleLogout}>
+                      <IonIcon color="danger" slot="start" icon={exitSharp} />
+                      <IonLabel color="danger">Logout</IonLabel>
+                    </IonItem>
+
+                  </IonList>
+                </IonContent>
+              </IonMenu>
+            )}
+            <IonReactRouter>
+              <ToastManager />
+              {isAuthenticating ? (
+                <LoadingFallback />
+              ) : (
+                  <AppRoutes />
+                )}
+
+              <Detector render={(props) => {
+                return props.online ?
+                  null : <div
+                    className="network-detector-status">Seems you're offline</div>
+              }} />
+            </IonReactRouter>
+          </AppContext.Provider>
+        </IonApp>
+      </Elements>
+    </ErrorBoundary>
   );
 };
 
