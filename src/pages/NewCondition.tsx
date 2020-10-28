@@ -25,7 +25,7 @@ const NewCondition: React.FC = () => {
       await addCondition(values, currentUser.token);
       setSubmitting(false);
       onSuccess("Condition posted successfully");
-      history.goBack();
+      history.push("/app/info");
     } catch (error) {
       setSubmitting(false);
       onError(error.message);

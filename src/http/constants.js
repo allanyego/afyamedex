@@ -28,3 +28,11 @@ export const USER = {
 };
 
 export const STORAGE_KEY = "afyamedex-storage";
+
+export const ALLOWED_FILE_TYPES = [
+  "application/pdf",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  "application/msword",
+];
+
+export const MAX_ATTACHMENT_SIZE = 5000000;

@@ -16,11 +16,17 @@ export async function post(userId, token, data) {
   });
 }
 
-export async function editAppointment(appointmentId, token, data) {
+export async function editAppointment(
+  appointmentId,
+  token,
+  data,
+  multiPart = false
+) {
   return await request(`${BASE_URL}/${appointmentId}`, {
     method: "PUT",
     headers: constructAuthHeader(token),
     data,
+    multiPart,
   });
 }
 

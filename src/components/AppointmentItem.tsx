@@ -80,7 +80,10 @@ const AppointmentItem: React.FC<PropsWithChildren<Props>> = ({ appointment, onTa
                 _appointment.patient.fullName
               )}
         </h2>
-        <IonText color="medium">{_appointment.subject}</IonText>
+        <IonText color="medium">
+          <strong>Subject:{" "}</strong>
+          {_appointment.subject}
+        </IonText>
         <IonGrid
           className="ion-no-padding datetime-grid"
         >
@@ -93,6 +96,11 @@ const AppointmentItem: React.FC<PropsWithChildren<Props>> = ({ appointment, onTa
             </IonCol>
           </IonRow>
         </IonGrid>
+        {(_appointment.status === APPOINTMENT.STATUSES.CLOSED) && (
+          <IonText color="medium" className="ion-text-uppercase">
+            {_appointment.status}/{_appointment.hasBeenBilled ? `KES.${_appointment.amount}` : "unpaid"}
+          </IonText>
+        )}
       </IonLabel>
     </IonItem>
   );

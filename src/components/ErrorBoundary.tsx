@@ -1,6 +1,5 @@
 import { IonText } from "@ionic/react";
 import React from "react";
-import { boolean } from "yup";
 import ErrorFallback from "./ErrorFallback";
 
 class ErrorBoundary extends React.Component<any, { hasError: boolean }> {
@@ -27,7 +26,7 @@ class ErrorBoundary extends React.Component<any, { hasError: boolean }> {
           color: "var(--ion-color-danger)"
         }}>
           <p>
-            <strong>Something went wrong. I recommed you restart the app.</strong>
+            <strong>Something went wrong. Try restarting the app.</strong>
           </p>
         </IonText>
       </ErrorFallback>

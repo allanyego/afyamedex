@@ -1,5 +1,5 @@
 import { IonAlert, IonButton, IonContent, IonIcon, IonPage, IonText, useIonViewWillLeave } from "@ionic/react";
-import { arrowBackSharp, arrowForwardSharp, playSharp, stopSharp } from "ionicons/icons";
+import { arrowBackSharp, arrowForwardSharp, checkmarkCircleSharp, playSharp, starSharp, stopSharp } from "ionicons/icons";
 import React, { useState } from "react";
 import { useHistory, useLocation } from "react-router";
 import Centered from "../components/Centered";
@@ -66,9 +66,11 @@ const OnSite: React.FC = () => {
     setMounted(false);
   });
 
-  if (!selectedAppointment) {
+  if (!selectedAppointment || !selectedAppointment._id) {
     return null;
   }
+
+  console.log("page mounted successfully");
 
   return (
     <IonPage>
@@ -94,16 +96,20 @@ const OnSite: React.FC = () => {
         />
         <Centered fullHeight>
           <div>
-            {(hasMeetingEnded || !hasMeetingStarted) && (
-              <IonButton
-                fill="clear"
-                color="medium"
-                size="small"
-                routerLink="/app/appointments">
-                Back
-                <IonIcon slot="start" icon={arrowBackSharp} />
-              </IonButton>
-            )}
+            <div className="d-flex ion-align-items-center ion-justify-content-between">
+              {(hasMeetingEnded || !hasMeetingStarted) && (
+                <IonButton
+                  fill="clear"
+                  color="medium"
+                  size="small"
+                  routerLink="/app/appointments">
+                  Back
+                  <IonIcon slot="start" icon={arrowBackSharp} />
+                </IonButton>
+              )}
+
+              <ToReviewButton appointment={selectedAppointment} />
+            </div>
             <h3>Meeting with <strong className="ion-text-capitalize">
               {extractForDisplay(currentUser, selectedAppointment).fullName}
             </strong>
@@ -203,12 +209,22 @@ function ViewInner({ appointment }: ViewProps) {
 
   return (appointment.patient._id === currentUser._id) ? (
     <>
-      <p>Your session lasted <strong>{appointment.minutesBilled}mins (billed: 10min)</strong>. Proceed to payment...</p>
+      <p>Your session lasted <strong>
+        {appointment.minutesBilled}mins {appointment.minutesBilled < 10 && "(billed: 10min)"}
+      </strong>. {!appointment.hasBeenBilled && "Proceed to payment..."}
+      </p>
       <div className="h100 d-flex ion-justify-content-center ion-align-items-center">
-        <IonButton color="secondary" onClick={toCheckout}>
-          Pay
-            <IonIcon slot="end" icon={arrowForwardSharp} />
-        </IonButton>
+        {appointment.hasBeenBilled ? (
+          <IonButton color="success" fill="clear" size="small" disabled>
+            Billed
+            <IonIcon slot="end" icon={checkmarkCircleSharp} />
+          </IonButton>
+        ) : (
+            <IonButton color="secondary" onClick={toCheckout}>
+              Pay
+              <IonIcon slot="end" icon={arrowForwardSharp} />
+            </IonButton>
+          )}
       </div>
     </>
   ) : (
@@ -216,4 +232,24 @@ function ViewInner({ appointment }: ViewProps) {
         <p>Your session lasted <strong>{appointment.minutesBilled}mins.</strong></p>
       </>
     );
+}
+
+export function ToReviewButton({ appointment }: ViewProps) {
+  const history = useHistory();
+  const toReview = () => history.push("/app/appointments/review", {
+    ...appointment
+  });
+
+  return (appointment.status === APPOINTMENT.STATUSES.CLOSED &&
+    appointment.hasBeenBilled) ? (
+      <IonButton
+        fill="clear"
+        color="warning"
+        size="small"
+        onClick={toReview}
+      >
+        Review
+        <IonIcon slot="start" icon={starSharp} />
+      </IonButton>
+    ) : null;
 }

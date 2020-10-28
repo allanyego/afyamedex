@@ -34,9 +34,10 @@ const Review: React.FC = () => {
     }
   };
 
-  if (!appointment) {
+  if (!appointment || !appointment._id) {
     return null;
   }
+
   return (
     <IonPage>
       <IonContent fullscreen>
@@ -64,7 +65,7 @@ export default Review;
 
 const reviewSchema = Yup.object({
   rating: Yup.number().min(1, "Too low").max(5, "Too much").required("Enter rating out of 5"),
-  feedback: Yup.string().min(20, "Too short"),
+  feedback: Yup.string().min(15, "Too short"),
 });
 
 const initialReviewValues = {
@@ -76,6 +77,8 @@ function ReviewForm({ onSubmit, appointment }: {
   onSubmit: (...args: any[]) => any,
   appointment: any,
 }) {
+  const history = useHistory();
+
   return (
     <Formik
       validationSchema={reviewSchema}
@@ -95,9 +98,10 @@ function ReviewForm({ onSubmit, appointment }: {
               fill="clear"
               color="medium"
               size="small"
-              routerLink="/app/appointments">
-              Back
-                <IonIcon slot="start" icon={arrowBackSharp} />
+              onClick={history.goBack}
+            >
+              back
+          <IonIcon slot="start" icon={arrowBackSharp} />
             </IonButton>
 
             <IonText className="ion-text-center">
@@ -166,14 +170,7 @@ function ReviewView({ appointmentId }: {
           <Rating rating={review.rating} />
         </div>
         <p>{review.feedback || "No feedback."}</p>
-        <IonButton
-          fill="clear"
-          color="medium"
-          size="small"
-          routerLink="/app/appointments">
-          Back
-            <IonIcon slot="start" icon={arrowBackSharp} />
-        </IonButton>
+        <BackButton />
 
       </>
     );
@@ -183,16 +180,25 @@ function NoRewiewView() {
   return (
     <>
       <p>This session has no reviews yet.</p>
-      <Centered>
-        <IonButton
-          fill="clear"
-          color="medium"
-          size="small"
-          routerLink="/app/appointments">
-          back
-          <IonIcon slot="start" icon={arrowBackSharp} />
-        </IonButton>
-      </Centered>
+      <BackButton />
     </>
+  );
+}
+
+function BackButton() {
+  const history = useHistory();
+
+  return (
+    <Centered>
+      <IonButton
+        fill="clear"
+        color="medium"
+        size="small"
+        onClick={history.goBack}
+      >
+        back
+          <IonIcon slot="start" icon={arrowBackSharp} />
+      </IonButton>
+    </Centered>
   );
 }

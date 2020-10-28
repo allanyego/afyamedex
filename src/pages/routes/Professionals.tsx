@@ -12,8 +12,8 @@ const Professionals = () => {
     <IonPage>
       <Suspense fallback={<SuspenseFallback />}>
         <IonRouterOutlet>
-          <Route path={path} component={Listing} exact />
           <Route path={`${path}/:professionalId/book`} component={BookAppointment} exact />
+          <Route path={path} component={Listing} exact />
         </IonRouterOutlet>
       </Suspense>
     </IonPage>

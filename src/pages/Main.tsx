@@ -58,7 +58,7 @@ const Main: React.FC = () => {
           <Route path={`${path}/chat`} component={ChatsRouter} />
           <Route path={`${path}/profile`} component={Profile} />
           <Route path={`${path}/professionals`} component={ProfessionalsRouter} />
-          <Route render={() => <Redirect to={`${path}/feed`} />} />
+          <Route render={() => <Redirect to={`/app/feed`} />} />
         </IonRouterOutlet>
       </Suspense>
     </IonPage>

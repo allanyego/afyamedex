@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { IonPage, IonContent, IonText, IonIcon, IonButton, IonSpinner } from '@ionic/react';
 import { businessOutline, personOutline, person } from 'ionicons/icons';
 import { useAppContext } from '../lib/context-lib';
@@ -6,6 +6,7 @@ import { useHistory } from 'react-router';
 import { editUser } from '../http/users';
 import { USER } from '../http/constants';
 import useToastManager from '../lib/toast-hook';
+import useMounted from '../lib/mounted-hook';
 
 const accountTypes = [
   {
@@ -57,32 +58,40 @@ function AccountTypeCard({ accountType, icon, userId, settingUp, setSettingUp }:
   const { currentUser, setCurrentUser } = useAppContext() as any;
   const history = useHistory();
   const { onError, onSuccess } = useToastManager();
+  const { isMounted, setMounted } = useMounted();
 
   const setAccountType = async (e: MouseEvent) => {
     if (settingUp) {
       return;
     }
 
+    setLoading(true);
     setSettingUp(true);
     try {
-      await editUser(userId, currentUser.token, {
+      const { data } = await editUser(userId, currentUser.token, {
         accountType,
       });
 
       setCurrentUser({
         ...currentUser,
-        accountType
+        accountType,
+        token: data.token, // Replace old token with old details
       });
 
-      setLoading(false);
       onSuccess("Account type set");
-      history.push("/app/profile");
+      history.push("/app");
     } catch (error) {
-      setLoading(false);
-      setSettingUp(false);
       onError(error.message);
+    } finally {
+      if (isMounted) {
+        setLoading(false);
+        setSettingUp(false);
+      }
     }
   };
+
+  useEffect(() => () => setMounted(false));
+
   return (
     <IonButton size="large" color="secondary"
       expand="block"

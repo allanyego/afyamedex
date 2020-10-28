@@ -13,8 +13,8 @@ const Chats = () => {
     <IonPage>
       <Suspense fallback={<SuspenseFallback />}>
         <IonRouterOutlet>
-          <Route path={path} component={Chat} exact />
           <Route path={`${path}/:threadId`} component={Thread} exact />
+          <Route path={path} component={Chat} exact />
         </IonRouterOutlet>
       </Suspense>
     </IonPage>

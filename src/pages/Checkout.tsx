@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { IonPage, IonIcon, IonContent, IonText, IonButton, useIonViewDidEnter, useIonViewWillLeave, IonSpinner } from "@ionic/react";
 import { useParams, useLocation, useHistory } from "react-router";
 import { useStripe, useElements, CardElement } from "@stripe/react-stripe-js";
-import { arrowBackSharp, cardSharp } from 'ionicons/icons';
+import { arrowBackSharp } from 'ionicons/icons';
 
 import CardSection from "../components/CardSection";
 import { checkout, editAppointment } from "../http/appointments";
@@ -24,7 +24,9 @@ const Checkout: React.FC = () => {
   const [isSubmitting, setSubmitting] = useState(false);
   const stripe = useStripe();
   const elements = useElements();
-  const { appointmentId } = useParams();
+  const { appointmentId } = useParams<{
+    appointmentId: string,
+  }>();
   const { state } = useLocation<{ duration: number }>();
   const history = useHistory();
   const { currentUser } = useAppContext() as any;
@@ -32,10 +34,6 @@ const Checkout: React.FC = () => {
   const { isMounted, setMounted } = useMounted();
 
   useIonViewDidEnter(async () => {
-    if (!state || state.duration == undefined) {
-      return;
-    }
-
     try {
       const resp = await checkout(appointmentId, currentUser.token);
 
@@ -91,7 +89,8 @@ const Checkout: React.FC = () => {
             await editAppointment(appointmentId, currentUser.token, {
               hasBeenBilled: true,
               paymentId: result.paymentIntent!.id,
-            })
+              amount: result.paymentIntent!.amount,
+            });
           } catch (error) {
             onError("There was an error uploading payment details");
           };
@@ -104,13 +103,17 @@ const Checkout: React.FC = () => {
     }
   };
 
+  if (!state || state.duration == undefined) {
+    return null;
+  }
+
   return (
     <IonPage>
       <IonContent fullscreen>
         {(!data && !loadError) ? (
           <LoadingFallback />
         ) : loadError ? (
-          <ErrorFallback>
+          <ErrorFallback fullHeight>
             <IonText className="ion-text-center">
               <h5 className="ion-margin-horizontal">Something didn't go right. Try again later.</h5>
               <div className="d-flex ion-justify-content-center">
@@ -131,14 +134,14 @@ const Checkout: React.FC = () => {
                   <div>
                     <p className="ion-text-center">
                       Your payment was proccessed <strong>successfully</strong>.<br />
-                      Amount: <strong>KES{data!.amount}</strong>
+                      Amount: <strong>KES.{data!.amount}</strong>
                     </p>
                     <div className="h100 d-flex ion-justify-content-center ion-align-items-center">
                       <IonButton
                         fill="clear"
                         color="medium"
-                        routerLink="/app/feed">
-                        home
+                        routerLink="/app/appointments">
+                        back
                           <IonIcon icon={arrowBackSharp} slot="end" />
                       </IonButton>
                     </div>

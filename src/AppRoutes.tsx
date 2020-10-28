@@ -24,7 +24,7 @@ const AppRoutes: React.FC = () => {
   const hardwareBackBtnHandler = (ev: BackButtonEvent) => {
     ev.detail.register(5, () => {
       const path = window.location.pathname;
-      const isFirstPage = path === "/" || path === "/app/feed";
+      const isFirstPage = path === "/home" || path === "/app/feed";
       if (window.history.length === 1 || isFirstPage) {
         isMounted && setAlertOpen(true);
       } else {

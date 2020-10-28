@@ -14,9 +14,9 @@ const Conditions = () => {
     <IonPage>
       <Suspense fallback={<SuspenseFallback />}>
         <IonRouterOutlet>
-          <Route path={path} component={_Conditions} exact />
-          <Route path={`${path}/new`} component={NewCondition} exact />
           <Route path={`${path}/:conditionId/details`} component={Condition} exact />
+          <Route path={`${path}/new`} component={NewCondition} exact />
+          <Route path={path} component={_Conditions} exact />
         </IonRouterOutlet>
       </Suspense>
     </IonPage>

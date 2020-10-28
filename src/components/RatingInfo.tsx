@@ -37,7 +37,7 @@ const RatingInfo: React.FC<{
 
   return isFetching ? (
     <Centered>
-      <IonSpinner name="lines-small" />
+      <IonSpinner name="dots" />
     </Centered>
   ) : (
       <p className="ion-no-margin">

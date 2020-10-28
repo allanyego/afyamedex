@@ -1,16 +1,28 @@
 import { SERVER_URL } from "./constants";
 
-export default async function (url, { method = "GET", data, headers = {} }) {
+export default async function (
+  url,
+  { method = "GET", data, headers = {}, multiPart = false }
+) {
   const opts = {
     method,
     headers: {
-      "Content-Type": "application/json",
       ...headers,
     },
   };
 
   if (data) {
-    opts.body = JSON.stringify(data);
+    if (!multiPart) {
+      opts.headers["Content-Type"] = "application/json";
+      opts.body = JSON.stringify(data);
+    } else {
+      const formData = new FormData();
+      for (let key of Object.keys(data)) {
+        formData.append(key, data[key]);
+      }
+
+      opts.body = formData;
+    }
   }
 
   const resp = await fetch(SERVER_URL + url, opts);

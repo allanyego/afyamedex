@@ -44,7 +44,6 @@ export default function Conditions() {
   const onToggle = () => setShowSearchBar(!showSearchBar);
   const closeSearchBar = async () => {
     setShowSearchBar(false);
-    console.log("Fetching");
     await fetchConditions();
   };
 
@@ -116,7 +115,7 @@ function Buttons({ showSearchBar, onClick }: any) {
         <IonIcon slot="icon-only" icon={showSearchBar ? close : search} />
       </IonButton>
       {(currentUser.accountType !== USER.ACCOUNT_TYPES.PATIENT) && (
-        <IonButton color="success" routerLink={`${url}/new`}>
+        <IonButton color="success" routerLink={`/app/info/new`}>
           <IonIcon slot="icon-only" icon={add} />
         </IonButton>
       )}

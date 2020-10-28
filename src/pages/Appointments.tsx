@@ -31,16 +31,11 @@ export default function Appointments() {
       return;
     }
 
-    if (isClosed) {
-      const isUnbilled = !appointment.hasBeenBilled;
-      if (isUnbilled && (appointment.patient._id === currentUser._id)) {
-        return history.push("/app/appointments/checkout/" + appointment._id, {
-          duration: appointment.minutesBilled,
-        });
-      }
-
-      return history.push("/app/appointments/review", {
-        ...appointment,
+    const isUnbilled = !appointment.hasBeenBilled;
+    const isCurrentUserPatient = (appointment.patient._id === currentUser._id);
+    if (isClosed && isUnbilled && isCurrentUserPatient) {
+      history.push("/app/appointments/checkout/" + appointment._id, {
+        duration: appointment.minutesBilled,
       });
     } else {
       if (appointment.type === APPOINTMENT.TYPES.VIRTUAL_CONSULTATION) {
@@ -51,9 +46,10 @@ export default function Appointments() {
         history.push("/app/appointments/on-site", {
           ...appointment,
         });
-        // TODO: handle onsite tests
       } else {
-        return;
+        history.push("/app/appointments/tests", {
+          ...appointment,
+        });
       }
     }
   }

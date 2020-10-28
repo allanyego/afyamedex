@@ -28,7 +28,7 @@ function CardSection({ amount }: { amount: number }) {
         <IonText className="ion-text-center">
           <p>
             Enter card details to complete payment of:<br />
-            <strong>KES{amount}</strong>
+            <strong>KES.{amount}</strong>
           </p>
         </IonText>
         <CardElement options={CARD_ELEMENT_OPTIONS} />

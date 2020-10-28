@@ -5,12 +5,13 @@ import Centered from "./Centered";
 const LoadingFallback: React.FC<{
   fullLength?: boolean
   color?: string,
-}> = ({ fullLength = true, color = "dark", children }) => {
+  name?: any,
+}> = ({ fullLength = true, color = "dark", children, name = "crescent" }) => {
   return (
     <Centered fullHeight={fullLength}>
       <div>
         <Centered>
-          <IonSpinner color={color} name="crescent" />
+          <IonSpinner {...{ color, name }} />
         </Centered>
         {children}
       </div>

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { IonButton, IonContent, IonPage, IonText, IonList, IonItem, IonLabel, IonCardContent, IonAvatar, IonCard, IonIcon, IonChip } from '@ionic/react';
 import { useAppContext } from '../lib/context-lib';
 import { useHistory } from 'react-router';
-import { arrowForwardSharp, timeSharp } from 'ionicons/icons';
+import { arrowForwardSharp, createSharp, timeSharp } from 'ionicons/icons';
 import moment from "moment";
 
 import useToastManager from '../lib/toast-hook';
@@ -17,6 +17,7 @@ import { getPublicThreads } from "../http/messages";
 import "./Feed.css";
 import { USER } from '../http/constants';
 import useMounted from '../lib/mounted-hook';
+import Centered from '../components/Centered';
 
 const Feed: React.FC = () => {
   const { currentUser } = useAppContext() as any;
@@ -43,11 +44,11 @@ function Users() {
   const { isMounted, setMounted } = useMounted();
 
   useEffect(() => {
-    // getUsers({}).then(({ data }) => {
-    //   isMounted && setProfessionals(data.splice(0, 6).filter((pro: ProfileData) => pro._id !== currentUser._id));
-    // }).catch(err => {
-    //   onError(err.message);
-    // });
+    getUsers({}).then(({ data }) => {
+      isMounted && setProfessionals(data.splice(0, 6).filter((pro: ProfileData) => pro._id !== currentUser._id));
+    }).catch(err => {
+      onError(err.message);
+    });
 
     return () => setMounted(false);
   }, []);
@@ -57,7 +58,7 @@ function Users() {
       <h6>Professionals</h6>
       <div>
         {!professionals ? (
-          <LoadingFallback />
+          <LoadingFallback name="dots" />
         ) : !professionals.length ? (
           <IonText className="ion-text-center">
             <p className="ion-no-margin">Nothing here yet</p>
@@ -69,18 +70,16 @@ function Users() {
                     <ProfessionalCard professional={pro} />
                   ))}
                 </div>
-                {currentUser.accountType === USER.ACCOUNT_TYPES.PATIENT && (
-                  <div className="d-flex ion-justify-content-center">
-                    <IonButton
-                      fill="clear"
-                      color="medium"
-                      size="small"
-                      routerLink="/app/professionals">
-                      Discover more
+                <div className="d-flex ion-justify-content-center">
+                  <IonButton
+                    fill="clear"
+                    color="medium"
+                    size="small"
+                    routerLink="/app/professionals">
+                    Discover more
                     <IonIcon slot="end" icon={arrowForwardSharp} />
-                    </IonButton>
-                  </div>
-                )}
+                  </IonButton>
+                </div>
               </>
             )}
       </div>
@@ -92,6 +91,7 @@ function Conditions() {
   const [conditions, setConditions] = useState<any[] | null>(null);
   const { onError } = useToastManager();
   const { isMounted, setMounted } = useMounted();
+  const { currentUser } = useAppContext() as any;
 
   useEffect(() => {
     getConditions().then(({ data }) => {
@@ -108,7 +108,7 @@ function Conditions() {
       <h6>Conditions</h6>
       <div>
         {!conditions ? (
-          <LoadingFallback />
+          <LoadingFallback name="dots" />
         ) : !conditions.length ? (
           <IonText className="ion-text-center">
             <p className="ion-no-margin">Nothing here yet</p>
@@ -120,7 +120,7 @@ function Conditions() {
                     // <ConditionItem key={condition._id} condition={condition} />
                     <IonItem
                       key={condition._id}
-                      routerLink={`/app/${condition._id}/details`}
+                      routerLink={`/app/info/${condition._id}/details`}
                       className="listing-item"
                     >
                       <IonLabel>
@@ -153,13 +153,25 @@ function Conditions() {
                 </div>
               </>
             )}
+
+        {(currentUser.accountType !== USER.ACCOUNT_TYPES.PATIENT) && (
+          <Centered>
+            <IonButton
+              fill="clear"
+              color="success"
+              size="small"
+              routerLink="/app/info/new">
+              Post
+            <IonIcon slot="end" icon={createSharp} />
+            </IonButton>
+          </Centered>
+        )}
       </div>
     </>
   );
 }
 
 function PublicThreads() {
-
   const history = useHistory();
   const [threads, setThreads] = useState<any[] | null>(null);
   const { currentUser } = useAppContext() as any;
@@ -187,7 +199,7 @@ function PublicThreads() {
       <h6>Public chats</h6>
       <div>
         {!threads ? (
-          <LoadingFallback />
+          <LoadingFallback name="dots" />
         ) : !threads.length ? (
           <IonText className="ion-text-center">
             <p className="ion-no-margin">Nothing here yet</p>

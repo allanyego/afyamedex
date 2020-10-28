@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { IonButton, IonContent, IonPage, IonRow, IonCol, IonList, IonIcon, useIonViewDidLeave, IonAlert, IonBadge, IonGrid, IonPopover, IonToggle, IonLabel, IonItem, IonSpinner } from '@ionic/react';
 import { useHistory, useLocation } from 'react-router';
-import { micSharp, arrowBackSharp, settingsSharp, micOffSharp } from 'ionicons/icons';
+import { micSharp, arrowBackSharp, settingsSharp, micOffSharp, checkmarkCircleSharp } from 'ionicons/icons';
 import Peer from "peerjs";
 
 import { useAppContext } from '../lib/context-lib';
@@ -13,6 +13,7 @@ import videocamSharp from "../assets/img/videocam-sharp.svg";
 import { ProfileData } from '../components/UserProfile';
 import { APPOINTMENT } from "../http/constants";
 import Centered from '../components/Centered';
+import { ToReviewButton } from './OnSite';
 
 const Meeting: React.FC = () => {
   const [hasMeetingStarted, setMeetingStarted] = useState(false);
@@ -43,7 +44,7 @@ const Meeting: React.FC = () => {
   const toggleAudioOn = (e: any) => setAudioOn(e.detail.checked);
   const toggleVideoOn = (e: any) => setVideoOn(e.detail.checked);
   const toCheckout = () => {
-    history.push("/app/checkout/" + selectedAppointment._id, {
+    history.push("/app/appointments/checkout/" + selectedAppointment._id, {
       duration: duration || 1,
     });
   };
@@ -64,21 +65,25 @@ const Meeting: React.FC = () => {
 
   return (
     <IonPage>
-      <IonContent fullscreen className="d-flex">
+      <IonContent fullscreen className="d-flex ion-padding-horizontal">
         {!hasMeetingStarted ? (
           <div className="h100 d-flex ion-justify-content-center ion-align-items-center">
             <div>
               <div>
-                {(hasMeetingEnded || !hasMeetingStarted) && (
-                  <IonButton
-                    fill="clear"
-                    color="medium"
-                    size="small"
-                    routerLink="/app/appointments">
-                    Back
-                    <IonIcon slot="start" icon={arrowBackSharp} />
-                  </IonButton>
-                )}
+                <div className="d-flex ion-align-items-center ion-justify-content-between">
+                  {(hasMeetingEnded || !hasMeetingStarted) && (
+                    <IonButton
+                      fill="clear"
+                      color="medium"
+                      size="small"
+                      routerLink="/app/appointments">
+                      Back
+                      <IonIcon slot="start" icon={arrowBackSharp} />
+                    </IonButton>
+                  )}
+
+                  <ToReviewButton appointment={selectedAppointment} />
+                </div>
                 <h3>Meeting with <strong className="ion-text-capitalize">
                   {extractForDisplay(currentUser, selectedAppointment).fullName}
                 </strong>
@@ -86,29 +91,46 @@ const Meeting: React.FC = () => {
                 <p>
                   <strong>Subject: </strong>{selectedAppointment.subject}
                 </p>
-                {!hasMeetingEnded ? (
-                  <>
-                    <IonButton color="secondary" onClick={startMeeting}>
-                      Join
+                {(selectedAppointment.status !== APPOINTMENT.STATUSES.CLOSED &&
+                  !hasMeetingEnded) ? (
+                    <>
+                      <IonButton color="secondary" onClick={startMeeting}>
+                        Join
                     </IonButton>
-                    <IonButton onClick={openPopover}>
-                      <IonIcon slot="icon-only" icon={settingsSharp} />
-                    </IonButton>
-                  </>
-                ) : selectedAppointment.patient._id === currentUser._id ? (
-                  <>
-                    <p>Your session lasted <strong>{duration}mins (billed: 10min)</strong>. Proceed to payment...</p>
-                    <div className="h100 d-flex ion-justify-content-center ion-align-items-center">
-                      <IonButton color="secondary" onClick={toCheckout} disabled={isUpdating}>
-                        {isUpdating ? (
-                          <IonSpinner slot="icon-only" name="lines-small" />
-                        ) : "Go"}
+                      <IonButton onClick={openPopover}>
+                        <IonIcon slot="icon-only" icon={settingsSharp} />
                       </IonButton>
-                    </div>
-                  </>
-                ) : (
+                    </>
+                  ) : selectedAppointment.patient._id === currentUser._id ? (
+                    <>
+                      <p>Your session lasted <strong>
+                        {selectedAppointment.duration || duration}mins (billed: 10min)
+                        </strong>. Proceed to payment...</p>
+                      <div className="h100 d-flex ion-justify-content-center ion-align-items-center">
+                        {selectedAppointment.hasBeenBilled ? (
+                          <IonButton
+                            fill="clear"
+                            color="success"
+                            size="small"
+                            disabled
+                          >
+                            Billed
+                            <IonIcon slot="start" icon={checkmarkCircleSharp} />
+                          </IonButton>
+                        ) : (
+                            <IonButton color="secondary" onClick={toCheckout} disabled={isUpdating}>
+                              {isUpdating ? (
+                                <IonSpinner slot="icon-only" name="lines-small" />
+                              ) : "Pay"}
+                            </IonButton>
+                          )}
+                      </div>
+                    </>
+                  ) : (
                       <>
-                        <p>Your session lasted <strong>{duration}mins.</strong></p>
+                        <p>Your session lasted <strong>
+                          {selectedAppointment.duration || duration}mins.
+                          </strong></p>
                       </>
                     )}
               </div>
