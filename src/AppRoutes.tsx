@@ -67,7 +67,7 @@ const AppRoutes: React.FC = () => {
       />
 
       <Suspense fallback={<SuspenseFallback />}>
-        <IonRouterOutlet id="router-outlet">
+        <IonRouterOutlet id="router-outlet" ionPage>
           <Route path="/home" render={redirectToApp(Home, currentUser)} exact />
           <Route path="/sign-in" render={redirectToApp(SignIn, currentUser)} exact />
           <Route path="/sign-up" render={redirectToApp(SignUp, currentUser)} exact />

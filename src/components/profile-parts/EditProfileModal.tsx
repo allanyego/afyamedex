@@ -424,12 +424,12 @@ function EditEducation({ education, setEducation }: {
             {inputError && (
               <FormFieldFeedback
                 errors={{
-                  speciality: inputError,
+                  education: inputError,
                 }}
                 touched={{
-                  speciality: true,
+                  education: true,
                 }}
-                fieldName="speciality"
+                fieldName="education"
               />
             )}
           </IonCol>
@@ -448,7 +448,6 @@ function EditEducation({ education, setEducation }: {
         </IonRow>
       </IonGrid>
 
-      {/* TODO: A form here */}
       <IonList>
         {education.map((sch: any, index: number) => (
           <IonItemSliding key={index}>

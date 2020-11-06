@@ -122,7 +122,7 @@ const App: React.FC = () => {
                       <IonLabel>Profile</IonLabel>
                     </IonItem>
 
-                    <IonItem routerLink="/app/feed">
+                    <IonItem routerLink="/app">
                       <IonIcon slot="start" icon={homeSharp} />
                       <IonLabel>Home</IonLabel>
                     </IonItem>

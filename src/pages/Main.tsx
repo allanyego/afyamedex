@@ -1,6 +1,6 @@
 import React, { Suspense, useEffect } from "react";
-import { useRouteMatch, Route, Redirect } from "react-router";
-import { IonRouterOutlet, useIonViewWillLeave, IonPage } from "@ionic/react";
+import { useRouteMatch, Route, Redirect, useHistory } from "react-router";
+import { IonRouterOutlet, useIonViewWillLeave, IonPage, useIonViewDidEnter } from "@ionic/react";
 import io from "socket.io-client";
 
 import { useAppContext } from "../lib/context-lib";
@@ -51,14 +51,15 @@ const Main: React.FC = () => {
   return (
     <IonPage>
       <Suspense fallback={<SuspenseFallback />}>
-        <IonRouterOutlet>
+        <IonRouterOutlet ionPage>
+          <Route path={path} component={Feed} exact />
           <Route path={`${path}/feed`} component={Feed} exact />
           <Route path={`${path}/appointments`} component={AppointmentsRouter} />
           <Route path={`${path}/info`} component={ConditionsRouter} />
           <Route path={`${path}/chat`} component={ChatsRouter} />
           <Route path={`${path}/profile`} component={Profile} />
           <Route path={`${path}/professionals`} component={ProfessionalsRouter} />
-          <Route render={() => <Redirect to={`/app/feed`} />} />
+          {/* <Route render={() => <Redirect to="/app/feed" />} /> */}
         </IonRouterOutlet>
       </Suspense>
     </IonPage>

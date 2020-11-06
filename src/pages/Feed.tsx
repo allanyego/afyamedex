@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { IonButton, IonContent, IonPage, IonText, IonList, IonItem, IonLabel, IonCardContent, IonAvatar, IonCard, IonIcon, IonChip } from '@ionic/react';
+import { IonButton, IonContent, IonPage, IonText, IonList, IonItem, IonLabel, IonCardContent, IonAvatar, IonCard, IonIcon, IonChip, useIonViewDidEnter, useIonViewWillLeave } from '@ionic/react';
 import { useAppContext } from '../lib/context-lib';
 import { useHistory } from 'react-router';
 import { arrowForwardSharp, createSharp, timeSharp } from 'ionicons/icons';
@@ -43,15 +43,15 @@ function Users() {
   const { currentUser } = useAppContext() as any;
   const { isMounted, setMounted } = useMounted();
 
-  useEffect(() => {
+  useIonViewDidEnter(() => {
     getUsers({}).then(({ data }) => {
       isMounted && setProfessionals(data.splice(0, 6).filter((pro: ProfileData) => pro._id !== currentUser._id));
     }).catch(err => {
       onError(err.message);
     });
+  });
 
-    return () => setMounted(false);
-  }, []);
+  useIonViewWillLeave(() => setMounted(false));
 
   return (
     <>
