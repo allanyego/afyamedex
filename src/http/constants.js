@@ -24,6 +24,7 @@ export const USER = {
     PROFESSIONAL: "PROFESSIONAL",
     INSTITUTION: "INSTITUTION",
     PATIENT: "PATIENT",
+    ADMIN: "ADMIN",
   },
 };
 
@@ -36,3 +37,10 @@ export const ALLOWED_FILE_TYPES = [
 ];
 
 export const MAX_ATTACHMENT_SIZE = 5000000;
+
+export const NAME_REGEX = /([a-zA-Z]+\s?\b){2,}/g;
+export const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])/;
+export const REGEX = {
+  FULL_NAME: /([a-zA-Z]+\s?\b){2,}/g,
+  USERNAME: /^[a-zA-Z0-9]*$/,
+};

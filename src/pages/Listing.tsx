@@ -14,7 +14,7 @@ import debounce from '../lib/debounce';
 import useMounted from '../lib/mounted-hook';
 import ErrorFallback from '../components/ErrorFallback';
 import { useAppContext } from '../lib/context-lib';
-import { ProfileData } from '../components/UserDetails';
+import { ProfileData } from '../components/UserProfile';
 import RatingInfo from '../components/RatingInfo';
 
 const Listing: React.FC = () => {
@@ -30,7 +30,7 @@ const Listing: React.FC = () => {
   const fetchProfessionals = async (opts?: any) => {
     setProfessionals(null);
     try {
-      const { data } = await getUsers(opts);
+      const { data } = await getUsers(currentUser.token, opts);
       isMounted && setProfessionals(data.filter(
         (user: ProfileData) => user._id !== currentUser._id)
       );
@@ -55,10 +55,9 @@ const Listing: React.FC = () => {
     await fetchProfessionals();
   };
 
-
   return (
     <IonPage>
-      <UserHeader title="Professionals" secondary={
+      <UserHeader title="Listing" secondary={
         <IonButton onClick={onToggle} color={showSearchBar ? "danger" : "dark"}>
           <IonIcon slot="icon-only" icon={showSearchBar ? close : search} />
         </IonButton>
@@ -70,7 +69,7 @@ const Listing: React.FC = () => {
         )}
 
         {loadError ? (
-          <ErrorFallback />
+          <ErrorFallback fullHeight />
         ) : (!professionals || isSearching) ? (
           <LoadingFallback />
         ) : (
@@ -87,7 +86,11 @@ const Listing: React.FC = () => {
 
 export default Listing;
 
-function ListingItem({ prof }: any) {
+function ListingItem({ prof }: {
+  prof: ProfileData
+}) {
+  const [a, b, ...rest] = prof.speciality;
+
   return (
     <IonItem routerLink={`/app/profile/${prof._id}`} className="listing-item">
       <IonAvatar slot="start">
@@ -104,8 +107,11 @@ function ListingItem({ prof }: any) {
           />
         </h3>
         <p>{prof.bio || "No bio."}</p>
-        <RatingInfo userId={prof._id} />
-        {prof.speciality.map((s: any) => <IonBadge color="secondary">{s}</IonBadge>)}
+        <RatingInfo userId={prof._id as any} />
+        <div className="profile-badges-container d-flex ion-align-items-center">
+          {[a, b].map((s: any, idx: number) => <IonBadge key={`${s}${idx}`} color="secondary">{s}</IonBadge>)}{" "}
+          <small>{rest.length ? `${rest.length} more` : null}</small>
+        </div>
       </IonLabel>
     </IonItem>
   );

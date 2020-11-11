@@ -19,7 +19,7 @@ const RatingInfo: React.FC<{
 
   const _fetchRating = async () => {
     try {
-      const data = await getUserRating(userId, currentUser.token);
+      const { data } = await getUserRating(userId, currentUser.token);
       if (data.length && isMounted) {
         setRating(data[0].rating);
       }

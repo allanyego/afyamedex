@@ -1,12 +1,16 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Formik, Form } from "formik";
 import * as Yup from "yup";
 
 import useToastManager from "../lib/toast-hook";
-import { IonButton, IonCol, IonContent, IonInput, IonItem, IonLabel, IonPage, IonRow, IonText } from "@ionic/react";
+import { IonButton, IonCol, IonContent, IonIcon, IonInput, IonItem, IonLabel, IonPage, IonRow, IonText } from "@ionic/react";
 import FormFieldFeedback from "../components/FormFieldFeedback";
 import { confirmReset, resetPassword } from "../http/users";
 import trimLowerCase from "../lib/trim-lowercase";
+import useMounted from "../lib/mounted-hook";
+import Centered from "../components/Centered";
+import { arrowBackSharp } from "ionicons/icons";
+import { useHistory } from "react-router";
 
 const passwordChangeSchema = Yup.object({
   resetCode: Yup.string().min(6, "Too short").max(6, "Too long").required("Enter reset code"),
@@ -26,6 +30,7 @@ const ResetPassword: React.FC = () => {
     hasCode: false,
     activeRequest: false,
   });
+  const { isMounted, setMounted } = useMounted();
   const { onError, onSuccess } = useToastManager();
 
   const handleReset = async (values: any, { setSubmitting }: any) => {
@@ -33,21 +38,24 @@ const ResetPassword: React.FC = () => {
       const username = trimLowerCase(values.username);
       await resetPassword(username);
       setSubmitting(false);
-      setUser({
+      isMounted && setUser({
         ...user,
         username,
         hasCode: true,
       });
       onSuccess("Reset code sent to email");
     } catch (error) {
-      setSubmitting(false);
-      if (error.message === "present_active_request") {
-        setUser({
-          hasCode: true,
-          activeRequest: true,
-          ...values,
-        });
+      if (isMounted) {
+        setSubmitting(false);
+        if (error.message === "present_active_request") {
+          setUser({
+            hasCode: true,
+            activeRequest: true,
+            ...values,
+          });
+        }
       }
+
       onError(error.message);
     }
   };
@@ -62,6 +70,8 @@ const ResetPassword: React.FC = () => {
       onError(error.message);
     }
   };
+
+  useEffect(() => () => setMounted(false));
 
   return (
     <IonPage>
@@ -95,6 +105,8 @@ interface FormProps {
 }
 
 function ResetForm({ onSubmit }: FormProps) {
+  const history = useHistory();
+
   return (
     <Formik
       validationSchema={resetSchema}
@@ -122,6 +134,17 @@ function ResetForm({ onSubmit }: FormProps) {
               <IonButton color="secondary" expand="block" type="submit" disabled={!isValid || isSubmitting}>{isSubmitting ? "Submitting..." : "Submit"}</IonButton>
             </IonCol>
           </IonRow>
+          <Centered>
+            <IonButton
+              fill="clear"
+              color="medium"
+              size="small"
+              onClick={history.goBack}
+            >
+              back
+              <IonIcon slot="start" icon={arrowBackSharp} />
+            </IonButton>
+          </Centered>
         </Form>
       )}</Formik>
   );

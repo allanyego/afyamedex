@@ -100,7 +100,7 @@ export default function BookAppointment() {
         ) : !professional ? (
           <LoadingFallback />
         ) : (
-              <div>
+              <div className="ion-padding-horizontal">
                 <Formik
                   validationSchema={appointmentSchema}
                   onSubmit={handleSubmit}

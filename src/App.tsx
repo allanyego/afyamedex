@@ -3,7 +3,7 @@ import { IonApp, IonMenu, IonHeader, IonToolbar, IonTitle, IonContent, IonList, 
 import { IonReactRouter } from '@ionic/react-router';
 import { Elements } from "@stripe/react-stripe-js";
 import { loadStripe } from "@stripe/stripe-js"
-import { Capacitor, SplashScreen } from '@capacitor/core';
+import { SplashScreen } from '@capacitor/core';
 
 /* Core CSS required for Ionic components to work properly */
 import '@ionic/react/css/core.css';
@@ -30,8 +30,8 @@ import ToastManager from './components/ToastManager';
 import { getObject, clear, setObject } from './lib/storage';
 import { STORAGE_KEY, USER } from './http/constants';
 import LoadingFallback from './components/LoadingFallback';
-import { personSharp, peopleSharp, exitSharp, fileTrayFullSharp, chatbubblesSharp, homeSharp } from 'ionicons/icons';
-import { ProfileData } from './components/UserDetails';
+import { personSharp, peopleSharp, exitSharp, fileTrayFullSharp, chatbubblesSharp, homeSharp, ellipseSharp } from 'ionicons/icons';
+import { ProfileData } from './components/UserProfile';
 import { Detector } from 'react-detect-offline';
 import AppRoutes from './AppRoutes';
 import ErrorBoundary from './components/ErrorBoundary';
@@ -39,7 +39,7 @@ import ErrorBoundary from './components/ErrorBoundary';
 const stripePromise = loadStripe("pk_test_lx1Waow5lgsLqWZfGakpklYO00rvf5kGYa");
 
 const App: React.FC = () => {
-  const [currentUser, setCurrUser] = useState<ProfileData | null>(null);
+  const [currentUser, setCurrentUser] = useState<ProfileData | null>(null);
   const [notifications, setNotifications] = useState([]);
   const [socket, setSocket] = useState(null);
   // const [isAlertOpen, setAlertOpen] = useState(false);
@@ -51,7 +51,12 @@ const App: React.FC = () => {
   //   isMounted && setAlertOpen(true);
   // };
 
-  const setCurrentUser = async (currUser: ProfileData) => {
+  const _setCurrentUser = async (currUser: ProfileData | null) => {
+    if (!currUser) {
+      await clear();
+      return setCurrentUser(currUser);
+    }
+
     const newDetails = {
       ...currentUser,
       ...currUser,
@@ -60,35 +65,25 @@ const App: React.FC = () => {
       currentUser: newDetails,
     });
 
-    setCurrUser(newDetails);
+    setCurrentUser(newDetails);
   };
 
   useEffect(() => {
     // Hide splashscreen if app loads in under 4s
     SplashScreen.hide();
 
-    if (Capacitor.isNative) {
-      // Plugins.App.addListener("backButton", hardwareBackButtonHandler);
-    }
-
     getObject(STORAGE_KEY).then(data => {
       if (data && data.currentUser) {
-        setCurrUser(data.currentUser);
+        setCurrentUser(data.currentUser);
       }
 
       setAuthenticating(false);
     });
-
-    return () => {
-      // Plugins.App.removeAllListeners();
-      // setMounted(false);
-    };
   }, []);
 
   const handleLogout = async () => {
     try {
-      await clear();
-      setCurrUser(null);
+      _setCurrentUser(null);
     } catch (error) {
       console.error(error);
     }
@@ -99,8 +94,8 @@ const App: React.FC = () => {
       <Elements stripe={stripePromise}>
         <IonApp>
           <AppContext.Provider value={{
+            setCurrentUser: _setCurrentUser,
             currentUser,
-            setCurrentUser,
             notifications,
             setNotifications,
             socket,
@@ -127,10 +122,15 @@ const App: React.FC = () => {
                       <IonLabel>Home</IonLabel>
                     </IonItem>
 
+                    <IonItem routerLink="/app/info">
+                      <IonIcon slot="start" icon={ellipseSharp} />
+                      <IonLabel>Conditions</IonLabel>
+                    </IonItem>
+
                     {currentUser.accountType === USER.ACCOUNT_TYPES.PATIENT && (
                       <IonItem routerLink="/app/professionals">
                         <IonIcon slot="start" icon={peopleSharp} />
-                        <IonLabel>Browse</IonLabel>
+                        <IonLabel>Professionals/Institutions</IonLabel>
                       </IonItem>
                     )}
 
@@ -141,10 +141,10 @@ const App: React.FC = () => {
 
                     <IonItem routerLink="/app/chat">
                       <IonIcon slot="start" icon={chatbubblesSharp} />
-                      <IonLabel>Chat</IonLabel>
+                      <IonLabel>Inbox</IonLabel>
                     </IonItem>
 
-                    <IonItem onClick={handleLogout}>
+                    <IonItem onClick={handleLogout} button>
                       <IonIcon color="danger" slot="start" icon={exitSharp} />
                       <IonLabel color="danger">Logout</IonLabel>
                     </IonItem>

@@ -5,7 +5,7 @@ import Centered from "./Centered";
 
 const ErrorFallback: React.FC<{
   fullHeight?: boolean
-}> = ({ fullHeight = false, children }) => {
+}> = ({ fullHeight = true, children }) => {
   return (
     <Centered fullHeight={fullHeight}>
       <div>

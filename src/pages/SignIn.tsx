@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { IonButton, IonContent, IonPage, IonRow, IonCol, IonText, IonRouterLink, IonItem, IonLabel, IonInput, useIonViewDidEnter, useIonViewWillLeave } from '@ionic/react';
 import { Formik, Form } from "formik";
 import * as Yup from "yup";
@@ -8,7 +8,7 @@ import { useHistory } from 'react-router';
 import useToastManager from '../lib/toast-hook';
 import FormFieldFeedback from '../components/FormFieldFeedback';
 import { setObject } from '../lib/storage';
-import { STORAGE_KEY } from '../http/constants';
+import { STORAGE_KEY, USER } from '../http/constants';
 import useMounted from "../lib/mounted-hook";
 
 const loginSchema = Yup.object({
@@ -26,6 +26,11 @@ const SignIn: React.FC = () => {
     try {
       const { data } = await signIn(values.username.trim(), values.password);
       isMounted && setSubmitting(false);
+
+      if (data.accountType === USER.ACCOUNT_TYPES.ADMIN) {
+        return onError("Admin log in disallowed. Try the web app.");
+      }
+
       isMounted && setCurrentUser(data);
       await setObject(STORAGE_KEY, {
         currentUser: data,
@@ -42,13 +47,7 @@ const SignIn: React.FC = () => {
     }
   };
 
-  useIonViewDidEnter(() => {
-    setMounted(true);
-  });
-
-  useIonViewWillLeave(() => {
-    setMounted(false);
-  });
+  useEffect(() => () => setMounted(false));
 
   return (
     <IonPage>

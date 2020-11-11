@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { IonPage, IonContent, IonCardTitle, IonCardContent, IonCard, IonCardHeader, IonCardSubtitle, IonButton, IonIcon, useIonViewDidEnter, useIonViewDidLeave, IonItem, IonLabel, IonList, useIonViewWillLeave, IonGrid, IonRow, IonCol, IonSearchbar } from "@ionic/react";
+import { IonPage, IonContent, IonButton, IonIcon, useIonViewDidEnter, useIonViewDidLeave, IonItem, IonLabel, IonList, useIonViewWillLeave, IonGrid, IonRow, IonCol, IonSearchbar } from "@ionic/react";
 import { useRouteMatch } from "react-router";
 import moment from "moment";
 
@@ -20,12 +20,13 @@ export default function Conditions() {
   let [conditions, setConditions] = useState<null | any[]>(null);
   const [loadError, setLoadError] = useState(false);
   const [listMargin, setListMargin] = useState(0);
+  const { currentUser } = useAppContext() as any;
   const { onError } = useToastManager();
   const { isMounted, setMounted } = useMounted();
 
   const fetchConditions = async (_search?: string) => {
     try {
-      const { data } = await getConditions(_search);
+      const { data } = await getConditions(currentUser.token, _search);
       isMounted && setConditions(data);
     } catch (error) {
       isMounted && setLoadError(true);

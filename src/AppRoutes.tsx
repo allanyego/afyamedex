@@ -5,8 +5,8 @@ import { BackButtonEvent } from "@ionic/core";
 import SuspenseFallback from './components/SuspenseFallback';
 import useMounted from './lib/mounted-hook';
 import { useAppContext } from "./lib/context-lib";
-import { IonAlert, IonRouterOutlet } from "@ionic/react";
-import { Redirect, Route } from "react-router";
+import { IonAlert } from "@ionic/react";
+import { Redirect, Route, Switch } from "react-router";
 const Home = React.lazy(() => import("./pages/Home"));
 const SignIn = React.lazy(() => import("./pages/SignIn"));
 const SignUp = React.lazy(() => import("./pages/SignUp"));
@@ -66,23 +66,25 @@ const AppRoutes: React.FC = () => {
         ]}
       />
 
-      <Suspense fallback={<SuspenseFallback />}>
-        <IonRouterOutlet id="router-outlet" ionPage>
-          <Route path="/home" render={redirectToApp(Home, currentUser)} exact />
-          <Route path="/sign-in" render={redirectToApp(SignIn, currentUser)} exact />
-          <Route path="/sign-up" render={redirectToApp(SignUp, currentUser)} exact />
-          <Route path="/reset-password" render={redirectToApp(ResetPassword, currentUser)} exact />
-          <Route path="/app" render={() => currentUser ? <Main /> : redirect("/sign-in")} />
-          <Route
-            path="/account-type"
-            exact
-            render={() => currentUser ?
-              currentUser.accountType ? redirect("/app") : <AccountType />
-              : redirect("/sign-in")}
-          />
-          <Route render={() => redirect("/home")} exact />
-        </IonRouterOutlet>
-      </Suspense>
+      <div className="h100" id="router-outlet">
+        <Suspense fallback={<SuspenseFallback />}>
+          <Switch>
+            <Route path="/home" render={redirectToApp(Home, currentUser)} exact />
+            <Route path="/sign-in" render={redirectToApp(SignIn, currentUser)} exact />
+            <Route path="/sign-up" render={redirectToApp(SignUp, currentUser)} exact />
+            <Route path="/reset-password" render={redirectToApp(ResetPassword, currentUser)} exact />
+            <Route path="/app" render={() => currentUser ? <Main /> : redirect("/sign-in")} />
+            <Route
+              path="/account-type"
+              exact
+              render={() => currentUser ?
+                currentUser.accountType ? redirect("/app") : <AccountType />
+                : redirect("/sign-in")}
+            />
+            <Route render={() => redirect("/home")} exact />
+          </Switch>
+        </Suspense>
+      </div>
     </>
   );
 }

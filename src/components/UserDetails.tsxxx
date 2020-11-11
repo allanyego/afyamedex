@@ -18,6 +18,7 @@ import Names from "./profile-parts/Names";
 
 export interface ProfileData {
   _id?: string,
+  birthday: Date,
   fullName: string,
   username: string,
   gender: string,
@@ -29,6 +30,7 @@ export interface ProfileData {
   picture?: string,
   experience?: number,
   speciality?: string[],
+  disabled: boolean,
   education?: {
     _id?: string,
     institution: string,

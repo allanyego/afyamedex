@@ -8,6 +8,7 @@ import { getById } from "../http/conditions";
 import LoadingFallback from "../components/LoadingFallback";
 import useMounted from "../lib/mounted-hook";
 import ErrorFallback from "../components/ErrorFallback";
+import { useAppContext } from "../lib/context-lib";
 
 export default function Condition() {
   const { conditionId } = useParams();
@@ -16,10 +17,11 @@ export default function Condition() {
   const [loadError, setLoadError] = useState(false);
   const { onError } = useToastManager();
   const { isMounted, setMounted } = useMounted();
+  const { currentUser } = useAppContext() as any;
 
   const getConditionDetails = async () => {
     try {
-      const { data } = await getById(conditionId);
+      const { data } = await getById(conditionId, currentUser.token);
       if (!data) {
         onError("No condition details found");
         history.replace("/app/info");

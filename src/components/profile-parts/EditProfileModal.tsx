@@ -1,14 +1,13 @@
 import React, { useState, useEffect } from "react";
 import { useAppContext } from "../../lib/context-lib";
-import { IonModal, IonToolbar, IonButtons, IonButton, IonTitle, IonGrid, IonRow, IonCol, IonItem, IonLabel, IonInput, IonTextarea, IonText, IonBadge, IonList, IonItemSliding, IonItemOptions, IonItemOption, IonIcon, IonDatetime } from "@ionic/react";
+import { IonModal, IonToolbar, IonButtons, IonButton, IonTitle, IonGrid, IonRow, IonCol, IonItem, IonLabel, IonInput, IonTextarea, IonText, IonBadge, IonList, IonItemSliding, IonItemOptions, IonItemOption, IonIcon, IonDatetime, CreateAnimation } from "@ionic/react";
 import { Formik, Form, FormikValues, FormikHelpers } from "formik";
 import * as Yup from "yup";
 import moment from "moment";
 
 import FormFieldFeedback from "../FormFieldFeedback";
 import { USER } from "../../http/constants";
-import { trash, addSharp } from "ionicons/icons";
-import "./EditProfileModal.css";
+import { trash, addSharp, close } from "ionicons/icons";
 import { editUser } from "../../http/users";
 import useToastManager from "../../lib/toast-hook";
 import useMounted from "../../lib/mounted-hook";
@@ -194,6 +193,12 @@ function EditSpeciality({ speciality, setSpeciality }: {
     setVal("");
   };
 
+  const handleRemoveFactory = (index: number) => () => {
+    const temp = Array.from(speciality);
+    temp.splice(index, 1);
+    setSpeciality([...temp]);
+  };
+
   return (
     <div>
       <IonGrid>
@@ -235,11 +240,20 @@ function EditSpeciality({ speciality, setSpeciality }: {
         </IonRow>
       </IonGrid>
 
-      <div className="edit-modal-badges">
+      <p className="ion-no-margin ion-text-right">
+        <small>
+          <i>
+            <IonText color="medium">Tap to <IonText color="danger">delete</IonText></IonText>
+          </i>
+        </small>
+      </p>
+      <div className="profile-badges-container">
         {
-          speciality.map((s: string, index: number) => <IonBadge key={index} color="dark">
-            {s}
-          </IonBadge>)
+          speciality.map((s: string, index: number) => (
+            <IonBadge key={index} color="danger" onClick={handleRemoveFactory(index)}>
+              {s} <IonIcon slot="end" icon={close} />
+            </IonBadge>
+          ))
         }
       </div>
     </div>
@@ -268,6 +282,12 @@ function EditConditions({ conditions, setConditions }: {
 
     setConditions([...conditions, val]);
     setVal("");
+  };
+
+  const handleRemoveFactory = (index: number) => () => {
+    const temp = Array.from(conditions);
+    temp.splice(index, 1);
+    setConditions([...temp]);
   };
 
   return (
@@ -312,11 +332,20 @@ function EditConditions({ conditions, setConditions }: {
         </IonRow>
       </IonGrid>
 
+      <p className="ion-no-margin ion-text-right">
+        <small>
+          <i>
+            <IonText color="medium">Tap to <IonText color="danger">delete</IonText></IonText>
+          </i>
+        </small>
+      </p>
       <div className="edit-modal-badges">
         {
-          conditions.map((s: string, index: number) => <IonBadge key={index} color="secondary">
-            {s}
-          </IonBadge>)
+          conditions.map((s: string, index: number) => (
+            <IonBadge key={index} color="danger" onClick={handleRemoveFactory(index)}>
+              {s}
+            </IonBadge>
+          ))
         }
       </div>
     </div>
@@ -377,6 +406,12 @@ function EditEducation({ education, setEducation }: {
     setAreaofStudy("");
     setStart(undefined);
     setEnd(undefined);
+  };
+
+  const handleRemove = (id: any) => {
+    setEducation([...education.filter((ed: any) =>
+      (ed._id || ed.id) !== id
+    )]);
   };
 
   return (
@@ -448,28 +483,58 @@ function EditEducation({ education, setEducation }: {
         </IonRow>
       </IonGrid>
 
-      <IonList>
-        {education.map((sch: any, index: number) => (
-          <IonItemSliding key={index}>
-            <IonItemOptions side="start">
-              <IonItemOption color="danger">
-                <IonIcon slot="icon-only" icon={trash} />
-              </IonItemOption>
-            </IonItemOptions>
-
-            <IonItem>
-              <div className="ion-margin-bottom">
-                <IonLabel className="ion-text-capitalize"><strong>{sch.institution}</strong></IonLabel>
+      <div style={{
+        overflowX: "hidden",
+      }}>
+        <CreateAnimation
+          play={true}
+          duration={1500}
+          delay={700}
+          iterations={Infinity}
+          fromTo={[
+            { property: 'transform', fromValue: 'translateX(0px)', toValue: 'translateX(75px)' },
+            { property: 'opacity', fromValue: '0.2', toValue: '1' }
+          ]}
+        >
+          <div>
+            <small>
+              <i>
                 <IonText color="medium">
-                  {moment(sch.startDate).format("MMM YYYY")} - {sch.endDate ? (moment(sch.endDate).format("MMM YYYY")) : "Current"}
-                </IonText><br />
-                <IonText className="ion-text-capitalize">
-                  {sch.areaOfStudy}
+                  Swipe right for options
                 </IonText>
-              </div>
-            </IonItem>
-          </IonItemSliding>
-        ))}
+              </i>
+            </small>
+          </div>
+        </CreateAnimation>
+      </div>
+      <IonList>
+        {education.map((sch: any, index: number) => {
+          const onRemove = () => handleRemove(sch._id || sch.id);
+
+          return (
+            <IonItemSliding key={index}>
+              <IonItemOptions side="start">
+                <IonItemOption color="danger" onClick={onRemove}>
+                  <IonIcon slot="icon-only" icon={trash} />
+                </IonItemOption>
+              </IonItemOptions>
+
+              <IonItem>
+                <div className="ion-margin-bottom">
+                  <IonLabel className="ion-text-capitalize"><strong>{sch.institution}</strong></IonLabel>
+                  <IonText color="medium">
+                    {moment(sch.startDate).format("MMM YYYY")} - {sch.endDate ?
+                      (moment(sch.endDate).format("MMM YYYY")) :
+                      "Current"}
+                  </IonText><br />
+                  <IonText className="ion-text-capitalize">
+                    {sch.areaOfStudy}
+                  </IonText>
+                </div>
+              </IonItem>
+            </IonItemSliding>
+          );
+        })}
       </IonList>
     </div>
   );

@@ -1,9 +1,7 @@
 import React from "react";
-import withEditableFeatures from "./withEditableFeatures";
 import { IonText, IonTextarea, IonItem, IonButton } from "@ionic/react";
-import { useAppContext } from "../../lib/context-lib";
-import { EditableProps } from "./withEditableFeatures";
-import { ProfileData } from "../UserDetails";
+
+import { ProfileData } from "../UserProfile";
 
 export interface PartProps {
   user: ProfileData,

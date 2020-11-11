@@ -7,7 +7,7 @@ import * as Yup from "yup";
 import download from "downloadjs";
 
 import Centered from "../components/Centered";
-import { ALLOWED_FILE_TYPES, APPOINTMENT, MAX_ATTACHMENT_SIZE, ROOT_URL } from "../http/constants";
+import { ALLOWED_FILE_TYPES, APPOINTMENT, MAX_ATTACHMENT_SIZE, ROOT_URL, SERVER_URL } from "../http/constants";
 import { useAppContext } from "../lib/context-lib";
 import useMounted from "../lib/mounted-hook";
 import { editAppointment } from "../http/appointments";
@@ -104,7 +104,10 @@ function PatientView({ appointment }: ViewProps) {
         <ViewInner appointment={appointment} />
       ) : (
           <IonText className="ion-text-center">
-            <p>Youre results are not out yet. Please, check back later.</p>
+            <p>
+              Youre results are not out yet. Please, check back later.{" "}
+              This shouldn't take long.
+            </p>
           </IonText>
         )
       }
@@ -244,9 +247,9 @@ function ViewInner({ appointment }: ViewProps) {
           </p>
         )}
       <div className="h100 d-flex ion-justify-content-center ion-align-items-center">
-        {!appointment.hasBeenBilled ? (
+        {appointment.hasBeenBilled ? (
           <IonButton color="success" fill="clear" size="small" disabled>
-            Billed
+            KES.{appointment.amount}
             <IonIcon slot="end" icon={checkmarkCircleSharp} />
           </IonButton>
         ) : (
@@ -270,17 +273,17 @@ function ViewInner({ appointment }: ViewProps) {
 
 function TestResultView({ appointment }: ViewProps) {
   const { currentUser } = useAppContext() as any;
-  const { onError, onSuccess } = useToastManager();
+  const { onError, onSuccess, onInfo } = useToastManager();
 
   const onDownload = () => {
-    onSuccess("Downloading file");
-    let url = `${ROOT_URL}/appointments/test-file/${appointment.testFile}`;
+    let url = `${SERVER_URL}/appointments/test-file/${appointment.testFile}`;
     return fetch(url, {
       method: 'GET',
       headers: {
         'Authorization': `Bearer ${currentUser.token}`
       }
     }).then(function (resp) {
+      onInfo("Downloading file");
       return resp.blob();
     }).then(function (blob) {
       (download as any)(blob);
@@ -290,15 +293,22 @@ function TestResultView({ appointment }: ViewProps) {
 
   return (
     <>
-      <p>
+      <div>
         <strong>Test file</strong>{" "}
-        <a
+        <div
+          className="d-flex ion-align-items-center"
           onClick={onDownload}
-          href="#"
-        >{appointment.testFile}
+          style={{
+            color: "var(--ion-color-primary)",
+            cursor: "pointer"
+          }}
+        >
+          <IonText>
+            {appointment.testFile}
+          </IonText>
           <IonIcon icon={arrowDownCircleSharp} />
-        </a>
-      </p>
+        </div>
+      </div>
       <strong>Test summary</strong>
       <IonText color="medium">
         <p>{appointment.testSummary}</p>

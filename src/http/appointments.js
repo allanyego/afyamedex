@@ -2,6 +2,12 @@ import request, { constructAuthHeader } from "./request";
 
 const BASE_URL = "/appointments";
 
+export async function getAppointment(appointmentId, token) {
+  return await request(`${BASE_URL}/appointment/${appointmentId}`, {
+    headers: constructAuthHeader(token),
+  });
+}
+
 export async function getAppointments(userId, token) {
   return await request(`${BASE_URL}/${userId}`, {
     headers: constructAuthHeader(token),

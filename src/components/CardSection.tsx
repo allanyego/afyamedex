@@ -23,17 +23,29 @@ const CARD_ELEMENT_OPTIONS = {
 
 function CardSection({ amount }: { amount: number }) {
   return (
-    <IonCard>
-      <IonCardContent>
-        <IonText className="ion-text-center">
-          <p>
-            Enter card details to complete payment of:<br />
-            <strong>KES.{amount}</strong>
-          </p>
+    <div>
+      <div className="d-flex ion-justify-content-center ion-align-items-center" style={{
+        fontSize: "3em",
+        gap: "0.25em"
+      }}>
+        <IonText color="medium">
+          <strong>KES</strong>
         </IonText>
-        <CardElement options={CARD_ELEMENT_OPTIONS} />
-      </IonCardContent>
-    </IonCard>
+        <div style={{
+          background: "var(--ion-color-success-tint)",
+          padding: "0.25em",
+          borderRadius: "0.25em",
+        }}>
+          <strong>{amount}</strong>
+        </div>
+      </div>
+      <IonText className="ion-text-center">
+        <p>
+          Enter card details to complete payment.
+        </p>
+      </IonText>
+      <CardElement options={CARD_ELEMENT_OPTIONS} />
+    </div>
   );
 };
 

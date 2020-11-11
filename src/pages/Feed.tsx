@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { IonButton, IonContent, IonPage, IonText, IonList, IonItem, IonLabel, IonCardContent, IonAvatar, IonCard, IonIcon, IonChip, useIonViewDidEnter, useIonViewWillLeave } from '@ionic/react';
+import { IonButton, IonContent, IonPage, IonText, IonList, IonItem, IonLabel, IonCardContent, IonAvatar, IonCard, IonIcon, IonChip, useIonViewDidEnter, useIonViewWillLeave, IonSkeletonText, IonGrid, IonRow, IonCol } from '@ionic/react';
 import { useAppContext } from '../lib/context-lib';
 import { useHistory } from 'react-router';
 import { arrowForwardSharp, createSharp, timeSharp } from 'ionicons/icons';
@@ -8,9 +8,8 @@ import moment from "moment";
 import useToastManager from '../lib/toast-hook';
 import { getConditions } from '../http/conditions';
 import defaultAvatar from "../assets/img/default_avatar.jpg";
-import { ProfileData } from '../components/UserDetails';
+import { ProfileData } from '../components/UserProfile';
 import Rating from '../components/Rating';
-import LoadingFallback from '../components/LoadingFallback';
 import UserHeader from '../components/UserHeader';
 import { getUsers } from '../http/users';
 import { getPublicThreads } from "../http/messages";
@@ -44,7 +43,7 @@ function Users() {
   const { isMounted, setMounted } = useMounted();
 
   useIonViewDidEnter(() => {
-    getUsers({}).then(({ data }) => {
+    getUsers(currentUser.token).then(({ data }) => {
       isMounted && setProfessionals(data.splice(0, 6).filter((pro: ProfileData) => pro._id !== currentUser._id));
     }).catch(err => {
       onError(err.message);
@@ -58,7 +57,7 @@ function Users() {
       <h6>Professionals</h6>
       <div>
         {!professionals ? (
-          <LoadingFallback name="dots" />
+          <UsersLoader />
         ) : !professionals.length ? (
           <IonText className="ion-text-center">
             <p className="ion-no-margin">Nothing here yet</p>
@@ -67,7 +66,7 @@ function Users() {
               <>
                 <div className="d-flex profession-card-feed">
                   {professionals && professionals.map((pro: ProfileData) => (
-                    <ProfessionalCard professional={pro} />
+                    <ProfessionalCard professional={pro} key={pro._id} />
                   ))}
                 </div>
                 <div className="d-flex ion-justify-content-center">
@@ -94,7 +93,7 @@ function Conditions() {
   const { currentUser } = useAppContext() as any;
 
   useEffect(() => {
-    getConditions().then(({ data }) => {
+    getConditions(currentUser.token).then(({ data }) => {
       isMounted && setConditions(data);
     }).catch(err => {
       onError(err.message);
@@ -108,7 +107,7 @@ function Conditions() {
       <h6>Conditions</h6>
       <div>
         {!conditions ? (
-          <LoadingFallback name="dots" />
+          <ConditionsLoader />
         ) : !conditions.length ? (
           <IonText className="ion-text-center">
             <p className="ion-no-margin">Nothing here yet</p>
@@ -116,8 +115,7 @@ function Conditions() {
         ) : (
               <>
                 <IonList lines="full">
-                  {conditions && conditions!.map((condition: any) => (
-                    // <ConditionItem key={condition._id} condition={condition} />
+                  {conditions.map((condition: any) => (
                     <IonItem
                       key={condition._id}
                       routerLink={`/app/info/${condition._id}/details`}
@@ -199,7 +197,7 @@ function PublicThreads() {
       <h6>Public chats</h6>
       <div>
         {!threads ? (
-          <LoadingFallback name="dots" />
+          <ThreadsLoader />
         ) : !threads.length ? (
           <IonText className="ion-text-center">
             <p className="ion-no-margin">Nothing here yet</p>
@@ -246,6 +244,64 @@ function ProfessionalCard({ professional }: {
           </div>
         </IonCardContent>
       </IonCard>
+    </div>
+  );
+}
+
+function UsersLoader() {
+  const Inner = () => (
+    <IonCol size="4">
+      <IonSkeletonText animated style={{
+        width: "100%",
+        height: "6em",
+        borderRadius: "0.5em"
+      }} />
+    </IonCol>
+  );
+
+  return (
+    <IonGrid>
+      <IonRow>
+        {[1, 2, 3].map((val) => (
+          <Inner key={val} />
+        ))}
+      </IonRow>
+    </IonGrid>
+  );
+}
+
+function ConditionsLoader() {
+  const Inner = () => (
+    <IonSkeletonText animated style={{
+      width: "100%",
+      height: "3em"
+    }} />
+  );
+
+  return (
+    <div>
+      {[1, 2, 3].map((val) => (
+        <Inner key={val} />
+      ))}
+    </div>
+  );
+}
+
+function ThreadsLoader() {
+  const Inner = () => (
+    <IonSkeletonText animated style={{
+      width: "8em",
+      height: "2em",
+      borderRadius: "1em",
+    }} />
+  );
+
+  return (
+    <div className="d-flex" style={{ gap: "0.5em" }}>
+
+      {[1, 2, 3, 4, 5].map(val => (
+        <Inner key={val} />
+      ))}
     </div>
   );
 }

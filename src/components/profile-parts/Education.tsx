@@ -1,7 +1,7 @@
 import React from "react";
 import { IonText, IonList, IonItem, IonLabel } from "@ionic/react";
-import { trash } from "ionicons/icons";
 import moment from "moment";
+
 import { PartProps } from "./Bio";
 
 const Education: React.FC<PartProps> = ({ user, currentUserId }) => {

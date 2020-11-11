@@ -1,13 +1,12 @@
 import React from "react";
-import withEditableFeatures, { EditableProps } from "./withEditableFeatures";
-import { IonButton, IonItem, IonInput } from "@ionic/react";
+
 import { PartProps } from "./Bio";
 
 const Experience: React.FC<PartProps> = ({ user }) => {
   return (
-    <>
+    <p className="ion-no-margin">
       {user.experience ? `${user.experience} years experience` : "No experience."}
-    </>
+    </p>
   );
 }
 

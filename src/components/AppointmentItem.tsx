@@ -1,6 +1,6 @@
 import React, { useState, PropsWithChildren } from "react";
-import { IonItem, IonLabel, IonText, IonGrid, IonRow, IonCol, IonIcon, IonItemSliding, IonItemOptions, IonItemOption } from "@ionic/react";
-import { calendarOutline, timeOutline, checkmarkCircle, closeCircle } from "ionicons/icons";
+import { IonItem, IonLabel, IonText, IonGrid, IonRow, IonCol, IonIcon, IonItemSliding, IonItemOptions, IonItemOption, IonButton } from "@ionic/react";
+import { calendarOutline, timeOutline, checkmarkCircle, closeCircle, close, checkmark } from "ionicons/icons";
 import moment from "moment";
 
 import { APPOINTMENT, USER } from "../http/constants";
@@ -63,6 +63,11 @@ const AppointmentItem: React.FC<PropsWithChildren<Props>> = ({ appointment, onTa
     }
   };
 
+  const isCurrentNonPatient = currentUser.accountType &&
+    currentUser.accountType !== USER.ACCOUNT_TYPES.PATIENT;
+  const isCurrentPatient = currentUser.accountType === USER.ACCOUNT_TYPES.PATIENT;
+  const isAppointmentPatient = _appointment?.patient?._id === currentUser._id;
+
   const Inner = () => (
     <IonItem
       onClick={handleClick}
@@ -74,7 +79,7 @@ const AppointmentItem: React.FC<PropsWithChildren<Props>> = ({ appointment, onTa
       <IonLabel>
         <h2 className="ion-text-capitalize">
           {
-            currentUser.accountType === USER.ACCOUNT_TYPES.PATIENT ? (
+            isCurrentPatient ? (
               _appointment.professional.fullName
             ) : (
                 _appointment.patient.fullName
@@ -98,8 +103,46 @@ const AppointmentItem: React.FC<PropsWithChildren<Props>> = ({ appointment, onTa
         </IonGrid>
         {(_appointment.status === APPOINTMENT.STATUSES.CLOSED) && (
           <IonText color="medium" className="ion-text-uppercase">
-            {_appointment.status}/{_appointment.hasBeenBilled ? `KES.${_appointment.amount}` : "unpaid"}
+            {_appointment.status}/{_appointment.hasBeenBilled ?
+              `KES.${_appointment.amount}` :
+              (isAppointmentPatient ? (
+                <strong>
+                  <IonText color="secondary">tap to pay</IonText>
+                </strong>
+              ) : "unpaid")}
           </IonText>
+        )}
+
+        {(_appointment.status === APPOINTMENT.STATUSES.UNAPPROVED && isCurrentNonPatient) && (
+          <IonGrid className="ion-no-padding">
+            <IonRow>
+              <IonCol>
+                <IonButton
+                  expand="block"
+                  color="danger"
+                  fill="outline"
+                  onClick={onReject}
+                  disabled={isUpdating}
+                  shape="round"
+                >
+                  Reject
+                  <IonIcon slot="end" icon={close} />
+                </IonButton>
+              </IonCol>
+              <IonCol>
+                <IonButton
+                  expand="block"
+                  color="success"
+                  onClick={onApprove}
+                  disabled={isUpdating}
+                  shape="round"
+                >
+                  Approve
+                  <IonIcon slot="end" icon={checkmark} />
+                </IonButton>
+              </IonCol>
+            </IonRow>
+          </IonGrid>
         )}
       </IonLabel>
     </IonItem>
@@ -107,27 +150,8 @@ const AppointmentItem: React.FC<PropsWithChildren<Props>> = ({ appointment, onTa
 
   return (
     <>
-      {currentUser.accountType !== USER.ACCOUNT_TYPES.PATIENT &&
-        _appointment.status === APPOINTMENT.STATUSES.UNAPPROVED ? (
-          <>
-            <Loader isOpen={isUpdating} message="Responding" />
-            <IonItemSliding key={_appointment._id}>
-              <IonItemOptions side="start">
-                <IonItemOption color="success" onClick={onApprove}>
-                  <IonIcon slot="icon-only" icon={checkmarkCircle} />
-                </IonItemOption>
-                <IonItemOption color="danger" onClick={onReject}>
-                  <IonIcon slot="icon-only" icon={closeCircle} />
-                </IonItemOption>
-              </IonItemOptions>
-              <Inner key="appointment-inner" />
-
-            </IonItemSliding>
-          </>
-        ) : (
-          <Inner key="appointment-inner" />
-        )}
-
+      <Loader isOpen={isUpdating} message="Responding" />
+      <Inner key="appointment-inner" />
     </>
   );
 }

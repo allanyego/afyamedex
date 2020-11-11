@@ -70,8 +70,6 @@ const OnSite: React.FC = () => {
     return null;
   }
 
-  console.log("page mounted successfully");
-
   return (
     <IonPage>
       <IonContent fullscreen className="ion-padding-horizontal">
@@ -180,18 +178,20 @@ function ProfessionalView({
       {(appointment.status === APPOINTMENT.STATUSES.CLOSED || hasMeetingEnded) ? (
         <ViewInner appointment={appointment} />
       ) : (
-          hasMeetingStarted ? (
-            <IonButton color="danger" size="large" onClick={endMeeting}>
-              {duration}min
-              <IonIcon slot="end" icon={stopSharp} />
-            </IonButton>
-          ) : (
-              <IonButton color="secondary" size="large" onClick={startMeeting}>
-                Start
-                <IonIcon slot="end" icon={playSharp} />
+          <Centered>
+            {hasMeetingStarted ? (
+              <IonButton color="danger" size="large" onClick={endMeeting}>
+                {duration}min
+                <IonIcon slot="end" icon={stopSharp} />
               </IonButton>
+            ) : (
+                <IonButton color="secondary" size="large" onClick={startMeeting}>
+                  Start
+                  <IonIcon slot="end" icon={playSharp} />
+                </IonButton>
 
-            )
+              )}
+          </Centered>
         )
       }
     </div >
@@ -216,7 +216,7 @@ function ViewInner({ appointment }: ViewProps) {
       <div className="h100 d-flex ion-justify-content-center ion-align-items-center">
         {appointment.hasBeenBilled ? (
           <IonButton color="success" fill="clear" size="small" disabled>
-            Billed
+            KES.{appointment.amount}
             <IonIcon slot="end" icon={checkmarkCircleSharp} />
           </IonButton>
         ) : (

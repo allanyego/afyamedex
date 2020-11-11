@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { IonButton, IonCol, IonContent, IonIcon, IonInput, IonItem, IonLabel, IonPage, IonRow, IonText, IonTextarea } from "@ionic/react";
+import { IonButton, IonCol, IonContent, IonIcon, IonInput, IonItem, IonLabel, IonPage, IonRow, IonText, IonTextarea, useIonViewDidEnter } from "@ionic/react";
 import { useHistory, useLocation } from "react-router";
 import * as Yup from "yup";
 import { Formik, Form } from "formik";
@@ -13,10 +13,13 @@ import useToastManager from "../lib/toast-hook";
 import useMounted from "../lib/mounted-hook";
 import { addReview, getSessionReview } from "../http/reviews";
 import LoadingFallback from "../components/LoadingFallback";
+import { getAppointment } from "../http/appointments";
 
 const Review: React.FC = () => {
+  const [isFetching, setFetching] = useState(true);
   const [hasReview, setHasReview] = useState(false);
-  const { state: appointment } = useLocation<any>();
+  const { state } = useLocation<any>();
+  const [appointment, setAppointment] = useState(state);
   const { currentUser } = useAppContext() as any;
   const { onError, onSuccess } = useToastManager();
 
@@ -34,6 +37,16 @@ const Review: React.FC = () => {
     }
   };
 
+  useIonViewDidEnter(async () => {
+    try {
+      const { data } = await getAppointment(appointment._id, currentUser.token);
+      setAppointment(data);
+      setFetching(false);
+    } catch (error) {
+      onError(error.message);
+    }
+  });
+
   if (!appointment || !appointment._id) {
     return null;
   }
@@ -42,18 +55,22 @@ const Review: React.FC = () => {
     <IonPage>
       <IonContent fullscreen>
         <Centered fullHeight>
-          <div>
-            {(appointment.hasReview || hasReview) ? (
-              <ReviewView appointmentId={appointment._id} />
-            ) : (appointment.professional._id === currentUser._id) ? (
-              <NoRewiewView />
-            ) : (
-                  <ReviewForm
-                    appointment={appointment}
-                    onSubmit={handleReview}
-                  />
-                )}
-          </div>
+          {isFetching ? (
+            <LoadingFallback fullLength />
+          ) : (
+              <div>
+                {(appointment.hasReview || hasReview) ? (
+                  <ReviewView appointmentId={appointment._id} />
+                ) : (appointment.professional._id === currentUser._id) ? (
+                  <NoRewiewView />
+                ) : (
+                      <ReviewForm
+                        appointment={appointment}
+                        onSubmit={handleReview}
+                      />
+                    )}
+              </div>
+            )}
 
         </Centered>
       </IonContent>

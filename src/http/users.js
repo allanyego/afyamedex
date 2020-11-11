@@ -2,7 +2,10 @@ import request, { constructAuthHeader } from "./request";
 
 const BASE_URL = "/users";
 
-export async function getUsers({ username = undefined, patient = false }) {
+export async function getUsers(
+  token,
+  { username = undefined, patient = false } = {}
+) {
   let queryParams = "";
   if (username && patient) {
     queryParams += `?username=${encodeURIComponent(username)}&patient=true`;
@@ -12,7 +15,9 @@ export async function getUsers({ username = undefined, patient = false }) {
     queryParams += `?patient=true`;
   }
 
-  return await request(`${BASE_URL}/${queryParams}`, {});
+  return await request(`${BASE_URL}/${queryParams}`, {
+    headers: constructAuthHeader(token),
+  });
 }
 
 export async function signIn(username, password) {

@@ -8,7 +8,6 @@ import defaultAvatar from "../assets/img/default_avatar.jpg";
 import ContactCard from "./ContactCard";
 import { chatbubbleEllipses, calendar, heartOutline, pencilSharp, heart } from "ionicons/icons";
 import { useHistory } from "react-router";
-import "./UserDetails.css";
 import Education from "./profile-parts/Education";
 import Speciality from "./profile-parts/Speciality";
 import Bio from "./profile-parts/Bio";
@@ -24,9 +23,11 @@ import { checkIfFavorited, favorite } from "../http/favorites";
 import { getUserRating } from "../http/reviews";
 import Centered from "./Centered";
 import RatingInfo from "./RatingInfo";
+import "./UserProfile.css";
 
 export interface ProfileData {
   _id?: string,
+  birthday: Date,
   fullName: string,
   username: string,
   gender: string,
@@ -38,6 +39,7 @@ export interface ProfileData {
   picture?: string,
   experience?: number,
   speciality?: string[],
+  disabled: boolean,
   education?: {
     _id?: string,
     institution: string,
@@ -100,65 +102,72 @@ function UserDetails({ user }: { user: ProfileData }) {
       fetch: true,
     }
   });
+
   return (
     <>
-      <IonGrid className="ion-no-padding ion-padding-vertical" style={{
-        backgroundColor: "var(--ion-color-dark)",
-        color: "var(--ion-color-light)"
-      }}>
-        <IonRow>
-          <IonCol
-            size="3"
-            className="ion-margin-horizontal d-flex ion-justify-content-center ion-align-items-center">
-            <img src={(user.picture || defaultAvatar) as any} alt={user.fullName} className="user-avatar" />
-          </IonCol>
-          <IonCol>
-            <Names user={user} currentUserId={currentUser._id} />
-            {[
-              USER.ACCOUNT_TYPES.INSTITUTION,
-              USER.ACCOUNT_TYPES.PROFESSIONAL
-            ].includes(user.accountType as string) &&
-              user._id !== currentUser._id &&
-              (
-                <IonRow>
-                  <IonCol size="5">
-                    <IonButton
-                      shape="round"
-                      fill="outline"
-                      color="secondary"
-                      expand="block"
-                      onClick={toChat}
-                    >
-                      <IonIcon slot="icon-only" icon={chatbubbleEllipses} />
-                    </IonButton>
-                  </IonCol>
-                  <IonCol size="5">
-                    <IonButton shape="round"
-                      fill="outline"
-                      color="secondary"
-                      expand="block"
-                      routerLink={`/app/professionals/${user._id}/book`}
-                    >
-                      <IonIcon slot="icon-only" icon={calendar} />
-                    </IonButton>
-                  </IonCol>
-                  <IonCol size="2" className="d-flex ion-justify-content-center ion-align-items-center">
-                    <FavButton userId={user._id as string} />
-                  </IonCol>
-                </IonRow>
-              )}
-          </IonCol>
-        </IonRow>
-      </IonGrid>
+      <div
+        style={{
+          backgroundColor: "var(--ion-color-dark)",
+          color: "var(--ion-color-light)"
+        }}
+      >
+        <IonGrid className="ion-no-padding ion-padding-top d-flex ion-align-items-center">
+          <IonRow>
+            <IonCol
+              size="3"
+              className="ion-margin-horizontal d-flex ion-justify-content-center ion-align-items-center">
+              <img src={(user.picture || defaultAvatar) as any} alt={user.fullName} className="user-avatar" />
+            </IonCol>
+            <IonCol>
+              <Names user={user} currentUserId={currentUser._id} />
+            </IonCol>
+          </IonRow>
+        </IonGrid>
+        <div className="ion-margin-bottom">
+          {[
+            USER.ACCOUNT_TYPES.INSTITUTION,
+            USER.ACCOUNT_TYPES.PROFESSIONAL
+          ].includes(user.accountType as string) &&
+            user._id !== currentUser._id &&
+            (
+              <IonRow>
+                <IonCol size="5">
+                  <IonButton
+                    shape="round"
+                    fill="outline"
+                    color="secondary"
+                    expand="block"
+                    onClick={toChat}
+                  >
+                    Chat
+                    <IonIcon slot="end" icon={chatbubbleEllipses} />
+                  </IonButton>
+                </IonCol>
+                <IonCol size="5">
+                  <IonButton shape="round"
+                    fill="outline"
+                    color="secondary"
+                    expand="block"
+                    routerLink={`/app/professionals/${user._id}/book`}
+                  >
+                    Book
+                    <IonIcon slot="end" icon={calendar} />
+                  </IonButton>
+                </IonCol>
+                <IonCol size="2" className="d-flex ion-justify-content-center ion-align-items-center">
+                  <FavButton userId={user._id as string} />
+                </IonCol>
+              </IonRow>
+            )}
+        </div>
+      </div>
       <IonGrid>
         <IonRow>
           <IonCol>
             <IonText className="ion-text-center ion-margin-bottom">
               {user.accountType !== USER.ACCOUNT_TYPES.PATIENT && (
                 <>
-                  <p className="ion-no-margin">
-                    <Experience user={user} currentUserId={currentUser._id} />
-                  </p>
+                  <Experience user={user} currentUserId={currentUser._id} />
                   <RatingInfo userId={user._id as string} />
                 </>
               )}

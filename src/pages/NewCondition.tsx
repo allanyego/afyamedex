@@ -1,5 +1,5 @@
 import React from "react";
-import { IonPage, IonContent, IonHeader, IonToolbar, IonButtons, IonBackButton, IonTitle, IonRow, IonCol, IonItem, IonLabel, IonInput, IonTextarea, IonButton, IonText, IonIcon } from "@ionic/react";
+import { IonPage, IonContent, IonHeader, IonToolbar, IonButtons, IonBackButton, IonTitle, IonRow, IonCol, IonItem, IonLabel, IonInput, IonTextarea, IonButton, IonText, IonIcon, IonCheckbox } from "@ionic/react";
 import { Formik, Form } from "formik";
 import * as Yup from "yup";
 import { useAppContext } from "../lib/context-lib";
@@ -13,6 +13,7 @@ const newConditionSchema = Yup.object({
   description: Yup.string().required("Enter condition description."),
   symptoms: Yup.string().required("Enter some symptoms."),
   remedies: Yup.string().required("Enter some remedies."),
+  startThread: Yup.boolean(),
 });
 
 const NewCondition: React.FC = () => {
@@ -22,7 +23,7 @@ const NewCondition: React.FC = () => {
 
   const handleSubmit = async (values: any, { setSubmitting }: any) => {
     try {
-      await addCondition(values, currentUser.token);
+      await addCondition(currentUser.token, values);
       setSubmitting(false);
       onSuccess("Condition posted successfully");
       history.push("/app/info");
@@ -30,6 +31,10 @@ const NewCondition: React.FC = () => {
       setSubmitting(false);
       onError(error.message);
     }
+  };
+
+  const wrapHandler = (fieldName: string, setFieldValue: any) => {
+    return (e: any) => setFieldValue(fieldName, e.detail.checked);
   };
 
   return (
@@ -52,6 +57,7 @@ const NewCondition: React.FC = () => {
             >{({
               handleChange,
               handleBlur,
+              setFieldValue,
               errors,
               touched,
               isValid,
@@ -91,9 +97,18 @@ const NewCondition: React.FC = () => {
                     <IonIcon icon={informationCircle} />Write each remedy in a new line
                   </IonText>
                   <IonItem className={touched.remedies && errors.remedies ? "has-error" : ""}>
-                    <IonLabel position="floating">Description</IonLabel>
+                    <IonLabel position="floating">Remedy</IonLabel>
                     <IonTextarea name="remedies" rows={3}
                       placeholder={'one\ntwo\nthree\nfour'} onIonChange={handleChange} onIonBlur={handleBlur} />
+                  </IonItem>
+
+                  <IonItem lines="full">
+                    <IonLabel>Start matching thread</IonLabel>
+                    <IonCheckbox
+                      name="startThread"
+                      slot="start"
+                      onIonChange={wrapHandler("startThread", setFieldValue)}
+                    />
                   </IonItem>
 
                   <IonRow>

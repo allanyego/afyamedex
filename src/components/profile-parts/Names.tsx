@@ -1,7 +1,6 @@
 import React from "react";
-import { IonItem, IonInput, IonButton, IonText } from "@ionic/react";
+import { IonText } from "@ionic/react";
 
-import withEditableFeatures, { EditableProps } from "./withEditableFeatures";
 import { PartProps } from "./Bio";
 
 const Names: React.FC<PartProps> = ({ user }) => {

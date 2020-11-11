@@ -1,9 +1,5 @@
-import React, { useState } from "react";
-import { Formik, Form } from "formik";
-import * as Yup from "yup";
-
-import withEditableFeatures, { EditableProps } from "./withEditableFeatures";
-import { IonButton, IonRow, IonItem, IonCol, IonInput, IonGrid, IonText, IonBadge } from "@ionic/react";
+import React from "react";
+import { IonText, IonBadge } from "@ionic/react";
 import { PartProps } from "./Bio";
 
 const Conditions: React.FC<PartProps> = ({ user, currentUserId }) => {
@@ -16,11 +12,13 @@ const Conditions: React.FC<PartProps> = ({ user, currentUserId }) => {
       <IonText>
         <h6 className="section-title">Conditions</h6 >
       </IonText >
-      {
-        user.conditions.map((c: string, index: number) => <IonBadge key={index} color="secondary">
-          {c}
-        </IonBadge>)
-      }
+      <div className="profile-badges-container">
+        {
+          user.conditions.map((c: string, index: number) => <IonBadge key={index} color="secondary">
+            {c}
+          </IonBadge>)
+        }
+      </div>
     </div>
   );
 }

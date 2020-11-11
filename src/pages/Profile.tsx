@@ -1,13 +1,12 @@
 import React, { useState, useEffect } from "react";
-import { useIonViewDidEnter, useIonViewWillLeave, IonRouterOutlet, IonPage, useIonViewDidLeave } from "@ionic/react";
+import { useIonViewDidEnter, useIonViewWillLeave, IonRouterOutlet, IonPage } from "@ionic/react";
 import { useParams, useRouteMatch, Route, useHistory } from "react-router";
 
 import { getById } from "../http/users";
 import { useAppContext } from "../lib/context-lib";
-import { ProfileData } from "../components/UserDetails";
 import useToastManager from "../lib/toast-hook";
 import "./Profile.css";
-import UserProfile from "../components/UserProfile";
+import UserProfile, { ProfileData } from "../components/UserProfile";
 import useMounted from "../lib/mounted-hook";
 
 const ProfileCurrentUser: React.FC = () => {

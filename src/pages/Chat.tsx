@@ -18,14 +18,14 @@ export default function Chat() {
   const { currentUser } = useAppContext() as any;
   const { onError } = useToastManager();
   const { isMounted, setMounted } = useMounted();
-  const socket = useSocket();
+  // const socket = useSocket();
 
-  useEffect(() => {
-    // Join all of our rooms once online
-    threads && socket && threads.forEach((thread: any) => socket.emit("join", {
-      room: thread._id,
-    }));
-  }, [threads]);
+  // useEffect(() => {
+  //   // Join all of our rooms once online
+  //   threads && threads.forEach((thread: any) => socket.emit("join", {
+  //     room: thread._id,
+  //   }));
+  // }, [threads]);
 
   useIonViewDidEnter(() => {
     getUserThreads(currentUser._id, currentUser.token).then(({ data }) => {
@@ -42,7 +42,7 @@ export default function Chat() {
 
   return (
     <IonPage>
-      <UserHeader title="Chat" />
+      <UserHeader title="Inbox" />
       <IonContent fullscreen>
 
         {loadError ? (
@@ -62,13 +62,15 @@ export default function Chat() {
 function ThreadRibbon({ thread }: any) {
   const history = useHistory();
   const { currentUser } = useAppContext() as any;
-  const otherUser = thread.participants.filter(
+  const otherUser = thread.participants.find(
     (user: any) => user._id !== currentUser._id
-  )[0];
+  );
 
   const toThread = () => history.push({
     pathname: `/app/chat/${thread._id}`,
-    state: otherUser,
+    state: {
+      ...otherUser,
+    },
   });
 
   return (

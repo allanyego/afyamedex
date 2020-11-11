@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { IonPage, IonIcon, IonContent, IonText, IonButton, useIonViewDidEnter, useIonViewWillLeave, IonSpinner } from "@ionic/react";
 import { useParams, useLocation, useHistory } from "react-router";
 import { useStripe, useElements, CardElement } from "@stripe/react-stripe-js";
-import { arrowBackSharp } from 'ionicons/icons';
+import { arrowBackSharp, checkmark } from 'ionicons/icons';
 
 import CardSection from "../components/CardSection";
 import { checkout, editAppointment } from "../http/appointments";
@@ -28,7 +28,6 @@ const Checkout: React.FC = () => {
     appointmentId: string,
   }>();
   const { state } = useLocation<{ duration: number }>();
-  const history = useHistory();
   const { currentUser } = useAppContext() as any;
   const { onError, onSuccess } = useToastManager();
   const { isMounted, setMounted } = useMounted();
@@ -121,8 +120,8 @@ const Checkout: React.FC = () => {
                   fill="clear"
                   color="medium"
                   size="small"
-                  routerLink="/app/feed">
-                  Back home
+                  routerLink="/app">
+                  home
                   <IonIcon slot="start" icon={arrowBackSharp} />
                 </IonButton>
               </div>
@@ -148,22 +147,29 @@ const Checkout: React.FC = () => {
                   </div>
                 ) : (
                     <div>
+                      <IonText>
+                        <h3 className="ion-text-center">
+                          Checkout
+                        </h3>
+                      </IonText>
                       <form onSubmit={handleSubmit}>
                         <CardSection amount={data!.amount} />
                         <div className="d-flex ion-justify-content-center ion-margin-top">
                           <IonButton
                             type="submit"
+                            color="secondary"
                             disabled={!stripe || isSubmitting}
                           >
 
                             {isSubmitting ? (
                               <>
-                                <IonSpinner name="lines-small" />
-                            Paying
-                            </>
+                                Confirming...
+                                <IonSpinner slot="end" name="lines-small" />
+                              </>
                             ) : (
                                 <>
-                                  Pay {data!.amount}
+                                  Confirm
+                                  <IonIcon slot="end" icon={checkmark} />
                                 </>
                               )}
                           </IonButton>
@@ -176,8 +182,8 @@ const Checkout: React.FC = () => {
                           size="small"
                           routerLink="/app/appointments">
                           <IonIcon slot="start" icon={arrowBackSharp} />
-                        Later
-                    </IonButton>
+                            Later
+                        </IonButton>
                       </Centered>
                     </div>
                   )}

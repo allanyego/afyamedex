@@ -114,7 +114,7 @@ const Meeting: React.FC = () => {
                             size="small"
                             disabled
                           >
-                            Billed
+                            KES.{selectedAppointment.amount}
                             <IonIcon slot="start" icon={checkmarkCircleSharp} />
                           </IonButton>
                         ) : (

@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { IonPage, IonContent, IonFooter, IonButtons, IonButton, IonIcon, IonHeader, IonBackButton, IonToolbar, IonTitle, IonGrid, IonRow, IonCard, IonCol, IonText, IonTextarea, useIonViewWillLeave, useIonViewDidEnter } from "@ionic/react";
 import { attachOutline, callOutline, sendOutline } from "ionicons/icons";
 import moment from "moment";
@@ -12,6 +12,7 @@ import { useAppContext } from "../lib/context-lib";
 import useToastManager from "../lib/toast-hook";
 import LoadingFallback from "../components/LoadingFallback";
 import useSocket from "../lib/socket-hook";
+import useMounted from "../lib/mounted-hook";
 
 const messageSchema = Yup.object({
   body: Yup.string().required("Message can't be blank"),
@@ -20,13 +21,27 @@ const messageSchema = Yup.object({
 const Thread: React.FC = () => {
   let [messages, setMessages] = useState<any[] | null>(null);
   const { threadId } = useParams();
-  const { state } = useLocation() as any;
-  const [otherUser] = useState(state);
+  const { state: otherUser } = useLocation() as any;
+  const [roomJoined, setRoomJoined] = useState<string | null>(null);
   const history = useHistory();
   const chatGrid = useRef<any | null>(null);
   const { currentUser } = useAppContext() as any;
   const { onError } = useToastManager();
+  const { isMounted, setMounted } = useMounted();
   const socket = useSocket();
+
+
+  const setupIO = (room: string) => {
+    isMounted && setRoomJoined(room);
+
+    socket.emit("join", {
+      room,
+    });
+
+    socket.on("new-message", ({ message }: any) => {
+      addMessage(message);
+    });
+  };
 
   const scrollBottomToView = () => {
     const el = document.querySelector(".chat-grid");
@@ -34,44 +49,42 @@ const Thread: React.FC = () => {
   };
 
   const addMessage = (msg: any) => {
-    setMessages((msgs: any) => [
+    isMounted && setMessages((msgs: any) => [
       ...msgs, msg,
     ]);
   };
 
-  useEffect(() => {
-    socket.on("new-message", ({ message }: any) => {
-      addMessage(message);
-      scrollBottomToView();
+  const pushMessage = (msg: any) => {
+    !roomJoined && setupIO(msg.thread);
+    addMessage(msg);
+    // Notify room of new message
+    socket.emit("new-message", {
+      room: msg.thread,
+      message: msg,
     });
-  }, []);
+  };
 
   useIonViewDidEnter(() => {
-    if (state && !state.fullName) {
+    if (otherUser && !otherUser.fullName) {
       history.replace("/app/chat");
       return;
     }
 
-    socket.emit("join", {
-      room: threadId,
-    });
-
-    if (state && !state.fetch) {
-      getThreadMessages(threadId, currentUser.token, !state.username).then(({ data }: any) => {
-        setMessages(data);
+    if (otherUser && !otherUser.fetch) {
+      setupIO(threadId);
+      getThreadMessages(threadId, currentUser.token, !otherUser.username).then(({ data }: any) => {
+        isMounted && setMessages(data);
         scrollBottomToView();
       }).catch(error => onError(error.message));
-    } else if (state && state.fetch) {
+    } else if (otherUser && otherUser.fetch) {
       getUserMessages([
         currentUser._id,
-        state._id,
+        otherUser._id,
       ], currentUser.token).then(({ data }: any) => {
-        setMessages(data);
+        isMounted && setMessages(data);
         // Subscribe to thread now
         if (data.length) {
-          socket.emit("join", {
-            room: data[0].thread,
-          });
+          setupIO(data[0].thread);
         }
         scrollBottomToView();
       }).catch(error => onError(error.message));
@@ -82,7 +95,10 @@ const Thread: React.FC = () => {
   }, []);
 
   useIonViewWillLeave(() => {
-    setMessages = () => null;
+    socket.emit("left-room", {
+      room: roomJoined,
+    });
+    setMounted(false);
   });
 
   return (
@@ -109,9 +125,7 @@ const Thread: React.FC = () => {
       </IonContent>
       <MessageBoxFooter
         threadId={threadId}
-        currentUser={currentUser}
-        otherUser={state}
-        addMessage={addMessage}
+        addMessage={pushMessage}
       />
     </IonPage>
   );
@@ -137,55 +151,48 @@ function Message({ message }: any) {
   );
 }
 
-function MessageBoxFooter({ threadId, currentUser, otherUser, addMessage }: any) {
+function MessageBoxFooter({ threadId, addMessage }: any) {
+  const { state: otherUser } = useLocation<any>();
+  const { currentUser } = useAppContext() as any;
   const { onError } = useToastManager();
-  const socket = useSocket();
+
+  const noThread = threadId === "no-thread";
+  const isPublicThread = !otherUser?._id;
 
   const handleSubmit = async (values: any, { setSubmitting, resetForm }: any) => {
     try {
-      const noThread = threadId !== "no-thread";
-      const isPublicThread = !otherUser.username;
-
       const newMessage = {
-        sender: currentUser._id,
         ...values,
+        sender: currentUser._id,
       };
 
       if (!isPublicThread) {
         newMessage.recipient = otherUser._id;
       }
 
-      if (noThread) {
+      if (!noThread) {
         newMessage.thread = threadId;
       }
 
       const { data } = await sendMessage(newMessage, currentUser.token);
       setSubmitting(false);
       resetForm({});
+
       const postedMessage = {
-        ...data.lastMessage,
+        ...data,
         sender: {
           fullName: currentUser.fullName,
           _id: currentUser._id,
         },
       }
-      if (noThread) {
-        // Join room if it is a new thread
-        socket.emit("join", {
-          room: data._id,
-        });
-      }
-      // Notify room of new message
-      socket.emit("new-message", {
-        room: data._id,
-        message: postedMessage,
-      });
+
       addMessage(postedMessage);
     } catch (error) {
       setSubmitting(false);
       onError(error.message);
     }
   };
+
   return (
     <IonFooter>
       <Formik
