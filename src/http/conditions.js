@@ -1,22 +1,23 @@
-import { SERVER_URL_DEV } from "./constants";
-import request from "./request";
+import request, { constructAuthHeader } from "./request";
 
-const BASE_URL = SERVER_URL_DEV + "/conditions";
+const BASE_URL = "/conditions";
 
-export async function getConditions() {
-  return await request(BASE_URL, {});
+export async function getConditions(token, search = null) {
+  return await request(`${BASE_URL + (!!search ? "?search=" + search : "")}`, {
+    headers: constructAuthHeader(token),
+  });
 }
 
-export async function getById(id) {
-  return await request(`${BASE_URL}/${id}`, {});
+export async function getById(id, token) {
+  return await request(`${BASE_URL}/${id}`, {
+    headers: constructAuthHeader(token),
+  });
 }
 
-export async function addCondition(data, token) {
+export async function addCondition(token, data) {
   return await request(BASE_URL, {
     method: "POST",
     data,
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
+    headers: constructAuthHeader(token),
   });
 }

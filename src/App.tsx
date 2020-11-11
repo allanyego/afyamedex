@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Redirect, Route } from 'react-router-dom';
-import { IonApp, IonRouterOutlet } from '@ionic/react';
+import { IonApp, IonMenu, IonHeader, IonToolbar, IonTitle, IonContent, IonList, IonItem, IonIcon, IonLabel } from '@ionic/react';
 import { IonReactRouter } from '@ionic/react-router';
+import { Elements } from "@stripe/react-stripe-js";
+import { loadStripe } from "@stripe/stripe-js"
+import { SplashScreen } from '@capacitor/core';
 
 /* Core CSS required for Ionic components to work properly */
 import '@ionic/react/css/core.css';
@@ -22,24 +24,54 @@ import '@ionic/react/css/display.css';
 /* Theme variables */
 import './theme/variables.css';
 
-import Home from './pages/Home';
-import SignIn from './pages/SignIn';
-import SignUp from './pages/SignUp';
-import AccountType from './pages/AccountType';
-import Main from './pages/Main';
 import { AppContext } from './lib/context-lib';
 import "./App.css";
 import ToastManager from './components/ToastManager';
-import { getObject } from './lib/storage';
-import { STORAGE_KEY } from './http/constants';
+import { getObject, clear, setObject } from './lib/storage';
+import { STORAGE_KEY, USER } from './http/constants';
 import LoadingFallback from './components/LoadingFallback';
+import { personSharp, peopleSharp, exitSharp, fileTrayFullSharp, chatbubblesSharp, homeSharp, ellipseSharp } from 'ionicons/icons';
+import { ProfileData } from './components/UserProfile';
+import { Detector } from 'react-detect-offline';
+import AppRoutes from './AppRoutes';
+import ErrorBoundary from './components/ErrorBoundary';
+
+const stripePromise = loadStripe("pk_test_lx1Waow5lgsLqWZfGakpklYO00rvf5kGYa");
 
 const App: React.FC = () => {
-  const [currentUser, setCurrentUser] = useState<any>(null);
+  const [currentUser, setCurrentUser] = useState<ProfileData | null>(null);
   const [notifications, setNotifications] = useState([]);
+  const [socket, setSocket] = useState(null);
+  // const [isAlertOpen, setAlertOpen] = useState(false);
   const [isAuthenticating, setAuthenticating] = useState(true);
+  // const { isMounted, setMounted } = useMounted();
+
+  // Close app is there is nothing left in the stack
+  // const hardwareBackButtonHandler = () => {
+  //   isMounted && setAlertOpen(true);
+  // };
+
+  const _setCurrentUser = async (currUser: ProfileData | null) => {
+    if (!currUser) {
+      await clear();
+      return setCurrentUser(currUser);
+    }
+
+    const newDetails = {
+      ...currentUser,
+      ...currUser,
+    };
+    await setObject(STORAGE_KEY, {
+      currentUser: newDetails,
+    });
+
+    setCurrentUser(newDetails);
+  };
 
   useEffect(() => {
+    // Hide splashscreen if app loads in under 4s
+    SplashScreen.hide();
+
     getObject(STORAGE_KEY).then(data => {
       if (data && data.currentUser) {
         setCurrentUser(data.currentUser);
@@ -49,46 +81,97 @@ const App: React.FC = () => {
     });
   }, []);
 
+  const handleLogout = async () => {
+    try {
+      _setCurrentUser(null);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
   return (
-    <IonApp>
-      <AppContext.Provider value={{
-        currentUser,
-        setCurrentUser,
-        notifications,
-        setNotifications,
-      }}>
-        <IonReactRouter>
-          <ToastManager />
-          {isAuthenticating ? (
-            <LoadingFallback />
-          ) : (
-              <IonRouterOutlet>
-                <Route path="/home" render={redirectToApp(Home, currentUser)} exact />
-                <Route path="/sign-in" render={redirectToApp(SignIn, currentUser)} exact={true} />
-                <Route path="/sign-up" render={redirectToApp(SignUp, currentUser)} exact={true} />
-                <Route path="/app" render={() => currentUser ? <Main /> : redirect("/sign-in")} />
-                <Route
-                  path="/account-type"
-                  exact
-                  render={() => currentUser ?
-                    currentUser!.accountType ? redirect("/app") : <AccountType />
-                    : redirect("/sign-in")}
-                />
-                <Route path="/" render={() => redirect("/home")} exact />
-              </IonRouterOutlet>
+    <ErrorBoundary>
+      <Elements stripe={stripePromise}>
+        <IonApp>
+          <AppContext.Provider value={{
+            setCurrentUser: _setCurrentUser,
+            currentUser,
+            notifications,
+            setNotifications,
+            socket,
+            setSocket,
+          }}>
+            {currentUser && (
+              <IonMenu side="start" menuId="super-cool-menu" contentId="router-outlet"
+                swipeGesture={false}
+              >
+                <IonHeader>
+                  <IonToolbar color="secondary">
+                    <IonTitle className="ion-text-capitalize">{currentUser.fullName}</IonTitle>
+                  </IonToolbar>
+                </IonHeader>
+                <IonContent>
+                  <IonList lines="full">
+                    <IonItem routerLink="/app/profile">
+                      <IonIcon slot="start" icon={personSharp} />
+                      <IonLabel>Profile</IonLabel>
+                    </IonItem>
+
+                    <IonItem routerLink="/app">
+                      <IonIcon slot="start" icon={homeSharp} />
+                      <IonLabel>Home</IonLabel>
+                    </IonItem>
+
+                    <IonItem routerLink="/app/info">
+                      <IonIcon slot="start" icon={ellipseSharp} />
+                      <IonLabel>Conditions</IonLabel>
+                    </IonItem>
+
+                    {currentUser.accountType === USER.ACCOUNT_TYPES.PATIENT && (
+                      <IonItem routerLink="/app/professionals">
+                        <IonIcon slot="start" icon={peopleSharp} />
+                        <IonLabel>Professionals/Institutions</IonLabel>
+                      </IonItem>
+                    )}
+
+                    <IonItem routerLink="/app/appointments">
+                      <IonIcon slot="start" icon={fileTrayFullSharp} />
+                      <IonLabel>Appointments</IonLabel>
+                    </IonItem>
+
+                    <IonItem routerLink="/app/chat">
+                      <IonIcon slot="start" icon={chatbubblesSharp} />
+                      <IonLabel>Inbox</IonLabel>
+                    </IonItem>
+
+                    <IonItem onClick={handleLogout} button>
+                      <IonIcon color="danger" slot="start" icon={exitSharp} />
+                      <IonLabel color="danger">Logout</IonLabel>
+                    </IonItem>
+
+                  </IonList>
+                </IonContent>
+              </IonMenu>
             )}
-        </IonReactRouter>
-      </AppContext.Provider>
-    </IonApp>
+            <IonReactRouter>
+              <ToastManager />
+              {isAuthenticating ? (
+                <LoadingFallback />
+              ) : (
+                  <AppRoutes />
+                )}
+
+              <Detector render={(props) => {
+                return props.online ?
+                  null : <div
+                    className="network-detector-status">Seems you're offline</div>
+              }} />
+            </IonReactRouter>
+          </AppContext.Provider>
+        </IonApp>
+      </Elements>
+    </ErrorBoundary>
   );
 };
-
-function redirect(path: string) {
-  return <Redirect to={path} />
-}
-
-function redirectToApp(Comp: React.FC, currentUser: any) {
-  return () => !currentUser ? <Comp /> : redirect("/app");
-}
 
 export default App;

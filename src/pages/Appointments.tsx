@@ -1,95 +1,102 @@
-import React, { useState, useEffect } from "react";
-import { IonPage, IonContent, IonList, IonItem, IonLabel, IonRow, IonIcon, IonText, IonGrid, IonCol, IonItemSliding, IonItemOptions, IonItemOption } from "@ionic/react";
+import React, { useState, useRef } from "react";
+import { IonPage, IonContent, IonList, IonItem, IonLabel, IonRow, IonIcon, IonText, IonGrid, IonCol, IonItemSliding, IonItemOptions, IonItemOption, useIonViewDidEnter, useIonViewWillLeave, IonLoading, IonModal, IonButton, IonAlert, IonBadge } from "@ionic/react";
 import moment from "moment";
 
 import UserHeader from "../components/UserHeader";
-import { calendarOutline, timeOutline, checkmarkCircle, closeCircle } from "ionicons/icons";
 import "./Appointments.css";
 import LoadingFallback from "../components/LoadingFallback";
 import useToastManager from "../lib/toast-hook";
 import { getAppointments } from "../http/appointments";
 import { useAppContext } from "../lib/context-lib";
-import { USER } from "../http/constants";
+import { APPOINTMENT } from "../http/constants";
+import useMounted from "../lib/mounted-hook";
+import ErrorFallback from "../components/ErrorFallback";
+import { useHistory } from "react-router";
+import AppointmentItem from "../components/AppointmentItem";
 
 export default function Appointments() {
   let [appointments, setAppointments] = useState<any[] | null>(null);
+  const [loadError, setLoadError] = useState(false);
+  const history = useHistory();
   const { onError } = useToastManager();
   const { currentUser } = useAppContext() as any;
+  const { isMounted, setMounted } = useMounted();
+
+  const onTapAppointment = (appointment: any) => {
+    const isNotApprovedOrIsRejected = appointment.status === APPOINTMENT.STATUSES.UNAPPROVED ||
+      appointment.status === APPOINTMENT.STATUSES.REJECTED;
+    const isClosed = appointment.status === APPOINTMENT.STATUSES.CLOSED;
+
+    if (isNotApprovedOrIsRejected) {
+      return;
+    }
+
+    const isUnbilled = !appointment.hasBeenBilled;
+    const isCurrentUserPatient = (appointment.patient._id === currentUser._id);
+    if (isClosed && isUnbilled && isCurrentUserPatient) {
+      history.push("/app/appointments/checkout/" + appointment._id, {
+        duration: appointment.minutesBilled,
+      });
+    } else {
+      if (appointment.type === APPOINTMENT.TYPES.VIRTUAL_CONSULTATION) {
+        history.push("/app/appointments/virtual", {
+          ...appointment,
+        });
+      } else if (appointment.type === APPOINTMENT.TYPES.ONSITE_CONSULTATION) {
+        history.push("/app/appointments/on-site", {
+          ...appointment,
+        });
+      } else {
+        history.push("/app/appointments/tests", {
+          ...appointment,
+        });
+      }
+    }
+  }
 
   const fetchAppointments = async () => {
+    if (isMounted) {
+      setAppointments(null);
+      setLoadError(false);
+    }
+
     try {
       const { data } = await getAppointments(currentUser._id, currentUser.token);
-      setAppointments(data);
+      isMounted && setAppointments(data);
     } catch (error) {
+      isMounted && setLoadError(true);
       onError(error.message);
     }
   };
 
-  useEffect(() => {
+  useIonViewDidEnter(() => {
     fetchAppointments().then();
-    return () => {
-      setAppointments = () => null;
-    }
-  }, [])
+  }, []);
+
+  useIonViewWillLeave(() => {
+    setMounted(false);
+  });
 
   return (
     <IonPage>
       <UserHeader title="Your appointments" />
       <IonContent fullscreen className="appointments-page">
-        {!appointments ? (
+        {loadError ? (
+          <ErrorFallback />
+        ) : !appointments ? (
           <LoadingFallback />
         ) : (
-            <AppointmentList appointments={appointments} />
-          )}
+              <IonList lines="full">
+                {appointments.map(appointment => (
+                  <AppointmentItem
+                    appointment={appointment}
+                    key={appointment._id}
+                    onTap={onTapAppointment}
+                  />
+                ))}
+              </IonList>
+            )}
       </IonContent>
     </IonPage>
-  );
-}
-
-
-function AppointmentList({ appointments }: { appointments: any[] }) {
-  const { currentUser } = useAppContext() as any;
-  return (
-    <IonList lines="full">
-      {appointments.map(appointment => (
-
-        <IonItemSliding key={appointment._id}>
-          <IonItemOptions side="start">
-            <IonItemOption color="success">
-              <IonIcon slot="icon-only" icon={checkmarkCircle} />
-            </IonItemOption>
-            <IonItemOption color="danger">
-              <IonIcon slot="icon-only" icon={closeCircle} />
-            </IonItemOption>
-          </IonItemOptions>
-
-          <IonItem>
-            <IonLabel>
-              <h2 className="ion-text-capitalize">
-                {
-                  currentUser.accountType === USER.ACCOUNT_TYPES.PATIENT ? (
-                    appointment.professional.fullName
-                  ) : (
-                      appointment.patient.fullName
-                    )}
-              </h2>
-              <IonText color="medium">{appointment.subject}</IonText>
-              <IonGrid
-                className="ion-no-padding datetime-grid"
-              >
-                <IonRow>
-                  <IonCol className="d-flex ion-align-items-center ion-no-padding d-col">
-                    <IonIcon icon={calendarOutline} />{" "} {moment(appointment.date).format("MMM Do YYYY")}
-                  </IonCol>
-                  <IonCol className="d-flex ion-align-items-center ion-no-padding ion-padding-start d-col">
-                    <IonIcon icon={timeOutline} />{" "} {moment(appointment.time).format("LT")}
-                  </IonCol>
-                </IonRow>
-              </IonGrid>
-            </IonLabel>
-          </IonItem>
-        </IonItemSliding>
-      ))}
-    </IonList>
   );
 }

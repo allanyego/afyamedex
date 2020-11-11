@@ -1,11 +1,10 @@
 import React, { useState } from "react";
-import { IonHeader, IonToolbar, IonAvatar, IonTitle, IonButtons, IonButton, IonIcon, IonPopover, IonList, IonItem, IonLabel } from "@ionic/react";
-import { ellipsisVertical, list, exit } from "ionicons/icons";
-import { useHistory } from "react-router";
+import { IonHeader, IonToolbar, IonAvatar, IonTitle, IonButtons, IonButton, IonIcon } from "@ionic/react";
+import { menuController } from "@ionic/core"
+
 import { useAppContext } from "../lib/context-lib";
 import defaultAvatar from "../assets/img/default_avatar.jpg";
-import { clear } from "../lib/storage";
-import useToastManager from "../lib/toast-hook";
+import { menuSharp } from "ionicons/icons";
 
 interface HeaderProps {
   title: string
@@ -13,70 +12,38 @@ interface HeaderProps {
 }
 
 export default function UserHeader({ title, secondary }: HeaderProps) {
-  const history = useHistory();
-  const { currentUser, setCurrentUser } = useAppContext() as any;
+  const [isMenuOpen, setMenuOpen] = useState(false);
+  const { currentUser } = useAppContext() as any;
 
-  const toProfile = () => history.push('/app/profile');
+  const toggleMenu = () => {
+    if (isMenuOpen) {
+      menuController.close();
+      setMenuOpen(false);
+    } else {
+      menuController.open();
+      setMenuOpen(true);
+    }
+  }
 
   return (
     <IonHeader>
       <IonToolbar>
-        <IonAvatar slot="start" className="ion-padding" onClick={toProfile}>
-          <img src={defaultAvatar} alt={currentUser.fullName} />
-        </IonAvatar>
-        <IonTitle>{title}</IonTitle>
-        <IonButtons slot="secondary">
-          {secondary ? secondary : <PopoverButton setCurrentUser={setCurrentUser} />}
+        <IonButtons slot="start">
+          <IonButton onClick={toggleMenu}>
+            <IonIcon slot="icon-only" icon={menuSharp} />
+          </IonButton>
         </IonButtons>
+        <IonTitle>{title}</IonTitle>
+        {secondary ? (
+          <IonButtons slot="end">
+            {secondary}
+          </IonButtons>
+        ) : (
+            <IonAvatar slot="end" className="ion-padding">
+              <img src={defaultAvatar} alt={currentUser.fullName} />
+            </IonAvatar>
+          )}
       </IonToolbar>
     </IonHeader>
   );
-}
-
-function PopoverButton({ setCurrentUser }: { setCurrentUser: (args: any) => {} }) {
-  let [showPopover, setShowPopover] = useState(false);
-  const [popoverEvent, setPopoverEvent] = useState(undefined);
-  const history = useHistory();
-  const { onError } = useToastManager();
-
-  const onShowPopover = (e: any) => {
-    e.persist();
-    setPopoverEvent(e);
-    setShowPopover(true);
-  };
-  const onHidePopover = () => setShowPopover(false);
-  const handleLogout = async () => {
-    try {
-      await clear();
-      setCurrentUser(null);
-      history.push("/sign-in");
-    } catch (error) {
-      onError(error.message);
-    }
-  };
-
-  return (
-    <>
-      <IonButton onClick={onShowPopover}>
-        <IonIcon slot="icon-only" icon={ellipsisVertical} />
-      </IonButton>
-      <IonPopover
-        isOpen={showPopover}
-        event={popoverEvent}
-        cssClass='my-custom-class'
-        onDidDismiss={onHidePopover}
-      >
-        <IonList>
-          <IonItem routerLink="/app/professionals">
-            <IonIcon slot="start" icon={list} />
-            <IonLabel>Find professionals</IonLabel>
-          </IonItem>
-          <IonItem onClick={handleLogout}>
-            <IonIcon color="danger" slot="start" icon={exit} />
-            <IonLabel color="danger">Logout</IonLabel>
-          </IonItem>
-        </IonList>
-      </IonPopover>
-    </>
-  )
 }

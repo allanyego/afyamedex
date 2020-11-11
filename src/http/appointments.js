@@ -1,7 +1,12 @@
-import { SERVER_URL_DEV } from "./constants";
 import request, { constructAuthHeader } from "./request";
 
-const BASE_URL = SERVER_URL_DEV + "/appointments";
+const BASE_URL = "/appointments";
+
+export async function getAppointment(appointmentId, token) {
+  return await request(`${BASE_URL}/appointment/${appointmentId}`, {
+    headers: constructAuthHeader(token),
+  });
+}
 
 export async function getAppointments(userId, token) {
   return await request(`${BASE_URL}/${userId}`, {
@@ -17,9 +22,23 @@ export async function post(userId, token, data) {
   });
 }
 
-export async function edit(appointmentId, token, data) {
+export async function editAppointment(
+  appointmentId,
+  token,
+  data,
+  multiPart = false
+) {
   return await request(`${BASE_URL}/${appointmentId}`, {
     method: "PUT",
+    headers: constructAuthHeader(token),
+    data,
+    multiPart,
+  });
+}
+
+export async function checkout(appointmentId, token, data) {
+  return await request(`${BASE_URL}/checkout/${appointmentId}`, {
+    method: "GET",
     headers: constructAuthHeader(token),
     data,
   });

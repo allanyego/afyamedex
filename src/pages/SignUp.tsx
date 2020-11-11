@@ -1,5 +1,5 @@
 import { IonButton, IonContent, IonHeader, IonPage, IonTitle, IonToolbar, IonRow, IonCol, IonText, IonRouterLink, IonInput, IonItem, IonLabel, IonItemDivider, IonSelect, IonSelectOption, IonDatetime } from '@ionic/react';
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Formik, Form } from "formik";
 import * as Yup from "yup";
 import { useHistory } from "react-router-dom";
@@ -8,15 +8,18 @@ import { useAppContext } from '../lib/context-lib';
 import useToastManager from '../lib/toast-hook';
 import FormFieldFeedback from '../components/FormFieldFeedback';
 import { setObject } from '../lib/storage';
-import { STORAGE_KEY } from '../http/constants';
+import { REGEX, STORAGE_KEY } from '../http/constants';
+import useMounted from '../lib/mounted-hook';
 
 const signUpSchema = Yup.object({
-  fullName: Yup.string().required("Enter your full name."),
+  fullName: Yup.string().required("Enter your full name.")
+    .matches(REGEX.FULL_NAME, "Invalid name (letters only)"),
   email: Yup.string().email("Enter a valid email.").required("Enter your email."),
-  username: Yup.string().required("Enter a username."),
-  gender: Yup.mixed().oneOf(["male", "female"]).required("Select your gender."),
-  birthday: Yup.date().required("Enter your birthday."),
-  password: Yup.string().min(8, "Too short.").max(40, "Too long.").required("Enter your password."),
+  username: Yup.string().required("Enter a username.")
+    .matches(REGEX.USERNAME, "Invalid username (letters and numbes only)"),
+  gender: Yup.mixed().oneOf(["male", "female"]),
+  birthday: Yup.date(),
+  password: Yup.string().min(8, "Too short.").max(32, "Too long.").required("Enter your password."),
   confirmPassword: Yup.string()
     .oneOf([Yup.ref("password")], "Passwords do not match.")
     .required("Confirm your password."),
@@ -25,23 +28,28 @@ const signUpSchema = Yup.object({
 const SignUp: React.FC = () => {
   const { setCurrentUser } = useAppContext() as any;
   const history = useHistory()
+  const { isMounted, setMounted } = useMounted();
   const { onError, onSuccess } = useToastManager();
 
   const handleSubmit = async (values: any, { setSubmitting }: any) => {
     try {
+      delete values.confirmPassword;
       const { data } = await signUp(values);
       setCurrentUser(data);
-      setSubmitting(false);
+      isMounted && setSubmitting(false);
       await setObject(STORAGE_KEY, {
         currentUser: data,
       });
       onSuccess("Welcome, " + data.username + ". Setup you account type");
       history.push("/account-type");
     } catch (error) {
-      setSubmitting(false);
+      isMounted && setSubmitting(false);
       onError(error.message);
     }
   };
+
+  useEffect(() => () => setMounted(false));
+
   return (
     <IonPage>
       <IonContent fullscreen>
@@ -81,6 +89,12 @@ const SignUp: React.FC = () => {
                   </IonItem>
                   <FormFieldFeedback {...{ errors, touched, fieldName: "username" }} />
 
+                  <IonText color="medium" className="ion-margin-top">
+                    <small>Leave <strong>
+                      gender</strong> and <strong>
+                        birthday</strong> fields empty if you wish to join as an <strong>
+                        institution</strong>.</small>
+                  </IonText>
                   <IonRow>
                     <IonCol>
                       <IonItem className={touched.gender && errors.gender ? "has-error" : ""}>

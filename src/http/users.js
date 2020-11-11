@@ -1,9 +1,11 @@
 import request, { constructAuthHeader } from "./request";
-import { SERVER_URL_DEV } from "./constants";
 
-const BASE_URL = SERVER_URL_DEV + "/users";
+const BASE_URL = "/users";
 
-export async function getUsers({ username, patient = false }) {
+export async function getUsers(
+  token,
+  { username = undefined, patient = false } = {}
+) {
   let queryParams = "";
   if (username && patient) {
     queryParams += `?username=${encodeURIComponent(username)}&patient=true`;
@@ -13,7 +15,9 @@ export async function getUsers({ username, patient = false }) {
     queryParams += `?patient=true`;
   }
 
-  return await request(`${BASE_URL}/${queryParams}`, {});
+  return await request(`${BASE_URL}/${queryParams}`, {
+    headers: constructAuthHeader(token),
+  });
 }
 
 export async function signIn(username, password) {
@@ -44,4 +48,24 @@ export async function editUser(userId, token, data) {
 
 export async function getById(userId) {
   return await request(`${BASE_URL}/${userId}`, {});
+}
+
+export async function resetPassword(username) {
+  return await request(`${BASE_URL}/reset-password`, {
+    method: "POST",
+    data: {
+      username,
+    },
+  });
+}
+
+export async function confirmReset(username, newPassword, resetCode) {
+  return await request(`${BASE_URL}/confirm-reset`, {
+    method: "POST",
+    data: {
+      username,
+      newPassword,
+      resetCode,
+    },
+  });
 }

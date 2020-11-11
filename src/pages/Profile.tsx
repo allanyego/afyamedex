@@ -1,55 +1,78 @@
 import React, { useState, useEffect } from "react";
-import { IonPage, IonContent, IonRow, IonGrid, IonButtons, IonBackButton, IonHeader, IonToolbar, IonTitle } from "@ionic/react";
-import { useParams } from "react-router";
+import { useIonViewDidEnter, useIonViewWillLeave, IonRouterOutlet, IonPage } from "@ionic/react";
+import { useParams, useRouteMatch, Route, useHistory } from "react-router";
 
 import { getById } from "../http/users";
 import { useAppContext } from "../lib/context-lib";
-import UserDetails, { ProfileData } from "../components/UserDetails";
-import LoadingFallback from "../components/LoadingFallback";
 import useToastManager from "../lib/toast-hook";
 import "./Profile.css";
+import UserProfile, { ProfileData } from "../components/UserProfile";
+import useMounted from "../lib/mounted-hook";
 
-const Profile: React.FC = () => {
-  const { userId } = useParams();
-  const [user, setUser] = useState<ProfileData | null>(null);
+const ProfileCurrentUser: React.FC = () => {
   const { currentUser } = useAppContext() as any;
-  const { onError } = useToastManager();
+  const [user, setUser] = useState<ProfileData | null>(currentUser);
+  const { isMounted, setMounted } = useMounted();
 
   useEffect(() => {
-    if (userId) {
-      getById(userId).then(({ data }: any) => {
-        if (data) {
-          setUser(data);
-        } else {
-          setUser(currentUser);
-        }
-      }).catch(error => onError(error.message));
-    } else {
-      setUser(currentUser);
-    }
+    isMounted && setUser(currentUser);
+  }, [currentUser]);
+
+  useEffect(() => {
+    return () => {
+      setMounted(false);
+    };
   }, []);
+
+  useIonViewDidEnter(() => {
+    setUser(currentUser);
+  });
+
+  return <UserProfile user={user} />
+};
+
+const ProfileOtherUser: React.FC = () => {
+  const [user, setUser] = useState<ProfileData | null>(null);
+  const [loadError, setLoadError] = useState(false);
+  const { userId } = useParams();
+  const history = useHistory();
+  const { onError } = useToastManager();
+  const { isMounted, setMounted } = useMounted();
+
+  useIonViewDidEnter(() => {
+    getById(userId).then(({ data }: any) => {
+      if (!isMounted) {
+        return;
+      }
+
+      if (data) {
+        setUser(data);
+      } else {
+        onError("No user by that id found");
+        history.replace("/app/profile");
+      }
+    }).catch(error => {
+      isMounted && setLoadError(true);
+      onError(error.message);
+    });
+  });
+
+  useIonViewWillLeave(() => {
+    setMounted(false);
+  });
+
+  return <UserProfile user={user} loadError={loadError} />
+};
+
+const Profile: React.FC = () => {
+  const { path } = useRouteMatch();
 
   return (
     <IonPage>
-      <IonHeader>
-        <IonToolbar>
-          <IonButtons slot="start">
-            <IonBackButton defaultHref="/app/info" />
-          </IonButtons>
-          <IonTitle>Profile</IonTitle>
-        </IonToolbar>
-      </IonHeader>
-      <IonContent fullscreen>
-        {!user ? (
-          <LoadingFallback />
-        ) : (
-            <IonGrid>
-              <IonRow>
-                <UserDetails user={user} />
-              </IonRow>
-            </IonGrid>
-          )}
-      </IonContent>
+      <IonRouterOutlet>
+        <Route path={path} component={ProfileCurrentUser} exact />
+        <Route path={`${path}/:userId`} component={ProfileOtherUser} exact />
+      </IonRouterOutlet>
     </IonPage>
   );
 }

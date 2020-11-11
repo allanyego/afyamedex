@@ -1,5 +1,5 @@
-import React from 'react';
-import { IonButton, IonContent, IonPage, IonRow, IonCol, IonText, IonRouterLink, IonItem, IonLabel, IonInput } from '@ionic/react';
+import React, { useEffect } from 'react';
+import { IonButton, IonContent, IonPage, IonRow, IonCol, IonText, IonRouterLink, IonItem, IonLabel, IonInput, useIonViewDidEnter, useIonViewWillLeave } from '@ionic/react';
 import { Formik, Form } from "formik";
 import * as Yup from "yup";
 import { signIn } from '../http/users';
@@ -8,7 +8,8 @@ import { useHistory } from 'react-router';
 import useToastManager from '../lib/toast-hook';
 import FormFieldFeedback from '../components/FormFieldFeedback';
 import { setObject } from '../lib/storage';
-import { STORAGE_KEY } from '../http/constants';
+import { STORAGE_KEY, USER } from '../http/constants';
+import useMounted from "../lib/mounted-hook";
 
 const loginSchema = Yup.object({
   username: Yup.string().required("Enter your username."),
@@ -19,12 +20,18 @@ const SignIn: React.FC = () => {
   const { setCurrentUser } = useAppContext() as any;
   const history = useHistory();
   const { onError } = useToastManager();
+  const { isMounted, setMounted } = useMounted();
 
   const handleSubmit = async (values: any, { setSubmitting }: any) => {
     try {
       const { data } = await signIn(values.username.trim(), values.password);
-      setSubmitting(false);
-      setCurrentUser(data);
+      isMounted && setSubmitting(false);
+
+      if (data.accountType === USER.ACCOUNT_TYPES.ADMIN) {
+        return onError("Admin log in disallowed. Try the web app.");
+      }
+
+      isMounted && setCurrentUser(data);
       await setObject(STORAGE_KEY, {
         currentUser: data,
       });
@@ -35,10 +42,12 @@ const SignIn: React.FC = () => {
         history.push("/account-type");
       }
     } catch (error) {
-      setSubmitting(false);
+      isMounted && setSubmitting(false);
       onError(error.message);
     }
   };
+
+  useEffect(() => () => setMounted(false));
 
   return (
     <IonPage>
@@ -81,6 +90,9 @@ const SignIn: React.FC = () => {
                 </Form>
               )}</Formik>
             <IonText className="ion-text-center">
+              <p>
+                <IonRouterLink href="/reset-password">Forgot password?</IonRouterLink>
+              </p>
               <p className="ion-no-margin">
                 Don't have an account? <IonRouterLink href="/sign-up">Sign up</IonRouterLink>
               </p>

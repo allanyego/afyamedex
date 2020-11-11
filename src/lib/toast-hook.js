@@ -13,7 +13,7 @@ export default function useToastManager() {
 
   const pushNotification = (message, type) =>
     setNotifications([
-      ...notifications,
+      ...(notifications || []),
       {
         message,
         type,

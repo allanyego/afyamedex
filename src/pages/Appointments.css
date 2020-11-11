@@ -5,3 +5,101 @@
 .appointments-page .d-col {
   gap: 0.25em;
 }
+
+.appointments-page .appointment-status {
+  position: absolute;
+  width: 0.5em;
+  height: 0.5em;
+  border-radius: 50%;
+  right: 1.5rem;
+  top: 20%;
+}
+
+.appointments-page .appointment-status.rejected {
+  background: var(--ion-color-medium-tint);
+}
+
+.appointments-page .appointment-status.unapproved {
+  background: var(--ion-color-warning-tint);
+}
+
+.appointments-page .appointment-status.success {
+  background: var(--ion-color-success);
+}
+
+.appointments-page .appointment-status.closed {
+  background: var(--ion-color-secondary);
+}
+
+.meeting-screen {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--ion-color-dark);
+}
+
+.meeting-feed {
+  display: grid;
+  grid-auto-flow: row;
+  grid-template-rows: repeat(auto-fit, minmax(50%, 1fr));
+}
+
+.meeting-feed,
+.meeting-feed > div {
+  flex-grow: 1;
+  position: relative;
+}
+
+.meeting-feed > div .video-placeholder,
+.meeting-feed > div .controls {
+  position: absolute;
+}
+
+.meeting-feed > div .video-placeholder {
+  --dims: 4em;
+  --offsets: calc(50% - (var(--dims) / 2));
+  height: var(--dims);
+  width: var(--dims);
+  border-radius: 50%;
+  top: var(--offsets);
+  left: var(--offsets);
+  background: var(--background);
+  font-weight: 900;
+  font-size: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.meeting-feed > div .controls {
+  bottom: 0;
+  left: 0;
+  padding: 1em;
+  color: #fff;
+  font-weight: bold;
+  background: var(--ion-color-dark);
+  opacity: 0.75;
+}
+
+.meeting-feed > div .controls {
+  width: 100%;
+}
+
+.meeting-feed .duration-badge {
+  position: absolute;
+  top: 1em;
+  right: 1em;
+  z-index: 3;
+}
+
+.meeting-feed video {
+  background: var(--ion-color-dark);
+  height: 100%;
+  width: 100%;
+  object-fit: cover;
+}
+
+.meeting-feed .meeting-btn-footer {
+  background: var(--ion-color-dark);
+}

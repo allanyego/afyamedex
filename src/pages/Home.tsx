@@ -1,4 +1,4 @@
-import { IonButton, IonContent, IonPage, IonTitle, IonToolbar, IonRow, IonCol, IonText } from '@ionic/react';
+import { IonButton, IonContent, IonPage, IonTitle, IonToolbar, IonRow, IonCol, IonText, IonRouterLink } from '@ionic/react';
 import React from 'react';
 
 import logo from "../assets/img/logo.png";
@@ -16,14 +16,16 @@ const Home: React.FC = () => {
                 <img src={logo} alt="afyamedex brand" className="d-block p-centered border-circle" />
               </IonCol>
             </IonRow>
-            <IonText color="light">
-              <h3 className="ion-no-margin">Welcome</h3>
-            </IonText>
             <IonButton color="light" expand="block" href="/sign-in">Sign in</IonButton>
-            <IonText color="light">
-              OR
+            <IonText className="ion-text-center">
+              <p>
+                Don't have an account? <IonRouterLink href="/sign-up"
+                  style={{
+                    color: "var(--ion-color-secondary-contrast",
+                  }}
+                >Sign up</IonRouterLink>
+              </p>
             </IonText>
-            <IonButton color="light" expand="block" href="/sign-up">Sign up</IonButton>
           </IonCol>
         </IonRow>
       </IonContent>

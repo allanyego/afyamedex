@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { IonButton, IonContent, IonHeader, IonPage, IonTitle, IonToolbar, IonRow, IonCol, IonText, IonIcon, IonButtons, IonBackButton, IonSearchbar, IonGrid, IonItem, IonLabel, IonRange, IonCheckbox, IonInput, IonToggle, IonSelectOption, IonSelect, IonDatetime, IonThumbnail, IonAvatar, IonList, IonChip, IonBadge } from '@ionic/react';
+import { IonButton, IonContent, IonHeader, IonPage, IonTitle, IonToolbar, IonRow, IonCol, IonText, IonIcon, IonButtons, IonBackButton, IonSearchbar, IonGrid, IonItem, IonLabel, IonRange, IonCheckbox, IonInput, IonToggle, IonSelectOption, IonSelect, IonDatetime, IonThumbnail, IonAvatar, IonList, IonChip, IonBadge, useIonViewDidEnter, useIonViewWillLeave } from '@ionic/react';
 import { caretBackCircle, search, personCircle, ellipsisHorizontal, ellipsisVertical, checkmarkCircle, shuffle, star, informationCircle, navigate, home, closeCircle, person, businessOutline, close } from 'ionicons/icons';
 
 import './Listing.css';
@@ -10,33 +10,54 @@ import useToastManager from '../lib/toast-hook';
 import LoadingFallback from '../components/LoadingFallback';
 import { USER } from '../http/constants';
 import UserHeader from '../components/UserHeader';
+import debounce from '../lib/debounce';
+import useMounted from '../lib/mounted-hook';
+import ErrorFallback from '../components/ErrorFallback';
+import { useAppContext } from '../lib/context-lib';
+import { ProfileData } from '../components/UserProfile';
+import RatingInfo from '../components/RatingInfo';
 
 const Listing: React.FC = () => {
   const [showSearchBar, setShowSearchBar] = useState(false);
-  const [professionals, setProfessionals] = useState<any[] | null>(null);
+  const [isSearching, setSearching] = useState(false);
+  let [professionals, setProfessionals] = useState<any[] | null>(null);
+  const [loadError, setLoadError] = useState(false);
   const [listMargin, setListMargin] = useState(0);
   const { onError } = useToastManager();
+  const { currentUser } = useAppContext() as any;
+  const { isMounted, setMounted } = useMounted();
 
   const fetchProfessionals = async (opts?: any) => {
+    setProfessionals(null);
     try {
-      const { data } = await getUsers(opts);
-      setProfessionals(data);
+      const { data } = await getUsers(currentUser.token, opts);
+      isMounted && setProfessionals(data.filter(
+        (user: ProfileData) => user._id !== currentUser._id)
+      );
     } catch (error) {
+      isMounted && setLoadError(true);
       onError(error.message);
     }
   };
 
-  useEffect(() => {
+  useIonViewDidEnter(() => {
     fetchProfessionals({}).then();
   }, []);
 
-  const onToggle = () => setShowSearchBar(!showSearchBar);
-  const closeSearchBar = () => setShowSearchBar(false);
+  useIonViewWillLeave(() => {
+    setMounted(false);
+  });
 
+  const onToggle = () => setShowSearchBar(!showSearchBar);
+  const closeSearchBar = async () => {
+    setShowSearchBar(false);
+    console.log("Fetching");
+    await fetchProfessionals();
+  };
 
   return (
     <IonPage>
-      <UserHeader title="Professionals" secondary={
+      <UserHeader title="Listing" secondary={
         <IonButton onClick={onToggle} color={showSearchBar ? "danger" : "dark"}>
           <IonIcon slot="icon-only" icon={showSearchBar ? close : search} />
         </IonButton>
@@ -44,26 +65,32 @@ const Listing: React.FC = () => {
       />
       <IonContent fullscreen className="listing-page">
         {showSearchBar && (
-          <SearchBar {...{ fetchProfessionals, closeSearchBar, setListMargin }} />
+          <SearchBar {...{ fetchProfessionals, closeSearchBar, setListMargin, setSearching }} />
         )}
 
-        {!professionals ? (
+        {loadError ? (
+          <ErrorFallback fullHeight />
+        ) : (!professionals || isSearching) ? (
           <LoadingFallback />
         ) : (
-            <IonList lines="full" style={{
-              marginTop: listMargin,
-            }}>
-              {professionals.map((prof: any) => <ListingItem key={prof._id} prof={prof} />)}
-            </IonList>
-          )}
+              <IonList lines="full" style={{
+                marginTop: listMargin,
+              }}>
+                {professionals.map((prof: any) => <ListingItem key={prof._id} prof={prof} />)}
+              </IonList>
+            )}
       </IonContent>
-    </IonPage >
+    </IonPage>
   );
 };
 
 export default Listing;
 
-function ListingItem({ prof }: any) {
+function ListingItem({ prof }: {
+  prof: ProfileData
+}) {
+  const [a, b, ...rest] = prof.speciality;
+
   return (
     <IonItem routerLink={`/app/profile/${prof._id}`} className="listing-item">
       <IonAvatar slot="start">
@@ -80,12 +107,11 @@ function ListingItem({ prof }: any) {
           />
         </h3>
         <p>{prof.bio || "No bio."}</p>
-        {prof.rating ? (
-          <>
-            <Rating rating={prof.rating} /><br />
-          </>
-        ) : "No rating."}
-        {prof.speciality.map((s: any) => <IonBadge color="secondary">{s}</IonBadge>)}
+        <RatingInfo userId={prof._id as any} />
+        <div className="profile-badges-container d-flex ion-align-items-center">
+          {[a, b].map((s: any, idx: number) => <IonBadge key={`${s}${idx}`} color="secondary">{s}</IonBadge>)}{" "}
+          <small>{rest.length ? `${rest.length} more` : null}</small>
+        </div>
       </IonLabel>
     </IonItem>
   );
@@ -95,11 +121,10 @@ interface SearchBarProps {
   fetchProfessionals: (args: any) => Promise<any>
   closeSearchBar: (args: any) => void
   setListMargin: (args: any) => any
+  setSearching: (args: any) => any
 }
 
-function SearchBar({ fetchProfessionals, closeSearchBar, setListMargin }: SearchBarProps) {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [isSearching, setSearching] = useState(false);
+function SearchBar({ fetchProfessionals, closeSearchBar, setListMargin, setSearching }: SearchBarProps) {
   const { onError } = useToastManager() as any;
   const searchBarRef = useRef(null);
 
@@ -107,12 +132,10 @@ function SearchBar({ fetchProfessionals, closeSearchBar, setListMargin }: Search
     setListMargin((searchBarRef.current as any).getBoundingClientRect().height);
 
     return () => setListMargin(0);
-  }, [])
+  }, []);
 
-  const handleChange = (e: any) => {
-    setSearchTerm(e.target.value.trim());
-  };
-  const handleSearch = async () => {
+  const handleSearch = async (e: any) => {
+    const searchTerm = e.target.value;
     if (!searchTerm) {
       return;
     }
@@ -136,20 +159,11 @@ function SearchBar({ fetchProfessionals, closeSearchBar, setListMargin }: Search
         <IonRow>
           <IonCol className="ion-no-padding">
             <IonSearchbar
-              value={searchTerm}
-              onIonChange={handleChange}
+              onIonChange={debounce(handleSearch, 1500)}
               showCancelButton="focus"
               cancelButtonText="Custom Cancel"
               onIonCancel={closeSearchBar}
             />
-          </IonCol>
-          <IonCol
-            className="ion-no-padding d-flex ion-align-items-center"
-            size="2">
-            <IonButton expand="block" onClick={handleSearch}
-              disabled={isSearching}>
-              Go
-          </IonButton>
           </IonCol>
         </IonRow>
       </IonGrid>
