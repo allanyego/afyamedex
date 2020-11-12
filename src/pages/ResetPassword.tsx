@@ -30,7 +30,6 @@ const ResetPassword: React.FC = () => {
     hasCode: false,
     activeRequest: false,
   });
-  const { isMounted, setMounted } = useMounted();
   const { onError, onSuccess } = useToastManager();
 
   const handleReset = async (values: any, { setSubmitting }: any) => {
@@ -38,22 +37,20 @@ const ResetPassword: React.FC = () => {
       const username = trimLowerCase(values.username);
       await resetPassword(username);
       setSubmitting(false);
-      isMounted && setUser({
+      setUser({
         ...user,
         username,
         hasCode: true,
       });
       onSuccess("Reset code sent to email");
     } catch (error) {
-      if (isMounted) {
-        setSubmitting(false);
-        if (error.message === "present_active_request") {
-          setUser({
-            hasCode: true,
-            activeRequest: true,
-            ...values,
-          });
-        }
+      setSubmitting(false);
+      if (error.message === "present_active_request") {
+        setUser({
+          hasCode: true,
+          activeRequest: true,
+          ...values,
+        });
       }
 
       onError(error.message);
@@ -70,8 +67,6 @@ const ResetPassword: React.FC = () => {
       onError(error.message);
     }
   };
-
-  useEffect(() => () => setMounted(false));
 
   return (
     <IonPage>
