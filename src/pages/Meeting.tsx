@@ -1,7 +1,19 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { IonButton, IonContent, IonPage, IonRow, IonCol, IonList, IonIcon, useIonViewDidLeave, IonAlert, IonBadge, IonGrid, IonPopover, IonToggle, IonLabel, IonItem, IonSpinner } from '@ionic/react';
+import {
+  IonButton,
+  IonContent,
+  IonPage,
+  IonRow,
+  IonCol,
+  IonIcon,
+  useIonViewDidLeave,
+  IonAlert,
+  IonBadge,
+  IonGrid,
+  IonSpinner
+} from '@ionic/react';
 import { useHistory, useLocation } from 'react-router';
-import { micSharp, arrowBackSharp, settingsSharp, micOffSharp, checkmarkCircleSharp } from 'ionicons/icons';
+import { micSharp, arrowBackSharp, micOffSharp, checkmarkCircleSharp } from 'ionicons/icons';
 import Peer from "peerjs";
 
 import { useAppContext } from '../lib/context-lib';
@@ -15,18 +27,150 @@ import { APPOINTMENT } from "../http/constants";
 import Centered from '../components/Centered';
 import { ToReviewButton } from './OnSite';
 
+const JoinButton = (onClick: any) => (
+  <Centered>
+    <IonButton color="secondary" onClick={onClick}>
+      Join
+    </IonButton>
+  </Centered>
+);
+
+const SessionDetailsPatient: React.FC<{
+  duration: number,
+  amount: number,
+  isUpdating: boolean,
+  hasBeenBilled: boolean,
+  onClick: (...args: any[]) => any,
+}> = ({
+  duration,
+  amount,
+  isUpdating,
+  hasBeenBilled,
+  onClick,
+}) => (
+      <>
+        <p>Your session lasted <strong>
+          {duration}mins (billed: 10min)
+                    </strong>. Proceed to payment...</p>
+        <div className="h100 d-flex ion-justify-content-center ion-align-items-center">
+          {hasBeenBilled ? (
+            <IonButton
+              fill="clear"
+              color="success"
+              size="small"
+              disabled
+            >
+              KES.{amount}
+              <IonIcon slot="start" icon={checkmarkCircleSharp} />
+            </IonButton>
+          ) : (
+              <IonButton color="secondary" onClick={onClick} disabled={isUpdating}>
+                {isUpdating ? (
+                  <IonSpinner slot="icon-only" name="lines-small" />
+                ) : "Pay"}
+              </IonButton>
+            )}
+        </div>
+      </>
+    );
+
+const SessionDetailsProfessional: React.FC<{
+  duration: number,
+}> = ({ duration }) => (
+  <p>Your session lasted{" "}
+    <strong>
+      {duration}mins.
+    </strong>
+  </p>
+);
+
+interface MeetingPageProps {
+  hasMeetingStarted: boolean,
+  hasMeetingEnded: boolean,
+  hasPeerJoined: boolean,
+  isUpdating: boolean,
+  duration: number,
+  appointment: any,
+  startMeeting: (...args: []) => any,
+}
+
+const MeetingPage: React.FC<MeetingPageProps> = ({
+  hasMeetingStarted,
+  hasMeetingEnded,
+  hasPeerJoined,
+  isUpdating,
+  duration,
+  appointment,
+  startMeeting,
+}) => {
+  const { currentUser } = useAppContext() as any;
+  const history = useHistory();
+  const meetingDuration = appointment.duration || duration;
+
+  const toCheckout = () => {
+    history.push("/app/appointments/checkout/" + appointment._id, {
+      duration: meetingDuration || 10,  // Bill at least 10 minutes
+    });
+  };
+
+  return (
+    <Centered fullHeight>
+      <div>
+        <div>
+          <Centered>
+            {(hasMeetingEnded || !hasMeetingStarted) && (
+              <IonButton
+                fill="clear"
+                color="medium"
+                size="small"
+                routerLink="/app/appointments">
+                Back
+                <IonIcon slot="start" icon={arrowBackSharp} />
+              </IonButton>
+            )}
+
+            <ToReviewButton appointment={appointment} />
+          </Centered>
+          <h3>Meeting with <strong className="ion-text-capitalize">
+            {extractForDisplay(currentUser, appointment).fullName}
+          </strong>
+          </h3>
+          <p>
+            <strong>Subject: </strong>{appointment.subject}
+          </p>
+          {
+            (appointment.status !== APPOINTMENT.STATUSES.CLOSED &&
+              !hasMeetingEnded) ? (
+                <JoinButton onClick={startMeeting} />
+              ) : (!hasPeerJoined ? (
+                <JoinButton onClick={startMeeting} />
+              ) : (
+                  appointment.patient._id === currentUser._id ? (
+                    <SessionDetailsPatient
+                      duration={meetingDuration}
+                      hasBeenBilled={appointment.hasBeenBilled}
+                      isUpdating={isUpdating}
+                      amount={appointment.amount}
+                      onClick={toCheckout}
+                    />
+                  ) : (
+                      <SessionDetailsProfessional duration={meetingDuration} />
+                    )
+                ))
+          }
+        </div>
+      </div>
+    </Centered>
+  );
+};
+
 const Meeting: React.FC = () => {
   const [hasMeetingStarted, setMeetingStarted] = useState(false);
   const [hasMeetingEnded, setMeetingEnded] = useState(false);
+  const [hasPeerJoined, setPeerJoined] = useState(false);
   const [duration, setDuration] = useState(0);
   let [isUpdating, setUpdating] = useState(false);
-  const [audioOn, setAudioOn] = useState(true);
-  const [videoOn, setVideoOn] = useState(true);
-  const [popoverOpen, setPopoverOpen] = useState(false);
-  const [popoverEvent, setPopoverEvent] = useState<any>(null);
   const { state: selectedAppointment } = useLocation<any>();
-  const history = useHistory();
-  const { currentUser } = useAppContext() as any;
 
 
   const startMeeting = () => setMeetingStarted(true);
@@ -34,29 +178,11 @@ const Meeting: React.FC = () => {
     setMeetingStarted(false);
     setMeetingEnded(true);
   };
-  const openPopover = (e: any) => {
-    e.persist()
-    setPopoverEvent(e);
-    setPopoverOpen(true);
-  };
-  const closePopover = () => setPopoverOpen(false);
-
-  const toggleAudioOn = (e: any) => setAudioOn(e.detail.checked);
-  const toggleVideoOn = (e: any) => setVideoOn(e.detail.checked);
-  const toCheckout = () => {
-    history.push("/app/appointments/checkout/" + selectedAppointment._id, {
-      duration: duration || 1,
-    });
-  };
 
   useIonViewDidLeave(() => {
     setMeetingEnded(false);
     setMeetingStarted(false);
-    setAudioOn(true);
-    setVideoOn(true);
-    setPopoverOpen(false);
-    setPopoverEvent(null);
-    setUpdating = () => null;
+    setUpdating(false);
   });
 
   if (!selectedAppointment || !selectedAppointment.professional) {
@@ -67,99 +193,17 @@ const Meeting: React.FC = () => {
     <IonPage>
       <IonContent fullscreen className="d-flex ion-padding-horizontal">
         {!hasMeetingStarted ? (
-          <div className="h100 d-flex ion-justify-content-center ion-align-items-center">
-            <div>
-              <div>
-                <div className="d-flex ion-align-items-center ion-justify-content-between">
-                  {(hasMeetingEnded || !hasMeetingStarted) && (
-                    <IonButton
-                      fill="clear"
-                      color="medium"
-                      size="small"
-                      routerLink="/app/appointments">
-                      Back
-                      <IonIcon slot="start" icon={arrowBackSharp} />
-                    </IonButton>
-                  )}
-
-                  <ToReviewButton appointment={selectedAppointment} />
-                </div>
-                <h3>Meeting with <strong className="ion-text-capitalize">
-                  {extractForDisplay(currentUser, selectedAppointment).fullName}
-                </strong>
-                </h3>
-                <p>
-                  <strong>Subject: </strong>{selectedAppointment.subject}
-                </p>
-                {(selectedAppointment.status !== APPOINTMENT.STATUSES.CLOSED &&
-                  !hasMeetingEnded) ? (
-                    <>
-                      <IonButton color="secondary" onClick={startMeeting}>
-                        Join
-                    </IonButton>
-                      <IonButton onClick={openPopover}>
-                        <IonIcon slot="icon-only" icon={settingsSharp} />
-                      </IonButton>
-                    </>
-                  ) : selectedAppointment.patient._id === currentUser._id ? (
-                    <>
-                      <p>Your session lasted <strong>
-                        {selectedAppointment.duration || duration}mins (billed: 10min)
-                        </strong>. Proceed to payment...</p>
-                      <div className="h100 d-flex ion-justify-content-center ion-align-items-center">
-                        {selectedAppointment.hasBeenBilled ? (
-                          <IonButton
-                            fill="clear"
-                            color="success"
-                            size="small"
-                            disabled
-                          >
-                            KES.{selectedAppointment.amount}
-                            <IonIcon slot="start" icon={checkmarkCircleSharp} />
-                          </IonButton>
-                        ) : (
-                            <IonButton color="secondary" onClick={toCheckout} disabled={isUpdating}>
-                              {isUpdating ? (
-                                <IonSpinner slot="icon-only" name="lines-small" />
-                              ) : "Pay"}
-                            </IonButton>
-                          )}
-                      </div>
-                    </>
-                  ) : (
-                      <>
-                        <p>Your session lasted <strong>
-                          {selectedAppointment.duration || duration}mins.
-                          </strong></p>
-                      </>
-                    )}
-              </div>
-              <IonPopover isOpen={popoverOpen}
-                onWillDismiss={closePopover}
-                event={popoverEvent}
-              >
-                <IonList lines="full">
-                  <IonItem>
-                    <IonLabel>Audio</IonLabel>
-                    <IonToggle slot="end"
-                      color="medium"
-                      checked={audioOn}
-                      onIonChange={toggleAudioOn} />
-                  </IonItem>
-                  <IonItem>
-                    <IonLabel>Video</IonLabel>
-                    <IonToggle
-                      checked={videoOn}
-                      slot="end"
-                      color="medium"
-                      onIonChange={toggleVideoOn}
-                    />
-                  </IonItem>
-                </IonList>
-              </IonPopover>
-            </div>
-
-          </div>
+          <MeetingPage
+            {...{
+              appointment: selectedAppointment,
+              hasMeetingStarted,
+              hasMeetingEnded,
+              hasPeerJoined,
+              duration,
+              isUpdating,
+              startMeeting,
+            }}
+          />
         ) : (
             <MeetingScreen {...{
               stopMeeting,
@@ -167,6 +211,8 @@ const Meeting: React.FC = () => {
               setDuration,
               selectedAppointment,
               setUpdating,
+              hasPeerJoined,
+              setPeerJoined,
             }} />
           )}
 
@@ -193,17 +239,27 @@ export function extractForDisplay(current: any, other: any) {
   return other.patient;
 }
 
-function MeetingScreen({ selectedAppointment, setDuration, duration, stopMeeting,
-  setUpdating }: {
-    selectedAppointment: any,
-    setDuration: any,
-    duration: number,
-    stopMeeting: any,
-    setUpdating: any,
-  }) {
+interface MeetingProps {
+  selectedAppointment: any,
+  setDuration: any,
+  duration: number,
+  stopMeeting: any,
+  setUpdating: any,
+  hasPeerJoined: boolean,
+  setPeerJoined: (arg: boolean) => any,
+}
+
+function MeetingScreen({
+  selectedAppointment,
+  setDuration,
+  duration,
+  stopMeeting,
+  setUpdating,
+  setPeerJoined,
+  hasPeerJoined,
+}: MeetingProps) {
   const myVideoFeed = useRef<HTMLVideoElement | null>(null);
   const otherVideoFeed = useRef<HTMLVideoElement | null>(null);
-  const [peerHasJoined, setPeerJoined] = useState(false);
   const [stream, setStream] = useState<MediaStream | null>(null);
   const [isVideoEnabled, setVideoEnabled] = useState(true);
   const [isAudioEnabled, setAudioEnabled] = useState(true);
@@ -310,11 +366,14 @@ function MeetingScreen({ selectedAppointment, setDuration, duration, stopMeeting
     }
 
     try {
-      setUpdating(true);
-      await editAppointment(selectedAppointment._id, currentUser.token, {
-        minutesBilled: duration > 10 ? duration : 10,
-        status: APPOINTMENT.STATUSES.CLOSED,
-      });
+      // Only initiate billing if both users joined
+      if (hasPeerJoined) {
+        setUpdating(true);
+        await editAppointment(selectedAppointment._id, currentUser.token, {
+          minutesBilled: duration > 10 ? duration : 10,
+          status: APPOINTMENT.STATUSES.CLOSED,
+        });
+      }
     } catch (error) {
       onError(error.message);
     } finally {
@@ -377,8 +436,8 @@ function MeetingScreen({ selectedAppointment, setDuration, duration, stopMeeting
     socket.on("disconnected", leaveRoom);
 
     return () => {
-      setMounted(false);
       stopTimer();
+      setMounted(false);
     };
   }, []);
 
@@ -407,7 +466,7 @@ function MeetingScreen({ selectedAppointment, setDuration, duration, stopMeeting
         <IonBadge className="duration-badge" color="danger">{duration}min</IonBadge>
 
 
-        {peerHasJoined && (
+        {hasPeerJoined && (
           <div>
             {!peerVideoOn && (
               <VideoPlaceholder username={extractForDisplay(currentUser, selectedAppointment).fullName} />
@@ -524,3 +583,27 @@ function VideoPlaceholder({ username }: {
     </div>
   );
 }
+
+{/* <IonPopover isOpen={popoverOpen}
+  onWillDismiss={closePopover}
+  event={popoverEvent}
+>
+  <IonList lines="full">
+    <IonItem>
+      <IonLabel>Audio</IonLabel>
+      <IonToggle slot="end"
+        color="medium"
+        checked={audioOn}
+        onIonChange={toggleAudioOn} />
+    </IonItem>
+    <IonItem>
+      <IonLabel>Video</IonLabel>
+      <IonToggle
+        checked={videoOn}
+        slot="end"
+        color="medium"
+        onIonChange={toggleVideoOn}
+      />
+    </IonItem>
+  </IonList>
+</IonPopover> */}
