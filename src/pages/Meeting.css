@@ -28,7 +28,22 @@
 }
 
 .meeting-pane .meeting-tab video {
-  width: 100%;
+  width: auto;
   height: 100%;
   object-fit: cover;
+}
+
+.meeting-tab .video-placeholder {
+  position: absolute;
+  height: 2em;
+  width: 2em;
+  border-radius: 50%;
+  background: wheat;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3em;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
 }

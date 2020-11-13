@@ -23,7 +23,7 @@ import useToastManager from '../lib/toast-hook';
 import videocamOffSharp from "../assets/img/videocam-off-sharp.svg";
 import videocamSharp from "../assets/img/videocam-sharp.svg";
 import { ProfileData } from '../components/UserProfile';
-import { APPOINTMENT } from "../http/constants";
+import { APPOINTMENT, HOST_PROD } from "../http/constants";
 import Centered from '../components/Centered';
 import { ToReviewButton } from './OnSite';
 import "./Meeting.css";
@@ -52,7 +52,7 @@ const SessionDetailsPatient: React.FC<{
   hasBeenBilled,
   onClick,
 }) => (
-      <>
+      <div className="ion-padding-horizontals">
         <p>Your session lasted <strong>
           {duration}mins (billed: 10min)
                     </strong>. Proceed to payment...</p>
@@ -75,7 +75,7 @@ const SessionDetailsPatient: React.FC<{
               </IonButton>
             )}
         </div>
-      </>
+      </div>
     );
 
 const SessionDetailsProfessional: React.FC<{
@@ -148,7 +148,7 @@ const MeetingPage: React.FC<MeetingPageProps> = ({
             <strong>Subject: </strong>{appointment.subject}
           </p>
           {
-            (isClosed || (hasPeerJoined && hasMeetingEnded)) ? (
+            (isClosed || hasMeetingEnded) ? (
               appointment.patient._id === currentUser._id ? (
                 <SessionDetailsPatient
                   duration={meetingDuration}
@@ -407,8 +407,8 @@ function MeetingScreen({
 
   useEffect(() => {
     myPeer = new Peer({
-      host: "localhost",
-      port: isProduction() ? 443 : 9000,
+      host: isProduction() ? HOST_PROD : "localhost",
+      port: 9000,
       secure: isProduction(),
     });
 
