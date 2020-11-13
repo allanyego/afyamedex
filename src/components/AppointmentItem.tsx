@@ -3,7 +3,7 @@ import { IonItem, IonLabel, IonText, IonGrid, IonRow, IonCol, IonIcon, IonItemSl
 import { calendarOutline, timeOutline, checkmarkCircle, closeCircle, close, checkmark } from "ionicons/icons";
 import moment from "moment";
 
-import { APPOINTMENT, USER } from "../http/constants";
+import { APPOINTMENT, APPOINTMENT_TYPE_LABELS, USER } from "../http/constants";
 import { useAppContext } from "../lib/context-lib";
 import useToastManager from "../lib/toast-hook";
 import { editAppointment } from "../http/appointments";
@@ -84,6 +84,14 @@ const AppointmentItem: React.FC<PropsWithChildren<Props>> = ({ appointment, onTa
             ) : (
                 _appointment.patient.fullName
               )}
+          {" "}
+          <small className="ion-text-uppercase">
+            <i>
+              <IonText color="medium">
+                {APPOINTMENT_TYPE_LABELS[_appointment.type]}
+              </IonText>
+            </i>
+          </small>
         </h2>
         <IonText color="medium">
           <strong>Subject:{" "}</strong>

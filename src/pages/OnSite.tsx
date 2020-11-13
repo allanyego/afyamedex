@@ -94,6 +94,9 @@ const OnSite: React.FC = () => {
         />
         <Centered fullHeight>
           <div>
+            <h3 className="ion-text-center">
+              On-site consultation
+          </h3>
             <div className="d-flex ion-align-items-center ion-justify-content-between">
               {(hasMeetingEnded || !hasMeetingStarted) && (
                 <IonButton

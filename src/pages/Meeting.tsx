@@ -26,14 +26,18 @@ import { ProfileData } from '../components/UserProfile';
 import { APPOINTMENT } from "../http/constants";
 import Centered from '../components/Centered';
 import { ToReviewButton } from './OnSite';
+import "./Meeting.css";
+import isProduction from '../lib/is-production';
 
-const JoinButton = (onClick: any) => (
-  <Centered>
-    <IonButton color="secondary" onClick={onClick}>
-      Join
+const JoinButton = ({ onClick }: {
+  onClick: any
+}) => (
+    <Centered>
+      <IonButton color="secondary" onClick={onClick}>
+        Join
     </IonButton>
-  </Centered>
-);
+    </Centered>
+  );
 
 const SessionDetailsPatient: React.FC<{
   duration: number,
@@ -113,12 +117,17 @@ const MeetingPage: React.FC<MeetingPageProps> = ({
     });
   };
 
+  const isClosed = appointment && appointment.status === APPOINTMENT.STATUSES.CLOSED;
+
   return (
     <Centered fullHeight>
       <div>
         <div>
-          <Centered>
-            {(hasMeetingEnded || !hasMeetingStarted) && (
+          <h3 className="ion-text-center">
+            Virtual consultation
+          </h3>
+          <div className="d-flex ion-justify-content-between">
+            {(hasMeetingEnded || !hasMeetingStarted || isClosed) && (
               <IonButton
                 fill="clear"
                 color="medium"
@@ -130,7 +139,7 @@ const MeetingPage: React.FC<MeetingPageProps> = ({
             )}
 
             <ToReviewButton appointment={appointment} />
-          </Centered>
+          </div>
           <h3>Meeting with <strong className="ion-text-capitalize">
             {extractForDisplay(currentUser, appointment).fullName}
           </strong>
@@ -139,24 +148,21 @@ const MeetingPage: React.FC<MeetingPageProps> = ({
             <strong>Subject: </strong>{appointment.subject}
           </p>
           {
-            (appointment.status !== APPOINTMENT.STATUSES.CLOSED &&
-              !hasMeetingEnded) ? (
-                <JoinButton onClick={startMeeting} />
-              ) : (!hasPeerJoined ? (
-                <JoinButton onClick={startMeeting} />
+            (isClosed || (hasPeerJoined && hasMeetingEnded)) ? (
+              appointment.patient._id === currentUser._id ? (
+                <SessionDetailsPatient
+                  duration={meetingDuration}
+                  hasBeenBilled={appointment.hasBeenBilled}
+                  isUpdating={isUpdating}
+                  amount={appointment.amount}
+                  onClick={toCheckout}
+                />
               ) : (
-                  appointment.patient._id === currentUser._id ? (
-                    <SessionDetailsPatient
-                      duration={meetingDuration}
-                      hasBeenBilled={appointment.hasBeenBilled}
-                      isUpdating={isUpdating}
-                      amount={appointment.amount}
-                      onClick={toCheckout}
-                    />
-                  ) : (
-                      <SessionDetailsProfessional duration={meetingDuration} />
-                    )
-                ))
+                  <SessionDetailsProfessional duration={meetingDuration} />
+                )
+            ) : (
+                <JoinButton onClick={startMeeting} />
+              )
           }
         </div>
       </div>
@@ -170,11 +176,16 @@ const Meeting: React.FC = () => {
   const [hasPeerJoined, setPeerJoined] = useState(false);
   const [duration, setDuration] = useState(0);
   let [isUpdating, setUpdating] = useState(false);
-  const { state: selectedAppointment } = useLocation<any>();
+  const { state } = useLocation<any>();
+  const [selectedAppointment, setSelectedAppointment] = useState(state);
 
 
   const startMeeting = () => setMeetingStarted(true);
   const stopMeeting = () => {
+    hasPeerJoined && setSelectedAppointment({
+      ...selectedAppointment,
+      status: APPOINTMENT.STATUSES.CLOSED,
+    });
     setMeetingStarted(false);
     setMeetingEnded(true);
   };
@@ -191,8 +202,8 @@ const Meeting: React.FC = () => {
 
   return (
     <IonPage>
-      <IonContent fullscreen className="d-flex ion-padding-horizontal">
-        {!hasMeetingStarted ? (
+      <IonContent fullscreen className="d-flex">
+        {(!hasMeetingStarted || hasMeetingEnded) ? (
           <MeetingPage
             {...{
               appointment: selectedAppointment,
@@ -215,7 +226,6 @@ const Meeting: React.FC = () => {
               setPeerJoined,
             }} />
           )}
-
 
       </IonContent>
     </IonPage >
@@ -329,7 +339,7 @@ function MeetingScreen({
   };
   // Receive stream from peer
   const receiveStream = (stream: MediaStream) => {
-    isMounted && setPeerJoined(true);
+    setPeerJoined(true);
     setupPeerStream(stream);
     addVideoStream(otherVideoFeed.current as any, stream);
   };
@@ -396,7 +406,12 @@ function MeetingScreen({
   }
 
   useEffect(() => {
-    myPeer = new Peer();
+    myPeer = new Peer({
+      host: "localhost",
+      port: isProduction() ? 443 : 9000,
+      secure: isProduction(),
+    });
+
     myPeer.on("open", (peerId) => {
       window.navigator.mediaDevices.getUserMedia({
         video: true,
@@ -442,48 +457,49 @@ function MeetingScreen({
   }, []);
 
   return (
-    <div className="meeting-screen">
-      <div className="meeting-feed">
-        <IonAlert
-          isOpen={isAlertOpen}
-          onDidDismiss={closeAlert}
-          cssClass="exit-app-alert"
-          header={"End session"}
-          message="Are you sure you want to end this session?"
-          buttons={[
-            {
-              text: 'No',
-              role: 'cancel',
-              cssClass: 'danger',
-              handler: () => true
-            },
-            {
-              text: 'Yes',
-              handler: endMeeting,
-            }
-          ]}
-        />
+    <div className="meeting-screen h100 d-flex">
+      <IonAlert
+        isOpen={isAlertOpen}
+        onDidDismiss={closeAlert}
+        cssClass="exit-app-alert"
+        header={"End session"}
+        message="Are you sure you want to end this session?"
+        buttons={[
+          {
+            text: 'No',
+            role: 'cancel',
+            cssClass: 'danger',
+            handler: () => true
+          },
+          {
+            text: 'Yes',
+            handler: endMeeting,
+          }
+        ]}
+      />
+      <div className="d-flex h100 meeting-pane">
         <IonBadge className="duration-badge" color="danger">{duration}min</IonBadge>
 
 
-        {hasPeerJoined && (
-          <div>
-            {!peerVideoOn && (
-              <VideoPlaceholder username={extractForDisplay(currentUser, selectedAppointment).fullName} />
-            )}
-            <video ref={otherVideoFeed} onLoadedMetadata={onLoadedMetadata}></video>
-            <Controls
-              disabled={true}
-              user={extractForDisplay(currentUser, selectedAppointment)}
-              video={false}
-              isAudioEnabled={peerAudioOn}
-              isVideoEnabled={peerVideoOn}
-            />
-          </div>
-        )
-        }
+        <div className="meeting-tab">
+          {hasPeerJoined && (
+            <div>
+              {!peerVideoOn && (
+                <VideoPlaceholder username={extractForDisplay(currentUser, selectedAppointment).fullName} />
+              )}
+              <video ref={otherVideoFeed} onLoadedMetadata={onLoadedMetadata}></video>
+              <Controls
+                disabled={true}
+                user={extractForDisplay(currentUser, selectedAppointment)}
+                video={false}
+                isAudioEnabled={peerAudioOn}
+                isVideoEnabled={peerVideoOn}
+              />
+            </div>
+          )}
+        </div>
 
-        <div>
+        <div className="meeting-tab">
           {!isVideoEnabled && (
             <VideoPlaceholder username={currentUser.fullName} />
           )}

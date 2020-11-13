@@ -55,6 +55,9 @@ const Tests: React.FC = () => {
       <IonContent fullscreen className="ion-padding-horizontal">
         <Centered fullHeight>
           <div>
+            <h3 className="ion-text-center">
+              Test
+          </h3>
             <div className="d-flex ion-align-items-center ion-justify-content-between">
               <IonButton
                 fill="clear"

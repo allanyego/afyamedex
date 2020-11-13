@@ -19,6 +19,7 @@ const Review: React.FC = () => {
   const [isFetching, setFetching] = useState(true);
   const [hasReview, setHasReview] = useState(false);
   const { state } = useLocation<any>();
+  const history = useHistory();
   const [appointment, setAppointment] = useState(state);
   const { currentUser } = useAppContext() as any;
   const { onError, onSuccess } = useToastManager();
@@ -44,6 +45,7 @@ const Review: React.FC = () => {
       setFetching(false);
     } catch (error) {
       onError(error.message);
+      history.replace("/app/appointments");
     }
   });
 

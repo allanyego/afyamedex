@@ -1,0 +1,34 @@
+.meeting-screen {
+  flex-direction: column;
+  background: var(--ion-color-dark);
+}
+
+.meeting-pane {
+  flex-direction: column;
+  position: relative;
+}
+
+.meeting-pane .duration-badge {
+  position: absolute;
+  right: 0.5em;
+  top: 0.25em;
+}
+
+.meeting-pane .meeting-tab {
+  flex-grow: 1;
+  position: relative;
+}
+
+.meeting-pane .meeting-tab .controls {
+  position: absolute;
+  width: 100%;
+  bottom: 0;
+  padding-left: 0.5em;
+  color: var(--ion-color-light);
+}
+
+.meeting-pane .meeting-tab video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}

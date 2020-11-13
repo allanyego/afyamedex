@@ -21,7 +21,7 @@ const Main: React.FC = () => {
   const { isMounted, setMounted } = useMounted();
 
   const handleSocketErr = (err: Error) => {
-    console.log("Socket error", err);
+    console.log("----Socket error----\n", err);
   };
 
   useEffect(() => {

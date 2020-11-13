@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { Formik, Form } from "formik";
 import * as Yup from "yup";
 
@@ -7,7 +7,6 @@ import { IonButton, IonCol, IonContent, IonIcon, IonInput, IonItem, IonLabel, Io
 import FormFieldFeedback from "../components/FormFieldFeedback";
 import { confirmReset, resetPassword } from "../http/users";
 import trimLowerCase from "../lib/trim-lowercase";
-import useMounted from "../lib/mounted-hook";
 import Centered from "../components/Centered";
 import { arrowBackSharp } from "ionicons/icons";
 import { useHistory } from "react-router";
@@ -148,54 +147,69 @@ function ResetForm({ onSubmit }: FormProps) {
 function ChangePasswordForm({ onSubmit, user }: FormProps & {
   user: any,
 }) {
+  const history = useHistory();
+
   return (
-    <Formik
-      validationSchema={passwordChangeSchema}
-      onSubmit={onSubmit}
-      initialValues={{}}
-    >{({
-      handleChange,
-      handleBlur,
-      errors,
-      touched,
-      isValid,
-      isSubmitting
-    }: any) => (
-        <Form noValidate>
-          <IonText className="ion-text-center">
-            {user.activeRequest && (
-              <p className="ion-no-margin" style={{
-                color: "var(--ion-color-danger)"
-              }}>
-                <strong>You already have an active password request</strong>
-              </p>
-            )}
-            <p>Use the code in your mail in your mail to complete reset.</p>
-          </IonText>
-          <IonItem className={touched.resetCode && errors.resetCode ? "has-error" : ""}>
-            <IonLabel position="floating">Reset code</IonLabel>
-            <IonInput name="resetCode" type="text" onIonChange={handleChange} onIonBlur={handleBlur} />
-          </IonItem>
-          <FormFieldFeedback {...{ errors, touched, fieldName: "resetCode" }} />
+    <>
+      <Formik
+        validationSchema={passwordChangeSchema}
+        onSubmit={onSubmit}
+        initialValues={{}}
+      >{({
+        handleChange,
+        handleBlur,
+        errors,
+        touched,
+        isValid,
+        isSubmitting
+      }: any) => (
+          <Form noValidate>
+            <IonText className="ion-text-center">
+              {user.activeRequest && (
+                <p className="ion-no-margin" style={{
+                  color: "var(--ion-color-danger)"
+                }}>
+                  <strong>You already have an active password request</strong>
+                </p>
+              )}
+              <p>Use the code in your mail in your mail to complete reset.</p>
+            </IonText>
+            <IonItem className={touched.resetCode && errors.resetCode ? "has-error" : ""}>
+              <IonLabel position="floating">Reset code</IonLabel>
+              <IonInput name="resetCode" type="text" onIonChange={handleChange} onIonBlur={handleBlur} />
+            </IonItem>
+            <FormFieldFeedback {...{ errors, touched, fieldName: "resetCode" }} />
 
-          <IonItem className={touched.newPassword && errors.newPassword ? "has-error" : ""}>
-            <IonLabel position="floating">Password</IonLabel>
-            <IonInput type="password" name="newPassword" onIonChange={handleChange} onIonBlur={handleBlur} />
-          </IonItem>
-          <FormFieldFeedback {...{ errors, touched, fieldName: "newPassword" }} />
+            <IonItem className={touched.newPassword && errors.newPassword ? "has-error" : ""}>
+              <IonLabel position="floating">Password</IonLabel>
+              <IonInput type="password" name="newPassword" onIonChange={handleChange} onIonBlur={handleBlur} />
+            </IonItem>
+            <FormFieldFeedback {...{ errors, touched, fieldName: "newPassword" }} />
 
-          <IonItem className={touched.confirmPassword && errors.confirmPassword ? "has-error" : ""}>
-            <IonLabel position="floating">Confirm password</IonLabel>
-            <IonInput type="password" name="confirmPassword" onIonChange={handleChange} onIonBlur={handleBlur} />
-          </IonItem>
-          <FormFieldFeedback {...{ errors, touched, fieldName: "confirmPassword" }} />
+            <IonItem className={touched.confirmPassword && errors.confirmPassword ? "has-error" : ""}>
+              <IonLabel position="floating">Confirm password</IonLabel>
+              <IonInput type="password" name="confirmPassword" onIonChange={handleChange} onIonBlur={handleBlur} />
+            </IonItem>
+            <FormFieldFeedback {...{ errors, touched, fieldName: "confirmPassword" }} />
 
-          <IonRow>
-            <IonCol>
-              <IonButton color="secondary" expand="block" type="submit" disabled={!isValid || isSubmitting}>{isSubmitting ? "Submitting..." : "Submit"}</IonButton>
-            </IonCol>
-          </IonRow>
-        </Form>
-      )}</Formik>
+            <IonRow>
+              <IonCol>
+                <IonButton color="secondary" expand="block" type="submit" disabled={!isValid || isSubmitting}>{isSubmitting ? "Submitting..." : "Submit"}</IonButton>
+              </IonCol>
+            </IonRow>
+          </Form>
+        )}</Formik>
+      <Centered>
+        <IonButton
+          fill="clear"
+          color="medium"
+          size="small"
+          onClick={history.goBack}
+        >
+          back
+              <IonIcon slot="start" icon={arrowBackSharp} />
+        </IonButton>
+      </Centered>
+    </>
   );
 }
