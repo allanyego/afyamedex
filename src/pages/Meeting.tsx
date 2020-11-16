@@ -120,50 +120,48 @@ const MeetingPage: React.FC<MeetingPageProps> = ({
 
   return (
     <Centered fullHeight>
-      <div>
-        <div>
-          <h3 className="ion-text-center">
-            Virtual consultation
+      <div className="ion-padding-horizontal">
+        <h3 className="ion-text-center">
+          Virtual consultation
           </h3>
-          <div className="d-flex ion-justify-content-between">
-            {(hasMeetingEnded || !hasMeetingStarted || isClosed) && (
-              <IonButton
-                fill="clear"
-                color="medium"
-                size="small"
-                routerLink="/app/appointments">
-                Back
-                <IonIcon slot="start" icon={arrowBackSharp} />
-              </IonButton>
-            )}
+        <div className="d-flex ion-justify-content-between">
+          {(hasMeetingEnded || !hasMeetingStarted || isClosed) && (
+            <IonButton
+              fill="clear"
+              color="medium"
+              size="small"
+              routerLink="/app/appointments">
+              Back
+              <IonIcon slot="start" icon={arrowBackSharp} />
+            </IonButton>
+          )}
 
-            <ToReviewButton appointment={appointment} />
-          </div>
-          <h3>Meeting with <strong className="ion-text-capitalize">
-            {extractForDisplay(currentUser, appointment).fullName}
-          </strong>
-          </h3>
-          <p>
-            <strong>Subject: </strong>{appointment.subject}
-          </p>
-          {
-            (isClosed) ? (
-              appointment.patient._id === currentUser._id ? (
-                <SessionDetailsPatient
-                  duration={meetingDuration}
-                  hasBeenBilled={appointment.hasBeenBilled}
-                  isUpdating={isUpdating}
-                  amount={appointment.amount}
-                  onClick={toCheckout}
-                />
-              ) : (
-                  <SessionDetailsProfessional duration={meetingDuration} />
-                )
-            ) : (
-                <JoinButton onClick={startMeeting} />
-              )
-          }
+          <ToReviewButton appointment={appointment} />
         </div>
+        <h3>Meeting with <strong className="ion-text-capitalize">
+          {extractForDisplay(currentUser, appointment).fullName}
+        </strong>
+        </h3>
+        <p>
+          <strong>Subject: </strong>{appointment.subject}
+        </p>
+        {
+          (isClosed) ? (
+            appointment.patient._id === currentUser._id ? (
+              <SessionDetailsPatient
+                duration={meetingDuration}
+                hasBeenBilled={appointment.hasBeenBilled}
+                isUpdating={isUpdating}
+                amount={appointment.amount}
+                onClick={toCheckout}
+              />
+            ) : (
+                <SessionDetailsProfessional duration={meetingDuration} />
+              )
+          ) : (
+              <JoinButton onClick={startMeeting} />
+            )
+        }
       </div>
     </Centered>
   );
