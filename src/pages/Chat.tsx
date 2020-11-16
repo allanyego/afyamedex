@@ -1,5 +1,6 @@
 import React, { useState, useCallback, useEffect } from "react";
 import { IonPage, IonContent, IonItem, IonAvatar, IonList, IonLabel, IonText, useIonViewDidEnter, useIonViewWillLeave } from "@ionic/react";
+import moment from "moment";
 
 import defaultAvatar from "../assets/img/default_avatar.jpg";
 import { useHistory } from "react-router";
@@ -79,7 +80,22 @@ function ThreadRibbon({ thread }: any) {
         <img src={defaultAvatar} alt={otherUser.fullName} />
       </IonAvatar>
       <IonLabel>
-        <h2 className="ion-text-capitalize">{otherUser.fullName}</h2>
+        <div className="d-flex ion-justify-content-center ion-align-items-center">
+          <div style={{
+            flexGrow: 1,
+            overflow: "hidden",
+            marginRight: "0.8em",
+          }}>
+            <h2 className="ion-text-capitalize">{otherUser.fullName}</h2>
+          </div>
+          <small>
+            <i>
+              <IonText color="medium">
+                {moment(thread.lastMessage.createdAt).format("l")}
+              </IonText>
+            </i>
+          </small>
+        </div>
         <IonText color="medium">{thread.lastMessage.body}</IonText>
       </IonLabel>
     </IonItem>

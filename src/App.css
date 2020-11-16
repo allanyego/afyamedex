@@ -44,3 +44,7 @@ form .has-error {
 .rating-container {
   color: var(--ion-color-warning-shade);
 }
+
+.app-alert .danger {
+  color: var(--ion-color-danger);
+}

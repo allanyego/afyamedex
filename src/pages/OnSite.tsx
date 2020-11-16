@@ -1,4 +1,4 @@
-import { IonAlert, IonButton, IonContent, IonIcon, IonPage, IonText, useIonViewWillLeave } from "@ionic/react";
+import { IonAlert, IonButton, IonContent, IonIcon, IonPage, IonText, useIonViewDidEnter, useIonViewWillLeave } from "@ionic/react";
 import { arrowBackSharp, arrowForwardSharp, checkmarkCircleSharp, playSharp, starSharp, stopSharp } from "ionicons/icons";
 import React, { useState } from "react";
 import { useHistory, useLocation } from "react-router";
@@ -17,6 +17,7 @@ const OnSite: React.FC = () => {
   const [isProcessing, setProcessing] = useState(false);
   const [duration, setDuration] = useState(0);
   const { state: selectedAppointment } = useLocation<any>();
+  const history = useHistory();
   const [_appointment, setAppointment] = useState(selectedAppointment);
   const [isAlertOpen, setAlertOpen] = useState(false);
   const { isMounted, setMounted } = useMounted();
@@ -62,13 +63,15 @@ const OnSite: React.FC = () => {
 
   const closeAlert = () => isMounted && setAlertOpen(false);
 
+  useIonViewDidEnter(() => {
+    if (!selectedAppointment || !selectedAppointment._id) {
+      history.replace("/app/appointments");
+    }
+  });
+
   useIonViewWillLeave(() => {
     setMounted(false);
   });
-
-  if (!selectedAppointment || !selectedAppointment._id) {
-    return null;
-  }
 
   return (
     <IonPage>
@@ -93,50 +96,52 @@ const OnSite: React.FC = () => {
           ]}
         />
         <Centered fullHeight>
-          <div>
-            <h3 className="ion-text-center">
-              On-site consultation
+          {selectedAppointment && (
+            <div>
+              <h3 className="ion-text-center">
+                On-site consultation
           </h3>
-            <div className="d-flex ion-align-items-center ion-justify-content-between">
-              {(hasMeetingEnded || !hasMeetingStarted) && (
-                <IonButton
-                  fill="clear"
-                  color="medium"
-                  size="small"
-                  routerLink="/app/appointments">
-                  Back
-                  <IonIcon slot="start" icon={arrowBackSharp} />
-                </IonButton>
-              )}
-
-              <ToReviewButton appointment={selectedAppointment} />
-            </div>
-            <h3>Meeting with <strong className="ion-text-capitalize">
-              {extractForDisplay(currentUser, selectedAppointment).fullName}
-            </strong>
-            </h3>
-            <p>
-              <strong>Subject: </strong>{selectedAppointment.subject}
-            </p>
-            {selectedAppointment.patient._id === currentUser._id ? (
-              <PatientView
-                appointment={_appointment}
-              />
-            ) : isProcessing ? (
-              <LoadingFallback fullLength={false} />
-            ) : (
-                  <ProfessionalView
-                    appointment={_appointment}
-                    startMeeting={startMeeting}
-                    endMeeting={onEndAttempt}
-                    {...{
-                      hasMeetingEnded,
-                      hasMeetingStarted,
-                      duration,
-                    }}
-                  />
+              <div className="d-flex ion-align-items-center ion-justify-content-between">
+                {(hasMeetingEnded || !hasMeetingStarted) && (
+                  <IonButton
+                    fill="clear"
+                    color="medium"
+                    size="small"
+                    routerLink="/app/appointments">
+                    Back
+                    <IonIcon slot="start" icon={arrowBackSharp} />
+                  </IonButton>
                 )}
-          </div>
+
+                <ToReviewButton appointment={selectedAppointment} />
+              </div>
+              <h3>Meeting with <strong className="ion-text-capitalize">
+                {extractForDisplay(currentUser, selectedAppointment).fullName}
+              </strong>
+              </h3>
+              <p>
+                <strong>Subject: </strong>{selectedAppointment.subject}
+              </p>
+              {selectedAppointment.patient._id === currentUser._id ? (
+                <PatientView
+                  appointment={_appointment}
+                />
+              ) : isProcessing ? (
+                <LoadingFallback fullLength={false} />
+              ) : (
+                    <ProfessionalView
+                      appointment={_appointment}
+                      startMeeting={startMeeting}
+                      endMeeting={onEndAttempt}
+                      {...{
+                        hasMeetingEnded,
+                        hasMeetingStarted,
+                        duration,
+                      }}
+                    />
+                  )}
+            </div>
+          )}
         </Centered>
       </IonContent>
     </IonPage>

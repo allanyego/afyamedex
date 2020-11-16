@@ -1,5 +1,5 @@
-import { IonAlert, IonButton, IonCard, IonCol, IonContent, IonIcon, IonInput, IonItem, IonLabel, IonPage, IonRow, IonText, IonTextarea, useIonViewWillLeave } from "@ionic/react";
-import { arrowBackSharp, arrowDownCircleSharp, arrowForwardSharp, attachSharp, checkmarkCircleSharp, playSharp, starSharp, stopSharp } from "ionicons/icons";
+import { IonButton, IonCard, IonCol, IonContent, IonIcon, IonInput, IonItem, IonLabel, IonPage, IonRow, IonText, IonTextarea, useIonViewDidEnter, useIonViewWillLeave } from "@ionic/react";
+import { arrowBackSharp, arrowDownCircleSharp, arrowForwardSharp, attachSharp, checkmarkCircleSharp } from "ionicons/icons";
 import React, { useRef, useState } from "react";
 import { useHistory, useLocation } from "react-router";
 import { Form, Formik } from "formik";
@@ -7,7 +7,7 @@ import * as Yup from "yup";
 import download from "downloadjs";
 
 import Centered from "../components/Centered";
-import { ALLOWED_FILE_TYPES, APPOINTMENT, MAX_ATTACHMENT_SIZE, ROOT_URL, SERVER_URL } from "../http/constants";
+import { ALLOWED_FILE_TYPES, APPOINTMENT, MAX_ATTACHMENT_SIZE, SERVER_URL } from "../http/constants";
 import { useAppContext } from "../lib/context-lib";
 import useMounted from "../lib/mounted-hook";
 import { editAppointment } from "../http/appointments";
@@ -17,14 +17,11 @@ import { ToReviewButton } from "./OnSite";
 
 const Tests: React.FC = () => {
   const { state: selectedAppointment } = useLocation<any>();
+  const history = useHistory();
   const [_appointment, setAppointment] = useState(selectedAppointment);
   const { isMounted, setMounted } = useMounted();
   const { currentUser } = useAppContext() as any;
   const { onError } = useToastManager();
-
-  useIonViewWillLeave(() => {
-    setMounted(false);
-  });
 
   const handleSubmit = async (values: any, { setSubmitting }: any) => {
     try {
@@ -46,48 +43,56 @@ const Tests: React.FC = () => {
     }
   };
 
-  if (!selectedAppointment) {
-    return null;
-  }
+  useIonViewDidEnter(() => {
+    if (!selectedAppointment) {
+      history.replace("/app/appointments");
+    }
+  });
+
+  useIonViewWillLeave(() => {
+    setMounted(false);
+  });
 
   return (
     <IonPage>
       <IonContent fullscreen className="ion-padding-horizontal">
         <Centered fullHeight>
-          <div>
-            <h3 className="ion-text-center">
-              Test
+          {selectedAppointment && (
+            <div>
+              <h3 className="ion-text-center">
+                Test
           </h3>
-            <div className="d-flex ion-align-items-center ion-justify-content-between">
-              <IonButton
-                fill="clear"
-                color="medium"
-                size="small"
-                routerLink="/app/appointments">
-                Back
+              <div className="d-flex ion-align-items-center ion-justify-content-between">
+                <IonButton
+                  fill="clear"
+                  color="medium"
+                  size="small"
+                  routerLink="/app/appointments">
+                  Back
                 <IonIcon slot="start" icon={arrowBackSharp} />
-              </IonButton>
+                </IonButton>
 
-              <ToReviewButton appointment={selectedAppointment} />
-            </div>
-            <h3>Test <strong className="ion-text-capitalize">
-              #{selectedAppointment._id}
-            </strong>
-            </h3>
-            <p>
-              <strong>Subject: </strong>{selectedAppointment.subject}
-            </p>
-            {selectedAppointment.patient._id === currentUser._id ? (
-              <PatientView
-                appointment={_appointment}
-              />
-            ) : (
-                <ProfessionalView
+                <ToReviewButton appointment={selectedAppointment} />
+              </div>
+              <h3>Test <strong className="ion-text-capitalize">
+                #{selectedAppointment._id}
+              </strong>
+              </h3>
+              <p>
+                <strong>Subject: </strong>{selectedAppointment.subject}
+              </p>
+              {selectedAppointment.patient._id === currentUser._id ? (
+                <PatientView
                   appointment={_appointment}
-                  handleSubmit={handleSubmit}
                 />
-              )}
-          </div>
+              ) : (
+                  <ProfessionalView
+                    appointment={_appointment}
+                    handleSubmit={handleSubmit}
+                  />
+                )}
+            </div>
+          )}
         </Centered>
       </IonContent>
     </IonPage>

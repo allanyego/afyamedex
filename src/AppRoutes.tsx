@@ -49,7 +49,7 @@ const AppRoutes: React.FC = () => {
       <IonAlert
         isOpen={isAlertOpen}
         onDidDismiss={closeAlert}
-        cssClass="exit-app-alert"
+        cssClass="app-alert"
         header={"Leaving?"}
         message="Are you you sure you want to leave?"
         buttons={[

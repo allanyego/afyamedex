@@ -1,6 +1,6 @@
-export const HOST_PROD = "https://afyamedex.herokuapp.com";
+export const PEER_HOST = "afyamedex-peer.herokuapp.com";
 
-export const ROOT_URL = HOST_PROD;
+export const ROOT_URL = "https://afyamedex.herokuapp.com";
 // process.env.NODE_ENV === "production"
 //   ? "https://afyamedex.herokuapp.com"
 //   : "http://localhost:8080";

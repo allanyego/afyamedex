@@ -339,7 +339,7 @@ function EditConditions({ conditions, setConditions }: {
           </i>
         </small>
       </p>
-      <div className="edit-modal-badges">
+      <div className="profile-badges-container">
         {
           conditions.map((s: string, index: number) => (
             <IonBadge key={index} color="danger" onClick={handleRemoveFactory(index)}>

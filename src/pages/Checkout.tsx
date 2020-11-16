@@ -180,7 +180,9 @@ const Checkout: React.FC = () => {
                           fill="clear"
                           color="medium"
                           size="small"
-                          routerLink="/app/appointments">
+                          routerLink="/app/appointments"
+                          routerDirection="back"
+                        >
                           <IonIcon slot="start" icon={arrowBackSharp} />
                             Later
                         </IonButton>

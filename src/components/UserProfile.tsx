@@ -93,8 +93,10 @@ export default function UserProfile({ user, loadError = false }: {
 }
 
 function UserDetails({ user }: { user: ProfileData }) {
-  const { currentUser } = useAppContext() as any;
   const history = useHistory();
+  const { currentUser } = useAppContext() as any;
+  const isCurrent = user._id === currentUser._id;
+
   const toChat = () => history.push({
     pathname: "/app/chat/no-thread",
     state: {
@@ -111,7 +113,13 @@ function UserDetails({ user }: { user: ProfileData }) {
           color: "var(--ion-color-light)"
         }}
       >
-        <IonGrid className="ion-no-padding ion-padding-top d-flex ion-align-items-center">
+        <IonGrid
+          className={
+            "d-flex ion-align-items-center ion-no-padding ion-padding-top" + (isCurrent ?
+              " ion-padding-bottom"
+              : "")
+          }
+        >
           <IonRow>
             <IonCol
               size="3"
