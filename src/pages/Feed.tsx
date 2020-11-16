@@ -221,7 +221,9 @@ function ProfessionalCard({ professional }: {
 }) {
   return (
     <div className="ion-align-self-center ion-align-items-center">
-      <IonCard routerLink={`/app/profile/${professional._id}`}>
+      <IonCard routerLink={`/app/profile/${professional._id}`} style={{
+        minWidth: "8em",
+      }}>
         <IonCardContent>
           <div className="d-flex ion-justify-content-center ion-align-items-center">
             <div>
