@@ -223,13 +223,16 @@ function ProfessionalCard({ professional }: {
     <div className="ion-align-self-center ion-align-items-center">
       <IonCard routerLink={`/app/profile/${professional._id}`} style={{
         minWidth: "8em",
+        padding: "0.5em",
       }}>
         <IonCardContent>
-          <div className="d-flex ion-justify-content-center ion-align-items-center">
+          <Centered>
             <div>
-              <IonAvatar>
-                <img src={defaultAvatar} alt={professional.fullName} />
-              </IonAvatar>
+              <Centered>
+                <IonAvatar>
+                  <img src={defaultAvatar} alt={professional.fullName} />
+                </IonAvatar>
+              </Centered>
               <IonText className="ion-text-center">
                 <h4 className="ion-text-capitalize">{professional.fullName}</h4>
                 <p className="ion-no-margin">
@@ -243,7 +246,7 @@ function ProfessionalCard({ professional }: {
                 </p>
               </IonText>
             </div>
-          </div>
+          </Centered>
         </IonCardContent>
       </IonCard>
     </div>
