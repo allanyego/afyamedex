@@ -504,13 +504,6 @@ function MeetingScreen({
 
 
         <div className="peer-tab h100">
-          <pre style={{
-            position: "absolute",
-            width: "100%",
-            bottom: 100,
-          }}>
-            {JSON.stringify({ hasPeerJoined, peers }, null, 2)}
-          </pre>
           {hasPeerJoined ? (
             <div className="h100 joined-screen">
               {!peerVideoOn && (
