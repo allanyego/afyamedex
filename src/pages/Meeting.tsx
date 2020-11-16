@@ -502,7 +502,6 @@ function MeetingScreen({
       <div className="d-flex meeting-pane">
         <IonBadge className="duration-badge" color="danger">{duration}min</IonBadge>
 
-
         <div className="peer-tab h100">
           {hasPeerJoined ? (
             <div className="h100 joined-screen">
