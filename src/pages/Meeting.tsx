@@ -177,7 +177,7 @@ const Meeting: React.FC = () => {
   let [isUpdating, setUpdating] = useState(false);
   const { state } = useLocation<any>();
   const [selectedAppointment, setSelectedAppointment] = useState(state);
-  const { socket, currentUser } = useAppContext() as any;
+  const { currentUser } = useAppContext() as any;
   const history = useHistory();
   const { onError } = useToastManager();
 
@@ -229,7 +229,7 @@ const Meeting: React.FC = () => {
 
   return (
     <IonPage>
-      <IonContent fullscreen className="ion-padding-horizontal d-flex">
+      <IonContent fullscreen className="d-flex">
         {selectedAppointment && (
           <>
             {(!hasMeetingStarted || hasMeetingEnded) ? (
