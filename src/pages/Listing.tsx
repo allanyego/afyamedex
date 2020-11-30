@@ -1,10 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { IonButton, IonContent, IonHeader, IonPage, IonTitle, IonToolbar, IonRow, IonCol, IonText, IonIcon, IonButtons, IonBackButton, IonSearchbar, IonGrid, IonItem, IonLabel, IonRange, IonCheckbox, IonInput, IonToggle, IonSelectOption, IonSelect, IonDatetime, IonThumbnail, IonAvatar, IonList, IonChip, IonBadge, useIonViewDidEnter, useIonViewWillLeave } from '@ionic/react';
-import { caretBackCircle, search, personCircle, ellipsisHorizontal, ellipsisVertical, checkmarkCircle, shuffle, star, informationCircle, navigate, home, closeCircle, person, businessOutline, close } from 'ionicons/icons';
+import { IonButton, IonContent, IonPage, IonRow, IonCol, IonIcon, IonSearchbar, IonGrid, IonItem, IonLabel, IonAvatar, IonList, IonBadge, useIonViewDidEnter, useIonViewWillLeave } from '@ionic/react';
+import { search, person, businessOutline, close } from 'ionicons/icons';
 
 import './Listing.css';
-import Rating from '../components/Rating';
-import defaultAvatar from "../assets/img/default_avatar.jpg";
 import { getUsers } from "../http/users";
 import useToastManager from '../lib/toast-hook';
 import LoadingFallback from '../components/LoadingFallback';
@@ -16,6 +14,7 @@ import ErrorFallback from '../components/ErrorFallback';
 import { useAppContext } from '../lib/context-lib';
 import { ProfileData } from '../components/UserProfile';
 import RatingInfo from '../components/RatingInfo';
+import userPicture from '../http/helpers/user-picture';
 
 const Listing: React.FC = () => {
   const [showSearchBar, setShowSearchBar] = useState(false);
@@ -41,7 +40,8 @@ const Listing: React.FC = () => {
   };
 
   useIonViewDidEnter(() => {
-    fetchProfessionals({}).then();
+    setMounted(true);
+    fetchProfessionals({});
   }, []);
 
   useIonViewWillLeave(() => {
@@ -51,7 +51,6 @@ const Listing: React.FC = () => {
   const onToggle = () => setShowSearchBar(!showSearchBar);
   const closeSearchBar = async () => {
     setShowSearchBar(false);
-    console.log("Fetching");
     await fetchProfessionals();
   };
 
@@ -94,7 +93,7 @@ function ListingItem({ prof }: {
   return (
     <IonItem routerLink={`/app/profile/${prof._id}`} className="listing-item">
       <IonAvatar slot="start">
-        <img src={defaultAvatar} alt={prof.fullName} />
+        <img src={userPicture(prof)} alt={prof.fullName} />
       </IonAvatar>
       <IonLabel>
         <h3 className="ion-text-capitalize d-flex ion-align-items-center">

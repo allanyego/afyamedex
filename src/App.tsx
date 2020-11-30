@@ -41,6 +41,7 @@ const stripePromise = loadStripe("pk_test_lx1Waow5lgsLqWZfGakpklYO00rvf5kGYa");
 const App: React.FC = () => {
   const [currentUser, setCurrentUser] = useState<ProfileData | null>(null);
   const [notifications, setNotifications] = useState([]);
+  const [activeAppointment, setActiveAppointment] = useState<any>(null);
   const [socket, setSocket] = useState(null);
   // const [isAlertOpen, setAlertOpen] = useState(false);
   const [isAuthenticating, setAuthenticating] = useState(true);
@@ -95,6 +96,8 @@ const App: React.FC = () => {
         <IonApp>
           <AppContext.Provider value={{
             setCurrentUser: _setCurrentUser,
+            activeAppointment,
+            setActiveAppointment,
             currentUser,
             notifications,
             setNotifications,

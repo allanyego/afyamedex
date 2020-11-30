@@ -5,6 +5,7 @@ import { menuController } from "@ionic/core"
 import { useAppContext } from "../lib/context-lib";
 import defaultAvatar from "../assets/img/default_avatar.jpg";
 import { menuSharp } from "ionicons/icons";
+import userPicture from "../http/helpers/user-picture";
 
 interface HeaderProps {
   title: string
@@ -40,7 +41,7 @@ export default function UserHeader({ title, secondary }: HeaderProps) {
           </IonButtons>
         ) : (
             <IonAvatar slot="end" className="ion-padding">
-              <img src={defaultAvatar} alt={currentUser.fullName} />
+              <img src={userPicture(currentUser)} alt={currentUser.fullName} />
             </IonAvatar>
           )}
       </IonToolbar>

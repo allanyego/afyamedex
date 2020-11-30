@@ -8,11 +8,11 @@ import {
   IonAlert,
   IonBadge,
   IonSpinner,
-  useIonViewDidEnter,
-  IonText
+  IonText,
+  useIonViewDidEnter
 } from '@ionic/react';
 import { useHistory, useLocation } from 'react-router';
-import { micSharp, arrowBackSharp, micOffSharp, checkmarkCircleSharp, callSharp } from 'ionicons/icons';
+import { micSharp, arrowBackSharp, micOffSharp, callSharp } from 'ionicons/icons';
 import Peer from "peerjs";
 
 import { useAppContext } from '../lib/context-lib';
@@ -25,8 +25,12 @@ import { ProfileData } from '../components/UserProfile';
 import { APPOINTMENT, PEER_HOST } from "../http/constants";
 import Centered from '../components/Centered';
 import LoadingFallback from "../components/LoadingFallback";
-import { ToReviewButton } from './OnSite';
 import "./Meeting.css";
+import BilledButton from '../components/BilledButton';
+import pluralizeDuration from '../lib/pluralize-duration';
+import MeetingMiniInfo from '../components/MeetingMiniInfo';
+import { Capacitor } from '@capacitor/core';
+import ToReviewButton from '../components/ToReviewButton';
 
 const JoinButton = ({ onClick }: {
   onClick: any
@@ -52,20 +56,14 @@ const SessionDetailsPatient: React.FC<{
   onClick,
 }) => (
       <div>
-        <p>Your session lasted <strong>
-          {duration}mins (billed: 10min)
-                    </strong>. Proceed to payment...</p>
+        <p>
+          <strong>
+            {pluralizeDuration(duration)}
+          </strong> billed.{!hasBeenBilled && " Proceed to payment..."}
+        </p>
         <div className="h100 d-flex ion-justify-content-center ion-align-items-center">
           {hasBeenBilled ? (
-            <IonButton
-              fill="clear"
-              color="success"
-              size="small"
-              disabled
-            >
-              KES.{amount}
-              <IonIcon slot="start" icon={checkmarkCircleSharp} />
-            </IonButton>
+            <BilledButton amount={amount} />
           ) : (
               <IonButton color="secondary" onClick={onClick} disabled={isUpdating}>
                 {isUpdating ? (
@@ -78,21 +76,25 @@ const SessionDetailsPatient: React.FC<{
     );
 
 const SessionDetailsProfessional: React.FC<{
-  duration: number,
-}> = ({ duration }) => (
-  <p>Your session lasted{" "}
-    <strong>
-      {duration}mins.
-    </strong>
-  </p>
+  hasBeenBilled: boolean,
+  amount?: number,
+}> = ({ hasBeenBilled, amount }) => (
+  <>
+    <p>
+      Session <strong>closed.</strong>
+    </p>
+    {hasBeenBilled && (
+      <Centered>
+        <BilledButton amount={amount!} />
+      </Centered>
+    )}
+  </>
 );
 
 interface MeetingPageProps {
   hasMeetingStarted: boolean,
   hasMeetingEnded: boolean,
-  hasPeerJoined: boolean,
   isUpdating: boolean,
-  duration: number,
   appointment: any,
   startMeeting: (...args: []) => any,
 }
@@ -100,19 +102,16 @@ interface MeetingPageProps {
 const MeetingPage: React.FC<MeetingPageProps> = ({
   hasMeetingStarted,
   hasMeetingEnded,
-  hasPeerJoined,
   isUpdating,
-  duration,
   appointment,
   startMeeting,
 }) => {
   const { currentUser } = useAppContext() as any;
   const history = useHistory();
-  const meetingDuration = appointment.duration || duration;
 
   const toCheckout = () => {
     history.push("/app/appointments/checkout/" + appointment._id, {
-      duration: meetingDuration || 10,  // Bill at least 10 minutes
+      ...appointment,
     });
   };
 
@@ -142,21 +141,19 @@ const MeetingPage: React.FC<MeetingPageProps> = ({
           {extractForDisplay(currentUser, appointment).fullName}
         </strong>
         </h3>
-        <p>
-          <strong>Subject: </strong>{appointment.subject}
-        </p>
+
+        <MeetingMiniInfo {...appointment} />
+
         {
           (isClosed) ? (
             appointment.patient._id === currentUser._id ? (
               <SessionDetailsPatient
-                duration={meetingDuration}
-                hasBeenBilled={appointment.hasBeenBilled}
                 isUpdating={isUpdating}
-                amount={appointment.amount}
                 onClick={toCheckout}
+                {...appointment}
               />
             ) : (
-                <SessionDetailsProfessional duration={meetingDuration} />
+                <SessionDetailsProfessional {...appointment} />
               )
           ) : (
               <JoinButton onClick={startMeeting} />
@@ -171,40 +168,29 @@ const Meeting: React.FC = () => {
   const [hasMeetingStarted, setMeetingStarted] = useState(false);
   const [hasMeetingEnded, setMeetingEnded] = useState(false);
   const [hasPeerJoined, setPeerJoined] = useState(false);
-  const [duration, setDuration] = useState(0);
   let [isUpdating, setUpdating] = useState(false);
-  const { state } = useLocation<any>();
-  const [selectedAppointment, setSelectedAppointment] = useState(state);
-  const { currentUser } = useAppContext() as any;
-  const history = useHistory();
+  const { currentUser, activeAppointment } = useAppContext() as any;
+  const [selectedAppointment, setSelectedAppointment] = useState<any>(null);
   const { onError } = useToastManager();
-
 
   const startMeeting = () => {
     setMeetingStarted(true);
     setMeetingEnded(false);
   };
   const stopMeeting = () => {
-    hasPeerJoined && setSelectedAppointment({
-      ...selectedAppointment,
-      status: APPOINTMENT.STATUSES.CLOSED,
-    });
     setMeetingStarted(false);
     setMeetingEnded(true);
   };
   const onCloseAppointment = async () => {
     setUpdating(true);
     try {
-      const minutesBilled = duration > 10 ? duration : 10;
       const status = APPOINTMENT.STATUSES.CLOSED;
       hasPeerJoined && (await editAppointment(selectedAppointment._id, currentUser.token, {
-        minutesBilled: duration > 10 ? duration : 10,
-        status: APPOINTMENT.STATUSES.CLOSED,
+        status,
       }));
       setUpdating(false);
       setSelectedAppointment({
         ...selectedAppointment,
-        minutesBilled,
         status,
       });
     } catch (error) {
@@ -213,16 +199,15 @@ const Meeting: React.FC = () => {
     }
   }
 
-  useIonViewDidEnter(() => {
-    if (!selectedAppointment || !selectedAppointment.professional) {
-      history.replace("/app/appointments");
-    }
-  })
+  useEffect(() => {
+    activeAppointment && setSelectedAppointment(activeAppointment);
+  }, [activeAppointment]);
 
   useIonViewDidLeave(() => {
-    setMeetingEnded(false);
-    setMeetingStarted(false);
-    setUpdating(false);
+    // setMeetingEnded(false);
+    // setMeetingStarted(false);
+    // setSelectedAppointment(null);
+    // setUpdating(false);
   });
 
   return (
@@ -237,7 +222,7 @@ const Meeting: React.FC = () => {
                   hasMeetingStarted,
                   hasMeetingEnded,
                   hasPeerJoined,
-                  duration,
+                  duration: selectedAppointment.duration,
                   isUpdating,
                   startMeeting,
                 }}
@@ -245,8 +230,6 @@ const Meeting: React.FC = () => {
             ) : (
                 <MeetingScreen {...{
                   stopMeeting,
-                  duration,
-                  setDuration,
                   selectedAppointment,
                   onCloseAppointment,
                   hasPeerJoined,
@@ -280,8 +263,6 @@ export function extractForDisplay(current: any, other: any) {
 
 interface MeetingProps {
   selectedAppointment: any,
-  setDuration: any,
-  duration: number,
   stopMeeting: any,
   hasPeerJoined: boolean,
   onCloseAppointment: () => any,
@@ -290,8 +271,6 @@ interface MeetingProps {
 
 function MeetingScreen({
   selectedAppointment,
-  setDuration,
-  duration,
   stopMeeting,
   onCloseAppointment,
   setPeerJoined,
@@ -299,6 +278,7 @@ function MeetingScreen({
 }: MeetingProps) {
   const myVideoFeed = useRef<HTMLVideoElement | null>(null);
   const otherVideoFeed = useRef<HTMLVideoElement | null>(null);
+  const [duration, setDuration] = useState(0);
   const [stream, setStream] = useState<MediaStream | null>(null);
   const [isVideoEnabled, setVideoEnabled] = useState(true);
   const [isAudioEnabled, setAudioEnabled] = useState(true);
@@ -342,7 +322,7 @@ function MeetingScreen({
   // Start session timer
   const startTimer = () => {
     interval = setInterval(() => {
-      setDuration((dur: number) => ++dur);
+      setDuration((dur: number) => (dur + 1));
     }, 60000);
   };
   // Stop session timer
@@ -366,14 +346,14 @@ function MeetingScreen({
     socket.emit(isVideoEnabled ? "video-off" : "video-on");
   };
   // Receive stream from peer
-  const receiveStream = (stream: MediaStream) => {
+  const receiveStream = (_stream: MediaStream) => {
     setPeerJoined(true);
-    setupPeerStream(stream);
-    addVideoStream(otherVideoFeed.current as any, stream);
+    setupPeerStream(_stream);
+    addVideoStream(otherVideoFeed.current as any, _stream);
   };
   // Connect to a peer
-  const connectToUser = (peerId: string, userId: string, stream: MediaStream) => {
-    const call = myPeer.call(peerId, stream);
+  const connectToUser = (peerId: string, userId: string, _stream: MediaStream) => {
+    const call = myPeer.call(peerId, _stream);
     call.on("stream", receiveStream);
 
     call.on("close", () => {
@@ -428,11 +408,28 @@ function MeetingScreen({
       secure: true,
     });
 
+    let constraints: {
+      audio: any,
+      video: any
+    } = { audio: true, video: true };
+
+    if (!Capacitor.isNative) {
+      constraints = {
+        ...constraints,
+        video: {
+          // mandatory: {
+          //   maxWidth: 640,
+          //   maxHeight: 360,
+          // },
+          quality: 6,
+          width: { ideal: 320 },
+          height: { ideal: 240 },
+        }
+      }
+    }
+
     myPeer.on("open", (peerId) => {
-      window.navigator.mediaDevices.getUserMedia({
-        video: true,
-        audio: true,
-      }).then(stream => {
+      window.navigator.mediaDevices.getUserMedia(constraints).then(stream => {
         if (!isMounted) {
           return;
         }

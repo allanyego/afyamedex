@@ -1,12 +1,11 @@
 import React, { useEffect, useState } from "react";
+import { IonCol, IonRow, IonText, IonButton, IonIcon, IonGrid, IonPage, IonHeader, IonToolbar, IonButtons, IonBackButton, IonTitle, IonContent, IonSpinner } from "@ionic/react";
+import { chatbubbleEllipses, calendar, heartOutline, pencilSharp, heart, checkmarkCircle } from "ionicons/icons";
+import * as Yup from "yup";
 
 import { useAppContext } from "../lib/context-lib";
-import { IonCol, IonRow, IonText, IonButton, IonIcon, IonGrid, IonPage, IonHeader, IonToolbar, IonButtons, IonBackButton, IonTitle, IonContent, IonModal, IonSpinner } from "@ionic/react";
-import { USER } from "../http/constants";
-import Rating from "./Rating";
-import defaultAvatar from "../assets/img/default_avatar.jpg";
+import { MAX_ATTACHMENT_SIZE, PROFILE_PICTURE_FORMATS, USER } from "../http/constants";
 import ContactCard from "./ContactCard";
-import { chatbubbleEllipses, calendar, heartOutline, pencilSharp, heart } from "ionicons/icons";
 import { useHistory } from "react-router";
 import Education from "./profile-parts/Education";
 import Speciality from "./profile-parts/Speciality";
@@ -20,10 +19,12 @@ import Conditions from "./profile-parts/Conditions";
 import useToastManager from "../lib/toast-hook";
 import useMounted from "../lib/mounted-hook";
 import { checkIfFavorited, favorite } from "../http/favorites";
-import { getUserRating } from "../http/reviews";
-import Centered from "./Centered";
 import RatingInfo from "./RatingInfo";
 import "./UserProfile.css";
+import userPicture from "../http/helpers/user-picture";
+import { editUser } from "../http/users";
+import { Field, Form, Formik } from "formik";
+import CustomPhotoUpload from "./CustomPhotoUpload";
 
 export interface ProfileData {
   _id?: string,
@@ -92,10 +93,38 @@ export default function UserProfile({ user, loadError = false }: {
   );
 }
 
+const profilePictureSchema = Yup.object({
+  picture: Yup.mixed()
+    .test("fileType", "Unsupported format.", (value) =>
+      value ? PROFILE_PICTURE_FORMATS.includes(value.type) : true
+    )
+    .test("fileSize", "That's too big", (value) =>
+      value ? value.size <= MAX_ATTACHMENT_SIZE : true
+    )
+});
+
 function UserDetails({ user }: { user: ProfileData }) {
   const history = useHistory();
-  const { currentUser } = useAppContext() as any;
+  const [photoPreview, setPhotoPreview] = useState(userPicture(user));
+  const { currentUser, setCurrentUser } = useAppContext() as any;
+  const { onError, onSuccess } = useToastManager();
+  const { isMounted, setMounted } = useMounted();
   const isCurrent = user._id === currentUser._id;
+
+  const onPhotoEdit = async (values: any, { setSubmitting, resetForm }: any) => {
+    try {
+      const { data } = await editUser(user._id, currentUser.token, values, true);
+      isMounted && resetForm({});
+      setCurrentUser({
+        picture: data.picture,
+      });
+      onSuccess("Profile picture updated");
+    } catch (error) {
+      onError(error.message);
+    } finally {
+      isMounted && setSubmitting(false);
+    }
+  };
 
   const toChat = () => history.push({
     pathname: "/app/chat/no-thread",
@@ -104,6 +133,8 @@ function UserDetails({ user }: { user: ProfileData }) {
       fetch: true,
     }
   });
+
+  useEffect(() => () => setMounted(false), []);
 
   return (
     <>
@@ -123,8 +154,64 @@ function UserDetails({ user }: { user: ProfileData }) {
           <IonRow>
             <IonCol
               size="3"
-              className="ion-margin-horizontal d-flex ion-justify-content-center ion-align-items-center">
-              <img src={(user.picture || defaultAvatar) as any} alt={user.fullName} className="user-avatar" />
+              className="ion-margin-horizontal d-flex ion-justify-content-center ion-align-items-center photo-section">
+              {isCurrent && (
+                <Formik
+                  validationSchema={profilePictureSchema}
+                  onSubmit={onPhotoEdit}
+                  initialValues={{
+                    picture: undefined,
+                  }}
+                >
+                  {({
+                    setFieldValue,
+                    setFieldError,
+                    values,
+                    isValid,
+                    errors,
+                    isSubmitting,
+                  }) => {
+                    const fieldName = "picture";
+                    const canShowSubmit = (values.picture && isValid);
+
+                    return (
+                      <Form noValidate className="photo-edit-form">
+                        <div className="d-flex ion-align-items-center">
+                          <Field
+                            name={fieldName}
+                            component={CustomPhotoUpload}
+                            {...{ setFieldValue, setPhotoPreview }}
+                          />
+
+                          {canShowSubmit && (
+                            <IonButton
+                              color="success"
+                              type="submit"
+                              disabled={isSubmitting}
+                              shape="round"
+                            >
+                              {isSubmitting ? (
+                                <IonSpinner name="lines-small" className="button-icon" />
+                              ) : (
+                                  <IonIcon icon={checkmarkCircle} className="button-icon" />
+                                )}
+                            </IonButton>
+                          )}
+
+                        </div>
+                        {errors[fieldName] && (
+                          <div
+                            className="error-tooltip"
+                          >
+                            {errors[fieldName]}
+                          </div>
+                        )}
+                      </Form>
+                    );
+                  }}
+                </Formik>
+              )}
+              <img src={photoPreview as any} alt={user.fullName} className="user-avatar" />
             </IonCol>
             <IonCol>
               <Names user={user} currentUserId={currentUser._id} />

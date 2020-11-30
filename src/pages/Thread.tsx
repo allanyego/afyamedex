@@ -65,6 +65,7 @@ const Thread: React.FC = () => {
   };
 
   useIonViewDidEnter(() => {
+    setMounted(true);
     if (otherUser && !otherUser.fullName) {
       history.replace("/app/chat");
       return;

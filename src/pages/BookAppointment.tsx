@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from "react";
-import { IonPage, IonContent, IonHeader, IonToolbar, IonButtons, IonBackButton, IonTitle, IonText, IonItem, IonDatetime, IonLabel, IonRow, IonCol, IonButton, IonInput, IonList, IonRadioGroup, IonListHeader, IonRadio, useIonViewDidEnter, useIonViewWillLeave } from "@ionic/react";
+import { IonPage, IonContent, IonHeader, IonToolbar, IonButtons, IonBackButton, IonTitle, IonText, IonItem, IonDatetime, IonLabel, IonRow, IonCol, IonButton, IonInput, IonList, IonRadioGroup, IonListHeader, IonRadio, useIonViewDidEnter, useIonViewWillLeave, IonSelect, IonSelectOption } from "@ionic/react";
 import { useHistory, useParams } from "react-router";
 import { Formik, Form } from "formik";
 import * as Yup from "yup";
+
 import { APPOINTMENT, USER } from "../http/constants";
 import { getById } from "../http/users";
 import { useAppContext } from "../lib/context-lib";
@@ -12,11 +13,13 @@ import LoadingFallback from "../components/LoadingFallback";
 import useMounted from "../lib/mounted-hook";
 import ErrorFallback from "../components/ErrorFallback";
 
+const durations = [1, 2, 3, 4, 5];
 const { ONSITE_CONSULTATION, VIRTUAL_CONSULTATION, ONSITE_TESTS } = APPOINTMENT.TYPES;
 const appointmentSchema = Yup.object({
   subject: Yup.string().required("Enter subject."),
   date: Yup.date().required("Select preferred date."),
   time: Yup.string().required("Select desired time."),
+  duration: Yup.number().required("Select meeting duration."),
   type: Yup.string().oneOf([
     VIRTUAL_CONSULTATION,
     ONSITE_CONSULTATION,
@@ -25,7 +28,7 @@ const appointmentSchema = Yup.object({
 });
 
 export default function BookAppointment() {
-  const { professionalId } = useParams();
+  const { professionalId } = useParams<any>();
   let [professional, setProfessional] = useState<any>(null);
   const [loadError, setLoadError] = useState(false);
   const history = useHistory();
@@ -156,6 +159,18 @@ export default function BookAppointment() {
                             </IonItem>
                           </IonRadioGroup>
                         </IonList>
+
+                        <IonItem className={touched.duration && errors.duration ? "has-error" : ""}>
+                          <IonLabel>Duration (hrs)</IonLabel>
+                          <IonSelect name="duration" onIonChange={handleChange} onIonBlur={handleBlur}>
+                            {durations.map((duration) => (
+                              <IonSelectOption key={duration} value={duration}>
+                                {duration + (duration > 1 ? "hrs" : "hr")}
+                              </IonSelectOption>
+                            ))}
+                          </IonSelect>
+                        </IonItem>
+
                         <IonRow>
                           <IonCol>
                             <IonButton

@@ -29,6 +29,7 @@ export default function Chat() {
   // }, [threads]);
 
   useIonViewDidEnter(() => {
+    setMounted(true);
     getUserThreads(currentUser._id, currentUser.token).then(({ data }) => {
       isMounted && setThreads(data);
     }).catch(error => {

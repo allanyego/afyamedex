@@ -20,13 +20,15 @@ const ProfileCurrentUser: React.FC = () => {
 
   useEffect(() => {
     return () => {
-      setMounted(false);
     };
   }, []);
 
   useIonViewDidEnter(() => {
+    setMounted(true);
     setUser(currentUser);
   });
+
+  useIonViewWillLeave(() => setMounted(false));
 
   return <UserProfile user={user} />
 };
@@ -40,6 +42,7 @@ const ProfileOtherUser: React.FC = () => {
   const { isMounted, setMounted } = useMounted();
 
   useIonViewDidEnter(() => {
+    setMounted(true);
     getById(userId).then(({ data }: any) => {
       if (!isMounted) {
         return;

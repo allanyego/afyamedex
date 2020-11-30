@@ -2,3 +2,38 @@
   display: flex;
   gap: 0.2em;
 }
+
+.photo-section {
+  position: relative;
+}
+
+.photo-section .photo-edit-form {
+  position: absolute;
+  top: -0.5em;
+  left: calc(100% - 1.6em);
+  width: fit-content;
+  z-index: 3;
+}
+
+.photo-edit-form .button,
+.photo-edit-form .button::part(native) {
+  height: auto;
+}
+
+.photo-edit-form .button {
+  padding: 0;
+}
+
+.photo-edit-form .button::part(native) {
+  padding: 0.5em;
+  font-size: 0.85em;
+}
+
+.photo-edit-form .error-tooltip {
+  background: var(--ion-color-danger);
+  padding: 0.25em;
+  color: var(--ion-color-danger-contrast);
+  z-index: 3;
+  font-size: 85%;
+  border-radius: 0.25em;
+}

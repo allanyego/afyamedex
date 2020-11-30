@@ -89,14 +89,16 @@ const SignUp: React.FC = () => {
                   </IonItem>
                   <FormFieldFeedback {...{ errors, touched, fieldName: "username" }} />
 
-                  <IonText color="medium" className="ion-margin-top">
-                    <small>Leave <strong>
-                      gender</strong> and <strong>
-                        birthday</strong> fields empty if you wish to join as an <strong>
-                        institution</strong>.</small>
+                  <IonText color="medium">
+                    <p className="ion-no-margin ion-margin-top ion-margin-horizontal">
+                      <small>Leave <strong>
+                        gender</strong> and <strong>
+                          birthday</strong> fields empty if you wish to join as an <strong>
+                          institution</strong>.</small>
+                    </p>
                   </IonText>
                   <IonRow>
-                    <IonCol>
+                    <IonCol style={{ paddingLeft: 0 }}>
                       <IonItem className={touched.gender && errors.gender ? "has-error" : ""}>
                         <IonLabel>Gender</IonLabel>
                         <IonSelect name="gender" onIonChange={handleChange} onIonBlur={handleBlur}>
@@ -106,7 +108,7 @@ const SignUp: React.FC = () => {
                       </IonItem>
                       <FormFieldFeedback {...{ errors, touched, fieldName: "gender" }} />
                     </IonCol>
-                    <IonCol>
+                    <IonCol style={{ paddingRight: 0 }}>
                       <IonItem className={touched.birthday && errors.birthday ? "has-error" : ""}>
                         <IonLabel>Birthday</IonLabel>
                         <IonDatetime displayFormat="MM DD YY" name="birthday" onIonChange={handleChange} onIonBlur={handleBlur} />

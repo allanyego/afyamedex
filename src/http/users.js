@@ -37,12 +37,13 @@ export async function signUp(userData) {
   });
 }
 
-export async function editUser(userId, token, data) {
+export async function editUser(userId, token, data, multiPart = false) {
   const url = `${BASE_URL}/${userId}`;
   return await request(url, {
     method: "PUT",
-    data,
     headers: constructAuthHeader(token),
+    data,
+    multiPart,
   });
 }
 

@@ -33,6 +33,11 @@ const Checkout: React.FC = () => {
   const { isMounted, setMounted } = useMounted();
 
   useIonViewDidEnter(async () => {
+    setMounted(true);
+    if (!state || state.duration === undefined) {
+      return;
+    }
+
     try {
       const resp = await checkout(appointmentId, currentUser.token);
 
@@ -102,10 +107,6 @@ const Checkout: React.FC = () => {
     }
   };
 
-  if (!state || state.duration == undefined) {
-    return null;
-  }
-
   return (
     <IonPage>
       <IonContent fullscreen>
@@ -120,8 +121,8 @@ const Checkout: React.FC = () => {
                   fill="clear"
                   color="medium"
                   size="small"
-                  routerLink="/app">
-                  home
+                  routerLink="/app/appointments">
+                  back
                   <IonIcon slot="start" icon={arrowBackSharp} />
                 </IonButton>
               </div>

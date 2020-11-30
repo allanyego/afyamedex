@@ -1,9 +1,9 @@
 export const PEER_HOST = "afyamedex-peer.herokuapp.com";
 
-export const ROOT_URL = "https://afyamedex.herokuapp.com";
-// process.env.NODE_ENV === "production"
-//   ? "https://afyamedex.herokuapp.com"
-//   : "http://localhost:8080";
+export const ROOT_URL =
+  process.env.NODE_ENV === "production"
+    ? "https://afyamedex.herokuapp.com"
+    : "http://localhost:8080";
 
 export const SERVER_URL = `${ROOT_URL}/api/v1`;
 
@@ -42,6 +42,13 @@ export const ALLOWED_FILE_TYPES = [
   "application/pdf",
   "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
   "application/msword",
+];
+
+export const PROFILE_PICTURE_FORMATS = [
+  "image/jpg",
+  "image/jpeg",
+  "image/png",
+  "image/gif",
 ];
 
 export const MAX_ATTACHMENT_SIZE = 5000000;

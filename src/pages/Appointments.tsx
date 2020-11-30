@@ -1,9 +1,7 @@
-import React, { useState, useRef } from "react";
-import { IonPage, IonContent, IonList, IonItem, IonLabel, IonRow, IonIcon, IonText, IonGrid, IonCol, IonItemSliding, IonItemOptions, IonItemOption, useIonViewDidEnter, useIonViewWillLeave, IonLoading, IonModal, IonButton, IonAlert, IonBadge } from "@ionic/react";
-import moment from "moment";
+import React, { useState } from "react";
+import { IonPage, IonContent, IonList, useIonViewDidEnter, useIonViewWillLeave } from "@ionic/react";
 
 import UserHeader from "../components/UserHeader";
-import "./Appointments.css";
 import LoadingFallback from "../components/LoadingFallback";
 import useToastManager from "../lib/toast-hook";
 import { getAppointments } from "../http/appointments";
@@ -13,13 +11,14 @@ import useMounted from "../lib/mounted-hook";
 import ErrorFallback from "../components/ErrorFallback";
 import { useHistory } from "react-router";
 import AppointmentItem from "../components/AppointmentItem";
+import "./Appointments.css";
 
 export default function Appointments() {
   let [appointments, setAppointments] = useState<any[] | null>(null);
   const [loadError, setLoadError] = useState(false);
   const history = useHistory();
   const { onError } = useToastManager();
-  const { currentUser } = useAppContext() as any;
+  const { currentUser, setActiveAppointment } = useAppContext() as any;
   const { isMounted, setMounted } = useMounted();
 
   const onTapAppointment = (appointment: any) => {
@@ -33,11 +32,13 @@ export default function Appointments() {
 
     const isUnbilled = !appointment.hasBeenBilled;
     const isCurrentUserPatient = (appointment.patient._id === currentUser._id);
+
     if (isClosed && isUnbilled && isCurrentUserPatient) {
       history.push("/app/appointments/checkout/" + appointment._id, {
-        duration: appointment.minutesBilled,
+        ...appointment,
       });
     } else {
+      setActiveAppointment(appointment);
       if (appointment.type === APPOINTMENT.TYPES.VIRTUAL_CONSULTATION) {
         history.push("/app/appointments/virtual", {
           ...appointment,
@@ -70,7 +71,9 @@ export default function Appointments() {
   };
 
   useIonViewDidEnter(() => {
-    fetchAppointments().then();
+    setMounted(true);
+    setActiveAppointment(null);
+    fetchAppointments();
   }, []);
 
   useIonViewWillLeave(() => {

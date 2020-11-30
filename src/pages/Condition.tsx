@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { IonContent, IonPage, IonHeader, IonToolbar, IonButtons, IonBackButton, IonTitle, IonText, IonList, IonItem, IonLabel, IonSpinner, IonListHeader, useIonViewWillLeave, useIonViewDidEnter } from "@ionic/react";
 import { useParams, useHistory } from "react-router";
 import moment from "moment";
@@ -11,7 +11,7 @@ import ErrorFallback from "../components/ErrorFallback";
 import { useAppContext } from "../lib/context-lib";
 
 export default function Condition() {
-  const { conditionId } = useParams();
+  const { conditionId } = useParams<any>();
   const history = useHistory();
   let [condition, setCondition] = useState<any>(null);
   const [loadError, setLoadError] = useState(false);
@@ -35,7 +35,8 @@ export default function Condition() {
   };
 
   useIonViewDidEnter(() => {
-    getConditionDetails().then();
+    setMounted(true);
+    getConditionDetails();
   }, []);
 
   useIonViewWillLeave(() => {

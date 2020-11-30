@@ -1,6 +1,6 @@
 import { IonButton, IonCard, IonCol, IonContent, IonIcon, IonInput, IonItem, IonLabel, IonPage, IonRow, IonText, IonTextarea, useIonViewDidEnter, useIonViewWillLeave } from "@ionic/react";
-import { arrowBackSharp, arrowDownCircleSharp, arrowForwardSharp, attachSharp, checkmarkCircleSharp } from "ionicons/icons";
-import React, { useRef, useState } from "react";
+import { arrowBackSharp, arrowDownCircleSharp, arrowForwardSharp, attachSharp } from "ionicons/icons";
+import React, { useEffect, useRef, useState } from "react";
 import { useHistory, useLocation } from "react-router";
 import { Form, Formik } from "formik";
 import * as Yup from "yup";
@@ -13,14 +13,15 @@ import useMounted from "../lib/mounted-hook";
 import { editAppointment } from "../http/appointments";
 import useToastManager from "../lib/toast-hook";
 import FormFieldFeedback from "../components/FormFieldFeedback";
-import { ToReviewButton } from "./OnSite";
+import MeetingMiniInfo from "../components/MeetingMiniInfo";
+import BilledButton from "../components/BilledButton";
+import pluralizeDuration from "../lib/pluralize-duration";
+import ToReviewButton from "../components/ToReviewButton";
 
 const Tests: React.FC = () => {
-  const { state: selectedAppointment } = useLocation<any>();
-  const history = useHistory();
-  const [_appointment, setAppointment] = useState(selectedAppointment);
+  const { currentUser, activeAppointment } = useAppContext() as any;
+  const [_appointment, setAppointment] = useState<any>(null);
   const { isMounted, setMounted } = useMounted();
-  const { currentUser } = useAppContext() as any;
   const { onError } = useToastManager();
 
   const handleSubmit = async (values: any, { setSubmitting }: any) => {
@@ -43,10 +44,12 @@ const Tests: React.FC = () => {
     }
   };
 
+  useEffect(() => {
+    activeAppointment && setAppointment(activeAppointment);
+  }, [activeAppointment]);
+
   useIonViewDidEnter(() => {
-    if (!selectedAppointment) {
-      history.replace("/app/appointments");
-    }
+    setMounted(true);
   });
 
   useIonViewWillLeave(() => {
@@ -57,7 +60,7 @@ const Tests: React.FC = () => {
     <IonPage>
       <IonContent fullscreen className="ion-padding-horizontal">
         <Centered fullHeight>
-          {selectedAppointment && (
+          {_appointment && (
             <div>
               <h3 className="ion-text-center">
                 Test
@@ -72,16 +75,16 @@ const Tests: React.FC = () => {
                 <IonIcon slot="start" icon={arrowBackSharp} />
                 </IonButton>
 
-                <ToReviewButton appointment={selectedAppointment} />
+                <ToReviewButton appointment={_appointment} />
               </div>
               <h3>Test <strong className="ion-text-capitalize">
-                #{selectedAppointment._id}
+                #{_appointment._id}
               </strong>
               </h3>
-              <p>
-                <strong>Subject: </strong>{selectedAppointment.subject}
-              </p>
-              {selectedAppointment.patient._id === currentUser._id ? (
+
+              <MeetingMiniInfo {..._appointment} />
+
+              {_appointment.patient._id === currentUser._id ? (
                 <PatientView
                   appointment={_appointment}
                 />
@@ -240,26 +243,26 @@ function ViewInner({ appointment }: ViewProps) {
   const history = useHistory();
   const toCheckout = () => {
     history.push("/app/checkout/" + appointment._id, {
-      duration: appointment.minutesBilled,
+      ...appointment,
     });
   };
+
+  const { hasBeenBilled } = appointment;
 
   return (appointment.patient._id === currentUser._id) ? (
     <>
       {(appointment.type === APPOINTMENT.TYPES.ONSITE_TESTS) ? (
         <TestResultView appointment={appointment} />
       ) : (
-          <p>Your session lasted <strong>
-            {appointment.minutesBilled}mins {appointment.minutesBilled < 10 && "(billed: 10min)"}
-          </strong>. {appointment.hasBeenBilled && "Proceed to payment..."}
+          <p>
+            <strong>
+              {pluralizeDuration(appointment.duration)}
+            </strong> billed. {!hasBeenBilled && "Proceed to payment..."}
           </p>
         )}
       <div className="h100 d-flex ion-justify-content-center ion-align-items-center">
-        {appointment.hasBeenBilled ? (
-          <IonButton color="success" fill="clear" size="small" disabled>
-            KES.{appointment.amount}
-            <IonIcon slot="end" icon={checkmarkCircleSharp} />
-          </IonButton>
+        {hasBeenBilled ? (
+          <BilledButton amount={appointment.amount} />
         ) : (
             <IonButton color="secondary" onClick={toCheckout}>
               Pay
@@ -273,7 +276,14 @@ function ViewInner({ appointment }: ViewProps) {
         {(appointment.type === APPOINTMENT.TYPES.ONSITE_TESTS) ? (
           <TestResultView appointment={appointment} />
         ) : (
-            <p>Your session lasted <strong>{appointment.minutesBilled}mins.</strong></p>
+            <>
+              <p>Session <strong>closed</strong>.</p>
+              {hasBeenBilled && (
+                <Centered>
+                  <BilledButton {...appointment} />
+                </Centered>
+              )}
+            </>
           )}
       </>
     );

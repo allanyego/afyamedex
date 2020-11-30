@@ -8,6 +8,32 @@ import { useAppContext } from "../lib/context-lib";
 import useToastManager from "../lib/toast-hook";
 import { editAppointment } from "../http/appointments";
 import Loader from "./Loader";
+import calculateDuration from "../lib/calculate-duration";
+
+const AppointmentTime: React.FC<{
+  date: Date,
+  time: Date,
+  duration: number,
+}> = ({ date, time, duration }) => {
+  const endTime = calculateDuration(time, duration);
+
+  const formatTime = (t: Date) => moment(t).format("LT");
+
+  return (
+    <IonGrid
+      className="ion-no-padding datetime-grid"
+    >
+      <IonRow>
+        <IonCol className="d-flex ion-align-items-center ion-no-padding d-col">
+          <IonIcon icon={calendarOutline} />{" "} {moment(date).format("MMM Do YYYY")}
+        </IonCol>
+        <IonCol className="d-flex ion-align-items-center ion-no-padding ion-padding-start d-col">
+          <IonIcon icon={timeOutline} />{" "} {formatTime(time)} - {formatTime(endTime)}
+        </IonCol>
+      </IonRow>
+    </IonGrid>
+  );
+}
 
 const statusClasses = {
   [APPOINTMENT.STATUSES.REJECTED]: "rejected",
@@ -97,18 +123,9 @@ const AppointmentItem: React.FC<PropsWithChildren<Props>> = ({ appointment, onTa
           <strong>Subject:{" "}</strong>
           {_appointment.subject}
         </IonText>
-        <IonGrid
-          className="ion-no-padding datetime-grid"
-        >
-          <IonRow>
-            <IonCol className="d-flex ion-align-items-center ion-no-padding d-col">
-              <IonIcon icon={calendarOutline} />{" "} {moment(_appointment.date).format("MMM Do YYYY")}
-            </IonCol>
-            <IonCol className="d-flex ion-align-items-center ion-no-padding ion-padding-start d-col">
-              <IonIcon icon={timeOutline} />{" "} {moment(_appointment.time).format("LT")}
-            </IonCol>
-          </IonRow>
-        </IonGrid>
+
+        <AppointmentTime {..._appointment} />
+
         {(_appointment.status === APPOINTMENT.STATUSES.CLOSED) && (
           <IonText color="medium" className="ion-text-uppercase">
             {_appointment.status}/{_appointment.hasBeenBilled ?

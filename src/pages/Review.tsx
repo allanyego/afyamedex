@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { IonButton, IonCol, IonContent, IonIcon, IonInput, IonItem, IonLabel, IonPage, IonRow, IonText, IonTextarea, useIonViewDidEnter } from "@ionic/react";
-import { useHistory, useLocation } from "react-router";
+import { useHistory } from "react-router";
 import * as Yup from "yup";
 import { Formik, Form } from "formik";
 
@@ -17,11 +17,9 @@ import { getAppointment } from "../http/appointments";
 
 const Review: React.FC = () => {
   const [isFetching, setFetching] = useState(true);
-  const [hasReview, setHasReview] = useState(false);
-  const { state } = useLocation<any>();
+  const { currentUser, activeAppointment } = useAppContext() as any;
+  const [appointment, setAppointment] = useState<any>(null);
   const history = useHistory();
-  const [appointment, setAppointment] = useState(state);
-  const { currentUser } = useAppContext() as any;
   const { onError, onSuccess } = useToastManager();
 
   const handleReview = async (values: any, { setSubmitting }: any) => {
@@ -30,7 +28,10 @@ const Review: React.FC = () => {
         ...values,
       });
       setSubmitting(false);
-      setHasReview(true);
+      setAppointment({
+        ...appointment,
+        hasReview: true,
+      });
       onSuccess("Review posted successfully");
     } catch (error) {
       setSubmitting(false);
@@ -38,7 +39,15 @@ const Review: React.FC = () => {
     }
   };
 
+  useEffect(() => {
+    activeAppointment && setAppointment(activeAppointment);
+  }, [activeAppointment]);
+
   useIonViewDidEnter(async () => {
+    if (!appointment) {
+      return;
+    }
+
     try {
       const { data } = await getAppointment(appointment._id, currentUser.token);
       setAppointment(data);
@@ -49,10 +58,6 @@ const Review: React.FC = () => {
     }
   });
 
-  if (!appointment || !appointment._id) {
-    return null;
-  }
-
   return (
     <IonPage>
       <IonContent fullscreen>
@@ -60,8 +65,8 @@ const Review: React.FC = () => {
           {isFetching ? (
             <LoadingFallback fullLength />
           ) : (
-              <div>
-                {(appointment.hasReview || hasReview) ? (
+              <div className="ion-padding-horizontal">
+                {(appointment.hasReview) ? (
                   <ReviewView appointmentId={appointment._id} />
                 ) : (appointment.professional._id === currentUser._id) ? (
                   <NoRewiewView />
@@ -190,7 +195,6 @@ function ReviewView({ appointmentId }: {
         </div>
         <p>{review.feedback || "No feedback."}</p>
         <BackButton />
-
       </>
     );
 }

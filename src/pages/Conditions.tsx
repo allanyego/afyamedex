@@ -35,7 +35,8 @@ export default function Conditions() {
   };
 
   useIonViewDidEnter(() => {
-    fetchConditions().then();
+    setMounted(true);
+    fetchConditions();
   }, []);
 
   useIonViewWillLeave(() => {
@@ -108,7 +109,6 @@ function ConditionItem({ condition }: ConditionCardProps) {
 }
 
 function Buttons({ showSearchBar, onClick }: any) {
-  const { url } = useRouteMatch();
   const { currentUser } = useAppContext() as any;
   return (
     <>

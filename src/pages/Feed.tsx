@@ -17,6 +17,7 @@ import "./Feed.css";
 import { USER } from '../http/constants';
 import useMounted from '../lib/mounted-hook';
 import Centered from '../components/Centered';
+import userPicture from '../http/helpers/user-picture';
 
 const Feed: React.FC = () => {
   const { currentUser } = useAppContext() as any;
@@ -232,7 +233,7 @@ function ProfessionalCard({ professional }: {
             <div>
               <Centered>
                 <IonAvatar>
-                  <img src={defaultAvatar} alt={professional.fullName} />
+                  <img src={userPicture(professional)} alt={professional.fullName} />
                 </IonAvatar>
               </Centered>
               <IonText className="ion-text-center">

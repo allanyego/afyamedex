@@ -44,6 +44,8 @@ const Main: React.FC = () => {
     }
   }, []);
 
+  useIonViewDidEnter(() => setMounted(true));
+
   useIonViewWillLeave(() => {
     setMounted(false);
   });
