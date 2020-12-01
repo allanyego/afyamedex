@@ -12,6 +12,7 @@ import LoadingFallback from "../components/LoadingFallback";
 import useMounted from "../lib/mounted-hook";
 import ErrorFallback from "../components/ErrorFallback";
 import useSocket from "../lib/socket-hook";
+import userPicture from "../http/helpers/user-picture";
 
 export default function Chat() {
   let [threads, setThreads] = useState<any[] | null>(null);
@@ -78,7 +79,7 @@ function ThreadRibbon({ thread }: any) {
   return (
     <IonItem onClick={toThread}>
       <IonAvatar slot="start">
-        <img src={defaultAvatar} alt={otherUser.fullName} />
+        <img src={userPicture(otherUser)} alt={otherUser.fullName} />
       </IonAvatar>
       <IonLabel>
         <div className="d-flex ion-justify-content-center ion-align-items-center">
