@@ -14,6 +14,12 @@ export async function getAppointments(userId, token) {
   });
 }
 
+export async function getPayments(userId, token) {
+  return await request(`${BASE_URL}/${userId}/payments`, {
+    headers: constructAuthHeader(token),
+  });
+}
+
 export async function post(userId, token, data) {
   return await request(`${BASE_URL}/${userId}`, {
     method: "POST",

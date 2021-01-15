@@ -30,7 +30,7 @@ import ToastManager from './components/ToastManager';
 import { getObject, clear, setObject } from './lib/storage';
 import { STORAGE_KEY, USER } from './http/constants';
 import LoadingFallback from './components/LoadingFallback';
-import { personSharp, peopleSharp, exitSharp, fileTrayFullSharp, chatbubblesSharp, homeSharp, ellipseSharp } from 'ionicons/icons';
+import { personSharp, peopleSharp, exitSharp, fileTrayFullSharp, chatbubblesSharp, homeSharp, ellipseSharp, walletSharp } from 'ionicons/icons';
 import { ProfileData } from './components/UserProfile';
 import { Detector } from 'react-detect-offline';
 import AppRoutes from './AppRoutes';
@@ -45,12 +45,6 @@ const App: React.FC = () => {
   const [socket, setSocket] = useState(null);
   // const [isAlertOpen, setAlertOpen] = useState(false);
   const [isAuthenticating, setAuthenticating] = useState(true);
-  // const { isMounted, setMounted } = useMounted();
-
-  // Close app is there is nothing left in the stack
-  // const hardwareBackButtonHandler = () => {
-  //   isMounted && setAlertOpen(true);
-  // };
 
   const _setCurrentUser = async (currUser: ProfileData | null) => {
     if (!currUser) {
@@ -141,6 +135,13 @@ const App: React.FC = () => {
                       <IonIcon slot="start" icon={fileTrayFullSharp} />
                       <IonLabel>Appointments</IonLabel>
                     </IonItem>
+
+                    {currentUser.accountType !== USER.ACCOUNT_TYPES.PATIENT && (
+                      <IonItem routerLink="/app/appointments/payments">
+                        <IonIcon slot="start" icon={walletSharp} />
+                        <IonLabel>Payments</IonLabel>
+                      </IonItem>
+                    )}
 
                     <IonItem routerLink="/app/chat">
                       <IonIcon slot="start" icon={chatbubblesSharp} />
