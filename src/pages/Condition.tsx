@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { IonContent, IonPage, IonHeader, IonToolbar, IonButtons, IonBackButton, IonTitle, IonText, IonList, IonItem, IonLabel, IonSpinner, IonListHeader, useIonViewWillLeave, useIonViewDidEnter } from "@ionic/react";
+import { IonContent, IonPage, IonHeader, IonToolbar, IonButtons, IonBackButton, IonTitle, IonText, IonList, IonLabel, IonListHeader, useIonViewWillLeave, useIonViewDidEnter, IonCard, IonCardContent } from "@ionic/react";
 import { useParams, useHistory } from "react-router";
 import moment from "moment";
 
@@ -9,6 +9,7 @@ import LoadingFallback from "../components/LoadingFallback";
 import useMounted from "../lib/mounted-hook";
 import ErrorFallback from "../components/ErrorFallback";
 import { useAppContext } from "../lib/context-lib";
+import mediaUrl from "../http/helpers/media-url";
 
 export default function Condition() {
   const { conditionId } = useParams<any>();
@@ -59,41 +60,82 @@ export default function Condition() {
         ) : !condition ? (
           <LoadingFallback />
         ) : (
-              <div className="ion-padding-horizontal">
-                <IonText>
-                  <h2 className="ion-text-capitalize">{condition.name}</h2>
-                  <small>Posted on <strong>{moment(condition.createdAt).format("LT")}</strong></small>
-                  <p>{condition.description}</p>
-
-                  <IonList>
-                    <IonListHeader>
-                      <IonLabel>
-                        <strong>Symptoms</strong>
-                      </IonLabel>
-                    </IonListHeader>
-                    {condition.symptoms.split('\n').map((symp: string, index: number) => (
-                      <IonItem key={index}>
-                        <IonLabel>{symp}</IonLabel>
-                      </IonItem>
-                    ))}
-                  </IonList>
-
-                  <IonList>
-                    <IonListHeader>
-                      <IonLabel>
-                        <strong>Possible remedies</strong>
-                      </IonLabel>
-                    </IonListHeader>
-                    {condition.remedies.split('\n').map((remedy: string, index: number) => (
-                      <IonItem key={index}>
-                        <IonLabel>{remedy}</IonLabel>
-                      </IonItem>
-                    ))}
-                  </IonList>
-                </IonText>
-              </div>
+              <ConditionDetails condition={condition} />
             )}
       </IonContent>
     </IonPage>
   );
+}
+
+function ConditionDetails({ condition }: {
+  condition: any,
+}) {
+  const { media } = condition;
+  const url = mediaUrl(condition._id);
+
+  return (
+    <div className="ion-padding-horizontal">
+      <IonText>
+        <h2 className="ion-text-capitalize">{condition.name}</h2>
+        <small>Posted on <strong>
+          {moment(condition.createdAt).format("ll")} - {" "}
+          {moment(condition.createdAt).format("LT")}
+        </strong></small>
+
+        {media.kind && (
+          media.kind === "image" ? (
+            <img src={url} alt="condition media" />
+          ) : (
+              <video src={url} className="w100" controls />
+            )
+        )}
+
+        <p>{condition.description}</p>
+
+        <IonList>
+          <IonListHeader>
+            <IonLabel>
+              <strong>Symptoms</strong>
+            </IonLabel>
+          </IonListHeader>
+          {splitParagraphs(condition.symptoms).map((symp: string, index: number) => (
+            <CardItem key={index} text={symp} />
+          ))}
+        </IonList>
+
+        <IonList>
+          <IonListHeader>
+            <IonLabel>
+              <strong>Possible remedies</strong>
+            </IonLabel>
+          </IonListHeader>
+          {splitParagraphs(condition.remedies).filter(
+            (c: any) => !!c
+          ).map(
+            (remedy: string, index: number) => (
+              <CardItem key={index} text={remedy} />
+            )
+          )}
+        </IonList>
+      </IonText>
+    </div>
+  );
+}
+
+function CardItem({ text }: { text: any }) {
+  return (
+    <IonCard>
+      <IonCardContent style={{
+        padding: "0.5em"
+      }}>
+        <IonText color="dark">
+          {text}
+        </IonText>
+      </IonCardContent>
+    </IonCard>
+  );
+}
+
+function splitParagraphs(text: string): string[] {
+  return text.split("\n").filter((s: string) => !!s)
 }

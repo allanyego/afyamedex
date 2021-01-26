@@ -1,12 +1,14 @@
-import React from "react";
-import { IonPage, IonContent, IonHeader, IonToolbar, IonButtons, IonBackButton, IonTitle, IonRow, IonCol, IonItem, IonLabel, IonInput, IonTextarea, IonButton, IonText, IonIcon, IonCheckbox } from "@ionic/react";
+import React, { useRef } from "react";
+import { IonPage, IonContent, IonHeader, IonToolbar, IonButtons, IonBackButton, IonTitle, IonRow, IonCol, IonItem, IonLabel, IonInput, IonTextarea, IonButton, IonText, IonIcon, IonCheckbox, IonGrid } from "@ionic/react";
 import { Formik, Form } from "formik";
 import * as Yup from "yup";
 import { useAppContext } from "../lib/context-lib";
 import { addCondition } from "../http/conditions";
 import { useHistory } from "react-router";
 import useToastManager from "../lib/toast-hook";
-import { informationCircle } from "ionicons/icons";
+import { filmSharp, imageSharp, informationCircle } from "ionicons/icons";
+import { ALLOWED_VIDEO_FILE_TYPES, PROFILE_PICTURE_FORMATS, MAX_VIDEO_ATTACHMENT_SIZE } from "../http/constants";
+import FormFieldFeedback from "../components/FormFieldFeedback";
 
 const newConditionSchema = Yup.object({
   name: Yup.string().required("Enter a name for this condition."),
@@ -14,16 +16,29 @@ const newConditionSchema = Yup.object({
   symptoms: Yup.string().required("Enter some symptoms."),
   remedies: Yup.string().required("Enter some remedies."),
   startThread: Yup.boolean(),
+  media: Yup.mixed().test("fileSize", "That's too big (100MB max)", (value) =>
+    value ? value.size <= MAX_VIDEO_ATTACHMENT_SIZE : true
+  ).test("fileType", "Unsupported format (mp4/webm allowed)", (value) =>
+    value ? (ALLOWED_VIDEO_FILE_TYPES.includes(value.type) ||
+      PROFILE_PICTURE_FORMATS.includes(value.type)) : true
+  )
 });
 
 const NewCondition: React.FC = () => {
   const { currentUser } = useAppContext() as any;
   const history = useHistory();
   const { onError, onSuccess } = useToastManager();
+  const customMediaUpload = useRef<HTMLInputElement | null>(null);
+
+  const onMediaFile = () => customMediaUpload.current!.click();
 
   const handleSubmit = async (values: any, { setSubmitting }: any) => {
     try {
-      await addCondition(currentUser.token, values);
+      await addCondition(currentUser.token, {
+        ...values,
+        symptoms: values.symptoms.trim(),
+        remedies: values.remedies.trim(),
+      }, !!values.media);
       setSubmitting(false);
       onSuccess("Condition posted successfully");
       history.push("/app/info");
@@ -36,6 +51,12 @@ const NewCondition: React.FC = () => {
   const wrapHandler = (fieldName: string, setFieldValue: any) => {
     return (e: any) => setFieldValue(fieldName, e.detail.checked);
   };
+
+  const wrapFileHandler = (fieldName: any, setFieldValue: any) => {
+    return (event: any) => {
+      setFieldValue(fieldName, event.currentTarget.files[0]);
+    }
+  }
 
   return (
     <IonPage>
@@ -58,10 +79,11 @@ const NewCondition: React.FC = () => {
               handleChange,
               handleBlur,
               setFieldValue,
+              values,
               errors,
               touched,
               isValid,
-              isSubmitting
+              isSubmitting,
             }: any) => (
                 <Form noValidate>
                   <IonItem className={touched.name && errors.name ? "has-error" : ""}>
@@ -74,6 +96,33 @@ const NewCondition: React.FC = () => {
                       onIonBlur={handleBlur}
                     />
                   </IonItem>
+
+                  <IonGrid>
+                    <small>(Optional) Attach either a video or an image</small>
+                    <IonRow className="ion-justify-content-center">
+                      <IonCol size="5">
+                        <input
+                          name="media"
+                          type="file"
+                          onChange={wrapFileHandler("media", setFieldValue)}
+                          accept="video/*,image/*"
+                          hidden
+                          ref={customMediaUpload}
+                        />
+                        <IonButton expand="block" color="medium" onClick={onMediaFile}>
+                          <IonIcon icon={filmSharp} slot="start" /> or <IonIcon icon={imageSharp} slot="end" />
+                        </IonButton>
+                      </IonCol>
+                    </IonRow>
+
+                    {values.media && (
+                      <p className="ion-no-margin">{values.media.name}</p>
+                    )}
+
+                    <FormFieldFeedback
+                      {...{ errors, touched: { media: true }, fieldName: "media" }}
+                    />
+                  </IonGrid>
 
                   <IonItem className={touched.description && errors.description ? "has-error" : ""}>
                     <IonLabel position="floating">Description</IonLabel>

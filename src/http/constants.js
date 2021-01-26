@@ -44,6 +44,8 @@ export const ALLOWED_FILE_TYPES = [
   "application/msword",
 ];
 
+export const ALLOWED_VIDEO_FILE_TYPES = ["video/mp4", "video/webm"];
+
 export const PROFILE_PICTURE_FORMATS = [
   "image/jpg",
   "image/jpeg",
@@ -52,6 +54,8 @@ export const PROFILE_PICTURE_FORMATS = [
 ];
 
 export const MAX_ATTACHMENT_SIZE = 5000000;
+
+export const MAX_VIDEO_ATTACHMENT_SIZE = 100000000;
 
 export const NAME_REGEX = /([a-zA-Z]+\s?\b){2,}/g;
 export const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])/;

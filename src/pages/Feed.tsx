@@ -2,12 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { IonButton, IonContent, IonPage, IonText, IonList, IonItem, IonLabel, IonCardContent, IonAvatar, IonCard, IonIcon, IonChip, useIonViewDidEnter, useIonViewWillLeave, IonSkeletonText, IonGrid, IonRow, IonCol } from '@ionic/react';
 import { useAppContext } from '../lib/context-lib';
 import { useHistory } from 'react-router';
-import { arrowForwardSharp, createSharp, timeSharp } from 'ionicons/icons';
+import { arrowForwardSharp, calendarOutline, createSharp } from 'ionicons/icons';
 import moment from "moment";
 
 import useToastManager from '../lib/toast-hook';
 import { getConditions } from '../http/conditions';
-import defaultAvatar from "../assets/img/default_avatar.jpg";
 import { ProfileData } from '../components/UserProfile';
 import Rating from '../components/Rating';
 import UserHeader from '../components/UserHeader';
@@ -135,7 +134,7 @@ function Conditions() {
                           gap: "0.15em",
                         }}
                       >
-                        <IonIcon icon={timeSharp} /><small>{moment(condition.createdAt).format("LT")}</small>
+                        <IonIcon icon={calendarOutline} /><small>{moment(condition.createdAt).format("ll")}</small>
                       </IonLabel>
                     </IonItem>
                   ))}

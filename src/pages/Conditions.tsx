@@ -102,7 +102,7 @@ function ConditionItem({ condition }: ConditionCardProps) {
           {condition.name}
         </h3>
         <p>{condition.description}</p>
-        <small>{moment(condition.createdAt).format("LT")}</small>
+        <small>{moment(condition.createdAt).format("ll")}</small>
       </IonLabel>
     </IonItem>
   );

@@ -304,7 +304,7 @@ function TestResultView({ appointment }: ViewProps) {
       onInfo("Downloading file");
       return resp.blob();
     }).then(function (blob) {
-      (download as any)(blob);
+      (download as any)(blob, appointment.testFile);
       onSuccess("Downloaded file");
     }).catch(error => onError(error.message));
   };

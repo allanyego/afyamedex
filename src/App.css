@@ -2,6 +2,10 @@
   height: 100% !important;
 }
 
+.w100 {
+  width: 100%;
+}
+
 form .has-error {
   color: var(--ion-color-danger) !important;
 }

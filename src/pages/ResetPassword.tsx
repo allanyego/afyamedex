@@ -29,6 +29,7 @@ const ResetPassword: React.FC = () => {
     hasCode: false,
     activeRequest: false,
   });
+  const history = useHistory();
   const { onError, onSuccess } = useToastManager();
 
   const handleReset = async (values: any, { setSubmitting }: any) => {
@@ -61,6 +62,7 @@ const ResetPassword: React.FC = () => {
       await confirmReset(user.username, values.newPassword, values.resetCode);
       setSubmitting(false);
       onSuccess("Success. You can now login.");
+      history.push("/sign-in");
     } catch (error) {
       setSubmitting(false);
       onError(error.message);

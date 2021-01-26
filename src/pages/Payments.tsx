@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { IonContent, IonPage, IonItem, IonLabel, IonList, useIonViewDidEnter, useIonViewWillLeave, IonText, IonButton, IonIcon } from '@ionic/react';
+import { checkmarkCircleSharp } from 'ionicons/icons';
+import moment from "moment";
 
 import useToastManager from '../lib/toast-hook';
 import LoadingFallback from '../components/LoadingFallback';
@@ -8,7 +10,6 @@ import UserHeader from '../components/UserHeader';
 import useMounted from '../lib/mounted-hook';
 import { useAppContext } from '../lib/context-lib';
 import { getPayments } from '../http/appointments';
-import { checkmarkCircleSharp } from 'ionicons/icons';
 
 const Payments: React.FC = () => {
   let [appointments, setAppointments] = useState<any[] | null>(null);
@@ -56,7 +57,7 @@ export default Payments;
 function PaymentItem({ appointment }: {
   appointment: any,
 }) {
-  const { patient, type, amount } = appointment;
+  const { patient, type, amount, dateBilled } = appointment;
 
   return (
     <IonItem>
@@ -72,14 +73,18 @@ function PaymentItem({ appointment }: {
             </i>
           </small>
         </h3>
-        <IonButton
-          fill="clear"
-          color="success"
-          disabled
-        >
-          KES.{amount}
-          <IonIcon slot="start" icon={checkmarkCircleSharp} />
-        </IonButton>
+        <div className="d-flex ion-align-items-center">
+          <IonButton
+            fill="clear"
+            color="success"
+            disabled
+          >
+            KES.{amount}
+            <IonIcon slot="start" icon={checkmarkCircleSharp} />
+          </IonButton>
+        - {" "}
+          <small>{moment(dateBilled || Date.now()).format("lll")}</small>
+        </div>
       </IonLabel>
     </IonItem>
   );

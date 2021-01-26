@@ -14,10 +14,11 @@ export async function getById(id, token) {
   });
 }
 
-export async function addCondition(token, data) {
+export async function addCondition(token, data, multiPart = false) {
   return await request(BASE_URL, {
     method: "POST",
     data,
     headers: constructAuthHeader(token),
+    multiPart,
   });
 }

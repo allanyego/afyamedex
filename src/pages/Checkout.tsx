@@ -94,6 +94,7 @@ const Checkout: React.FC = () => {
               hasBeenBilled: true,
               paymentId: result.paymentIntent!.id,
               amount: result.paymentIntent!.amount,
+              dateBilled: result.paymentIntent?.created,
             });
           } catch (error) {
             onError("There was an error uploading payment details");
