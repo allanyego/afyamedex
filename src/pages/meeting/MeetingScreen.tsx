@@ -170,9 +170,10 @@ const MeetingScreen: React.FC<MeetingProps> = ({
       constraints = {
         ...constraints,
         video: {
-          quality: 6,
-          width: { ideal: 320 },
-          height: { ideal: 240 },
+          frameRate: {
+            min: 10,
+            ideal: 30,
+          },
         }
       }
     }
