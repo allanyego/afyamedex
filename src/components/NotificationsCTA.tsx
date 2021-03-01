@@ -17,7 +17,7 @@ const NotificationsCTA: React.FC = () => {
     try {
       await removeNotificationToken(currentUser._id,)
       setCurrentUser({
-        pushNotifications: false,
+        pushNotifications: null,
       });
       setUpdating(false);
     } catch (error) {
@@ -34,13 +34,18 @@ const NotificationsCTA: React.FC = () => {
 
     // On succcess, we should be able to receive notifications
     PushNotifications.addListener('registration',
-      async (nToken: PushNotificationToken) => {
-        onInfo('Push registration success');
-        await addNotificationToken(currentUser._id, nToken, currentUser.token);
-        setCurrentUser({
-          pushNotifications: nToken,
-        });
-        setUpdating(false);
+      async ({ value }: PushNotificationToken) => {
+        try {
+          await addNotificationToken(currentUser._id, value, currentUser.token);
+          onInfo('Push registration success');
+          setCurrentUser({
+            pushNotifications: value,
+          });
+          setUpdating(false);
+        } catch (error) {
+          setUpdating(false);
+          onError(error.message);
+        }
       }
     );
 

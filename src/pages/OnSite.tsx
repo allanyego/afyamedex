@@ -212,7 +212,7 @@ function ProfessionalView({
             <Alert text="Appointment has been rejected." variant="danger" />
           ) : (
                 <Centered>
-                  {inSession ? (
+                  {!inSession ? (
                     <IonButton color="secondary" size="large" onClick={startMeeting}>
                       Start meeting
                       <IonIcon slot="end" icon={playSharp} />

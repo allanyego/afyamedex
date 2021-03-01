@@ -210,13 +210,14 @@ const App: React.FC = () => {
     });
   }, []);
 
-  const handleLogout = async () => {
-    try {
-      await removeNotificationToken(currentUser?._id, currentUser?.pushNotifications, currentUser?.token);
-      _setCurrentUser(null);
-    } catch (error) {
-      console.error(error);
-    }
+  const handleLogout = () => {
+    currentUser && currentUser.pushNotifications &&
+      removeNotificationToken(currentUser._id, currentUser.pushNotifications, currentUser.token)
+        .catch((error) => {
+          alert(error.message);
+        });
+
+    _setCurrentUser(null);
   };
 
   return (
