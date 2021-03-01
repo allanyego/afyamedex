@@ -15,11 +15,9 @@ const Speciality: React.FC<PartProps> = ({ user, currentUserId }) => {
         <h6 className="section-title">Speciality</h6 >
       </IonText >
       <div className="profile-badges-container">
-        {
-          user.speciality!.map((s: string, index: number) => <IonBadge key={index} color="secondary">
-            {s}
-          </IonBadge>)
-        }
+        <IonBadge color="secondary">
+          {user.speciality}
+        </IonBadge>
       </div>
     </div>
   );

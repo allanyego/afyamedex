@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "457603197809",
+    "firebase_url": "https://sf-server-35dd9.firebaseio.com",
+    "project_id": "sf-server-35dd9",
+    "storage_bucket": "sf-server-35dd9.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:457603197809:android:75dc8b1786062bd08a24d0",
+        "android_client_info": {
+          "package_name": "io.ionic.afyamedex"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "457603197809-n1cjgtemtvfgn6nugvlajfgtkrjugcgt.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCjPG_vnmoUUeOYZ4NLzMu_6WRrjjT8Sa8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "457603197809-n1cjgtemtvfgn6nugvlajfgtkrjugcgt.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

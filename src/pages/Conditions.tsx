@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { IonPage, IonContent, IonButton, IonIcon, useIonViewDidEnter, useIonViewDidLeave, IonItem, IonLabel, IonList, useIonViewWillLeave, IonGrid, IonRow, IonCol, IonSearchbar } from "@ionic/react";
+import { IonPage, IonContent, IonButton, IonIcon, useIonViewDidEnter, IonItem, IonLabel, IonList, useIonViewWillLeave, IonGrid, IonRow, IonCol, IonSearchbar } from "@ionic/react";
 import { useRouteMatch } from "react-router";
 import moment from "moment";
 
@@ -72,8 +72,8 @@ export default function Conditions() {
               <IonList lines="full" style={{
                 marginTop: listMargin,
               }}>
-                {conditions!.map((condition: any) => (
-                  <ConditionItem key={condition._id} condition={condition} />
+                {conditions.map((condition: any) => (
+                  <ConditionItem key={condition.id} condition={condition} />
                 ))}
               </IonList>
 
@@ -85,7 +85,7 @@ export default function Conditions() {
 
 type ConditionCardProps = {
   condition: {
-    _id: string,
+    id: string,
     name: string,
     description: string,
     createdAt: any,
@@ -96,7 +96,7 @@ function ConditionItem({ condition }: ConditionCardProps) {
   const { url } = useRouteMatch();
 
   return (
-    <IonItem routerLink={`${url}/${condition._id}/details`} className="listing-item">
+    <IonItem routerLink={`${url}/${condition.id}/details`} className="listing-item">
       <IonLabel>
         <h3 className="ion-text-capitalize d-flex ion-align-items-center">
           {condition.name}

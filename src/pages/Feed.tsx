@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { IonButton, IonContent, IonPage, IonText, IonList, IonItem, IonLabel, IonCardContent, IonAvatar, IonCard, IonIcon, IonChip, useIonViewDidEnter, useIonViewWillLeave, IonSkeletonText, IonGrid, IonRow, IonCol } from '@ionic/react';
+import { IonButton, IonContent, IonPage, IonText, IonList, IonItem, IonLabel, IonCardContent, IonAvatar, IonCard, IonIcon, IonChip, useIonViewDidEnter, useIonViewWillLeave, IonSkeletonText, IonGrid, IonRow, IonCol, IonBadge } from '@ionic/react';
 import { useAppContext } from '../lib/context-lib';
 import { useHistory } from 'react-router';
 import { arrowForwardSharp, calendarOutline, createSharp } from 'ionicons/icons';
@@ -17,6 +17,7 @@ import { USER } from '../http/constants';
 import useMounted from '../lib/mounted-hook';
 import Centered from '../components/Centered';
 import userPicture from '../http/helpers/user-picture';
+import Alert from '../components/Alert';
 
 const Feed: React.FC = () => {
   const { currentUser } = useAppContext() as any;
@@ -44,7 +45,9 @@ function Users() {
 
   useIonViewDidEnter(() => {
     getUsers(currentUser.token).then(({ data }) => {
-      isMounted && setProfessionals(data.splice(0, 6).filter((pro: ProfileData) => pro._id !== currentUser._id));
+      isMounted && setProfessionals(data.filter((pro: ProfileData) => {
+        return pro._id !== currentUser._id && !!pro.speciality;
+      }).splice(0, 6));
     }).catch(err => {
       onError(err.message);
     });
@@ -55,6 +58,9 @@ function Users() {
   return (
     <>
       <h6>Professionals</h6>
+
+      <Alert text="Click a professional below or explore more and book an appointment." variant="success" />
+
       <div>
         {!professionals ? (
           <UsersLoader />
@@ -117,8 +123,8 @@ function Conditions() {
                 <IonList lines="full">
                   {conditions.map((condition: any) => (
                     <IonItem
-                      key={condition._id}
-                      routerLink={`/app/info/${condition._id}/details`}
+                      key={condition.id}
+                      routerLink={`/app/info/${condition.id}/details`}
                       className="listing-item"
                     >
                       <IonLabel>
@@ -222,8 +228,7 @@ function ProfessionalCard({ professional }: {
   return (
     <div className="ion-align-self-center ion-align-items-center">
       <IonCard routerLink={`/app/profile/${professional._id}`} style={{
-        minWidth: "8em",
-
+        minWidth: "10em",
       }}>
         <IonCardContent style={{
           padding: "0.5em",
@@ -237,6 +242,9 @@ function ProfessionalCard({ professional }: {
               </Centered>
               <IonText className="ion-text-center">
                 <h4 className="ion-text-capitalize">{professional.fullName}</h4>
+                <IonBadge color="secondary">
+                  {professional.speciality}
+                </IonBadge>
                 <p className="ion-no-margin">
                   <small>
                     <strong>

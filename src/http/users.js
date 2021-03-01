@@ -70,3 +70,27 @@ export async function confirmReset(username, newPassword, resetCode) {
     },
   });
 }
+
+export async function addNotificationToken(userId, notificationToken, token) {
+  return await request(`${BASE_URL}/notifications/${userId}`, {
+    method: "POST",
+    data: {
+      token: notificationToken,
+    },
+    headers: constructAuthHeader(token),
+  });
+}
+
+export async function removeNotificationToken(
+  userId,
+  notificationToken,
+  token
+) {
+  return await request(`${BASE_URL}/notifications/${userId}?remove=true`, {
+    method: "POST",
+    data: {
+      token: notificationToken,
+    },
+    headers: constructAuthHeader(token),
+  });
+}

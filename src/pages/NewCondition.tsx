@@ -32,7 +32,7 @@ const NewCondition: React.FC = () => {
 
   const onMediaFile = () => customMediaUpload.current!.click();
 
-  const handleSubmit = async (values: any, { setSubmitting }: any) => {
+  const handleSubmit = async (values: any, { setSubmitting, resetForm }: any) => {
     try {
       await addCondition(currentUser.token, {
         ...values,
@@ -40,6 +40,7 @@ const NewCondition: React.FC = () => {
         remedies: values.remedies.trim(),
       }, !!values.media);
       setSubmitting(false);
+      resetForm({});
       onSuccess("Condition posted successfully");
       history.push("/app/info");
     } catch (error) {
@@ -74,7 +75,13 @@ const NewCondition: React.FC = () => {
             <Formik
               validationSchema={newConditionSchema}
               onSubmit={handleSubmit}
-              initialValues={{}}
+              initialValues={{
+                name: "",
+                media: undefined,
+                description: "",
+                symptoms: "",
+                remedies: "",
+              }}
             >{({
               handleChange,
               handleBlur,

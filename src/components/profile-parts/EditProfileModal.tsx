@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { useAppContext } from "../../lib/context-lib";
-import { IonModal, IonToolbar, IonButtons, IonButton, IonTitle, IonGrid, IonRow, IonCol, IonItem, IonLabel, IonInput, IonTextarea, IonText, IonBadge, IonList, IonItemSliding, IonItemOptions, IonItemOption, IonIcon, IonDatetime, CreateAnimation } from "@ionic/react";
+import { IonModal, IonToolbar, IonButtons, IonButton, IonTitle, IonGrid, IonRow, IonCol, IonItem, IonLabel, IonInput, IonTextarea, IonText, IonBadge, IonList, IonItemSliding, IonItemOptions, IonItemOption, IonIcon, IonDatetime, CreateAnimation, IonSelect, IonSelectOption } from "@ionic/react";
 import { Formik, Form, FormikValues, FormikHelpers } from "formik";
 import * as Yup from "yup";
 import moment from "moment";
 
 import FormFieldFeedback from "../FormFieldFeedback";
-import { USER } from "../../http/constants";
+import { SPECIALITIES, USER } from "../../http/constants";
 import { trash, addSharp, close } from "ionicons/icons";
 import { editUser } from "../../http/users";
 import useToastManager from "../../lib/toast-hook";
@@ -22,11 +22,12 @@ const userSchema = Yup.object({
   fullName: Yup.string().required("This shouldn't be empty"),
   bio: Yup.string(),
   experience: Yup.number().min(1, "Can't be less that 1 year").max(65, "Really? Seems a bit much"),
+  speciality: Yup.string(),
 });
 
 export default function EditProfileModal({ isOpen, onClose }: EditProfileModalProps) {
   const { currentUser, setCurrentUser } = useAppContext() as any;
-  const [speciality, setSpeciality] = useState(currentUser.speciality);
+  // const [speciality, setSpeciality] = useState(currentUser.speciality);
   const [showModal, setShowModal] = useState(isOpen);
   const [conditions, setConditions] = useState(currentUser.conditions);
   const [education, setEducation] = useState(currentUser.education);
@@ -42,7 +43,6 @@ export default function EditProfileModal({ isOpen, onClose }: EditProfileModalPr
       const newDetails = {
         ...values,
         fullName: trimLowerCase(values.fullName),
-        speciality,
         conditions,
         education,
       };
@@ -90,6 +90,7 @@ export default function EditProfileModal({ isOpen, onClose }: EditProfileModalPr
                   fullName: currentUser.fullName,
                   bio: currentUser.bio || "",
                   experience: currentUser.experience || "",
+                  speciality: currentUser.speciality || "",
                 }}
               >
                 {({
@@ -134,10 +135,21 @@ export default function EditProfileModal({ isOpen, onClose }: EditProfileModalPr
                               </IonItem>
                               <FormFieldFeedback {...{ errors, touched, fieldName: "experience" }} />
 
-                              <EditSpeciality
-                                speciality={speciality}
-                                setSpeciality={setSpeciality}
-                              />
+                              <IonItem className={touched.speciality && errors.speciality ? "has-error" : ""}>
+                                <IonLabel position="floating">Speciality</IonLabel>
+                                <IonSelect
+                                  name="speciality"
+                                  value={values.speciality}
+                                  placeholder="Select Speciality"
+                                  onIonChange={handleChange}
+                                  onIonBlur={handleBlur}
+                                >
+                                  {Object.keys(SPECIALITIES).map(s => (
+                                    <IonSelectOption key={s} value={s}>{s}</IonSelectOption>
+                                  ))}
+                                </IonSelect>
+                              </IonItem>
+                              <FormFieldFeedback {...{ errors, touched, fieldName: "speciality" }} />
 
                               <EditEducation
                                 education={education}
@@ -166,97 +178,6 @@ export default function EditProfileModal({ isOpen, onClose }: EditProfileModalPr
         </IonGrid>
       </IonModal>
     </>
-  );
-}
-
-function EditSpeciality({ speciality, setSpeciality }: {
-  speciality: any[],
-  setSpeciality: any
-}) {
-  const [val, setVal] = useState("");
-  const [inputError, setInputError] = useState<null | string>(null);
-
-  const onChange = (e: any) => {
-    if (inputError) {
-      setInputError(null);
-    }
-
-    setVal(e.target.value.trim());
-  };
-
-  const handleSubmit = () => {
-    if (!val) {
-      return setInputError("Cannot be empty");
-    }
-
-    setSpeciality([...speciality, val]);
-    setVal("");
-  };
-
-  const handleRemoveFactory = (index: number) => () => {
-    const temp = Array.from(speciality);
-    temp.splice(index, 1);
-    setSpeciality([...temp]);
-  };
-
-  return (
-    <div>
-      <IonGrid>
-        <IonRow>
-          <IonCol className="ion-no-padding">
-            <IonItem
-              className={inputError ? "has-error" : ""}
-            >
-              <IonLabel position="floating">Speciality</IonLabel>
-              <IonInput
-                value={val}
-                onIonChange={onChange}
-              />
-            </IonItem>
-            {inputError && (
-              <FormFieldFeedback
-                errors={{
-                  speciality: inputError,
-                }}
-                touched={{
-                  speciality: true,
-                }}
-                fieldName="speciality"
-              />
-            )}
-          </IonCol>
-          <IonCol
-            className="ion-no-padding d-flex ion-align-items-center"
-            size="2">
-            <IonButton
-              fill="clear"
-              color="secondary"
-              onClick={handleSubmit}
-              disabled={!!inputError}
-            >
-              <IonIcon icon={addSharp} slot="icon-only" />
-            </IonButton>
-          </IonCol>
-        </IonRow>
-      </IonGrid>
-
-      <p className="ion-no-margin ion-text-right">
-        <small>
-          <i>
-            <IonText color="medium">Tap to <IonText color="danger">delete</IonText></IonText>
-          </i>
-        </small>
-      </p>
-      <div className="profile-badges-container">
-        {
-          speciality.map((s: string, index: number) => (
-            <IonBadge key={index} color="danger" onClick={handleRemoveFactory(index)}>
-              {s} <IonIcon slot="end" icon={close} />
-            </IonBadge>
-          ))
-        }
-      </div>
-    </div>
   );
 }
 
@@ -488,12 +409,12 @@ function EditEducation({ education, setEducation }: {
       }}>
         <CreateAnimation
           play={true}
-          duration={1500}
+          duration={1700}
           delay={700}
           iterations={Infinity}
           fromTo={[
             { property: 'transform', fromValue: 'translateX(0px)', toValue: 'translateX(75px)' },
-            { property: 'opacity', fromValue: '0.2', toValue: '1' }
+            { property: 'opacity', fromValue: '0.3', toValue: '1' }
           ]}
         >
           <div>
@@ -536,6 +457,97 @@ function EditEducation({ education, setEducation }: {
           );
         })}
       </IonList>
+    </div>
+  );
+}
+
+function EditSpeciality({ speciality, setSpeciality }: {
+  speciality: any[],
+  setSpeciality: any
+}) {
+  const [val, setVal] = useState("");
+  const [inputError, setInputError] = useState<null | string>(null);
+
+  const onChange = (e: any) => {
+    if (inputError) {
+      setInputError(null);
+    }
+
+    setVal(e.target.value.trim());
+  };
+
+  const handleSubmit = () => {
+    if (!val) {
+      return setInputError("Cannot be empty");
+    }
+
+    setSpeciality([...speciality, val]);
+    setVal("");
+  };
+
+  const handleRemoveFactory = (index: number) => () => {
+    const temp = Array.from(speciality);
+    temp.splice(index, 1);
+    setSpeciality([...temp]);
+  };
+
+  return (
+    <div>
+      <IonGrid>
+        <IonRow>
+          <IonCol className="ion-no-padding">
+            <IonItem
+              className={inputError ? "has-error" : ""}
+            >
+              <IonLabel position="floating">Speciality</IonLabel>
+              <IonInput
+                value={val}
+                onIonChange={onChange}
+              />
+            </IonItem>
+            {inputError && (
+              <FormFieldFeedback
+                errors={{
+                  speciality: inputError,
+                }}
+                touched={{
+                  speciality: true,
+                }}
+                fieldName="speciality"
+              />
+            )}
+          </IonCol>
+          <IonCol
+            className="ion-no-padding d-flex ion-align-items-center"
+            size="2">
+            <IonButton
+              fill="clear"
+              color="secondary"
+              onClick={handleSubmit}
+              disabled={!!inputError}
+            >
+              <IonIcon icon={addSharp} slot="icon-only" />
+            </IonButton>
+          </IonCol>
+        </IonRow>
+      </IonGrid>
+
+      <p className="ion-no-margin ion-text-right">
+        <small>
+          <i>
+            <IonText color="medium">Tap to <IonText color="danger">delete</IonText></IonText>
+          </i>
+        </small>
+      </p>
+      <div className="profile-badges-container">
+        {
+          speciality.map((s: string, index: number) => (
+            <IonBadge key={index} color="danger" onClick={handleRemoveFactory(index)}>
+              {s} <IonIcon slot="end" icon={close} />
+            </IonBadge>
+          ))
+        }
+      </div>
     </div>
   );
 }

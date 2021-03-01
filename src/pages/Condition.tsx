@@ -10,6 +10,7 @@ import useMounted from "../lib/mounted-hook";
 import ErrorFallback from "../components/ErrorFallback";
 import { useAppContext } from "../lib/context-lib";
 import mediaUrl from "../http/helpers/media-url";
+import "./Condition.css";
 
 export default function Condition() {
   const { conditionId } = useParams<any>();
@@ -70,8 +71,8 @@ export default function Condition() {
 function ConditionDetails({ condition }: {
   condition: any,
 }) {
-  const { media } = condition;
-  const url = mediaUrl(condition._id);
+  const { mediaKind } = condition;
+  const url = mediaUrl(condition.id);
 
   return (
     <div className="ion-padding-horizontal">
@@ -82,11 +83,11 @@ function ConditionDetails({ condition }: {
           {moment(condition.createdAt).format("LT")}
         </strong></small>
 
-        {media.kind && (
-          media.kind === "image" ? (
-            <img src={url} alt="condition media" />
+        {mediaKind && (
+          mediaKind === "image" ? (
+            <img src={url} alt="condition media" className="condition-media" />
           ) : (
-              <video src={url} className="w100" controls />
+              <video src={url} className="w100 condition-media" controls />
             )
         )}
 

@@ -1,0 +1,14 @@
+.a-alert {
+  padding: 0.5em;
+  line-height: 0.8em;
+}
+
+.a-alert.success {
+  background: var(--ion-color-success-shade);
+  color: var(--ion-color-success-contrast);
+}
+
+.a-alert.danger {
+  background: var(--ion-color-danger);
+  color: var(--ion-color-danger-contrast);
+}

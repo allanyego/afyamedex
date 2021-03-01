@@ -171,7 +171,7 @@ function ChangePasswordForm({ onSubmit, user }: FormProps & {
                 <p className="ion-no-margin" style={{
                   color: "var(--ion-color-danger)"
                 }}>
-                  <strong>You already have an active password request</strong>
+                  <strong>You already have an active reset request</strong>
                 </p>
               )}
               <p>Use the code in your mail in your mail to complete reset.</p>

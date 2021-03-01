@@ -1,3 +1,3 @@
 export default function pluralizeDuration(duration) {
-  return duration + (duration > 1 ? "hrs" : "hr");
+  return duration + (duration > 1 ? "mins" : "min");
 }

@@ -1,5 +1,5 @@
 import React, { Suspense, useEffect } from "react";
-import { useRouteMatch, Route, Redirect, useHistory } from "react-router";
+import { useRouteMatch, Route, Redirect } from "react-router";
 import { IonRouterOutlet, useIonViewWillLeave, IonPage, useIonViewDidEnter } from "@ionic/react";
 import io from "socket.io-client";
 

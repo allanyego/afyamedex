@@ -25,6 +25,7 @@ import userPicture from "../http/helpers/user-picture";
 import { editUser } from "../http/users";
 import { Field, Form, Formik } from "formik";
 import CustomPhotoUpload from "./CustomPhotoUpload";
+import Alert from "./Alert";
 
 export interface ProfileData {
   _id?: string,
@@ -41,6 +42,7 @@ export interface ProfileData {
   experience?: number,
   speciality?: string[],
   disabled: boolean,
+  available: boolean,
   education?: {
     _id?: string,
     institution: string,
@@ -48,6 +50,8 @@ export interface ProfileData {
     startDate: Date,
     endDate?: Date,
   }[],
+  pushNotifications: string | null,
+  token: string | null,
   rating?: number,
 };
 
@@ -244,6 +248,7 @@ function UserDetails({ user }: { user: ProfileData }) {
                     color="secondary"
                     expand="block"
                     routerLink={`/app/professionals/${user._id}/book`}
+                    disabled={!user.available}
                   >
                     Book
                     <IonIcon slot="end" icon={calendar} />
@@ -256,6 +261,11 @@ function UserDetails({ user }: { user: ProfileData }) {
             )}
         </div>
       </div>
+      {!isCurrent && !user.available && (
+        <div className="ion-margin-vertic">
+          <Alert text="This user is not taking appointments at the moment." variant="danger" />
+        </div>
+      )}
       <IonGrid>
         <IonRow>
           <IonCol>

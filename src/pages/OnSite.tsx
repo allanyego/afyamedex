@@ -1,11 +1,10 @@
 import { IonAlert, IonButton, IonContent, IonIcon, IonPage, IonText, useIonViewDidEnter, useIonViewWillLeave } from "@ionic/react";
-import { arrowBackSharp, arrowForwardSharp, playSharp } from "ionicons/icons";
+import { arrowBackSharp, arrowForwardSharp, pauseSharp, playSharp } from "ionicons/icons";
 import React, { useEffect, useState } from "react";
 import { useHistory } from "react-router";
 import Centered from "../components/Centered";
 import { APPOINTMENT } from "../http/constants";
 import { useAppContext } from "../lib/context-lib";
-import { extractForDisplay } from "./Meeting";
 import useMounted from "../lib/mounted-hook";
 import { editAppointment } from "../http/appointments";
 import useToastManager from "../lib/toast-hook";
@@ -14,37 +13,62 @@ import MeetingMiniInfo from "../components/MeetingMiniInfo";
 import pluralizeDuration from "../lib/pluralize-duration";
 import BilledButton from "../components/BilledButton";
 import ToReviewButton from "../components/ToReviewButton";
+import { extractForDisplay } from "./meeting/helpers";
+import ResponseButtons from "../components/ResponseButtons";
+import Alert from "../components/Alert";
 
 const OnSite: React.FC = () => {
   const [isProcessing, setProcessing] = useState(false);
-  const { currentUser, activeAppointment } = useAppContext() as any;
   const [_appointment, setAppointment] = useState<any>(null);
   const [isAlertOpen, setAlertOpen] = useState(false);
+  const [duration, setDuration] = useState(0);
+  const [inSession, setInSession] = useState(false);
+  const { currentUser, activeAppointment } = useAppContext() as any;
   const { isMounted, setMounted } = useMounted();
   const { onError } = useToastManager();
+  let interval: NodeJS.Timeout;
+
+  const startTimer = () => {
+    interval = setInterval(() => setDuration((dur: number) => dur + 1), 60000);
+  };
+
+  const stopTimer = () => clearInterval(interval);
+
+  const startMeeting = () => {
+    setInSession(true);
+    startTimer();
+  }
 
   const closeMeeting = async () => {
+    stopTimer();
     if (isMounted) {
       setProcessing(true);
+      setInSession(false);
     }
 
     try {
-      const status = APPOINTMENT.STATUSES.CLOSED;
-      await editAppointment(_appointment._id, currentUser.token, {
-        status,
-      });
+      const newDetails = {
+        status: APPOINTMENT.STATUSES.CLOSED,
+        duration: duration > 10 ? duration : 10,
+      };
+      await editAppointment(_appointment._id, currentUser.token, newDetails);
       isMounted && setAppointment({
         ..._appointment,
-        status,
+        ...newDetails,
       });
+      setProcessing(false);
     } catch (error) {
+      setProcessing(false);
       onError(error.message);
-    } finally {
-      isMounted && setProcessing(false);
     }
   }
 
-  // When use attempts to end meeting
+  const onUpdate = (newDetails: any) => setAppointment({
+    ..._appointment,
+    ...newDetails,
+  });
+
+  // When user attempts to end meeting
   const onCloseAttempt = () => {
     isMounted && setAlertOpen(true);
   };
@@ -120,6 +144,12 @@ const OnSite: React.FC = () => {
                     <ProfessionalView
                       appointment={_appointment}
                       closeMeeting={onCloseAttempt}
+                      {...{
+                        duration,
+                        inSession,
+                        startMeeting,
+                        onUpdate,
+                      }}
                     />
                   )}
             </div>
@@ -152,24 +182,54 @@ function PatientView({ appointment }: ViewProps) {
 }
 
 interface ProViewProps {
+  duration: number,
+  inSession: boolean,
   closeMeeting: () => any,
+  startMeeting: () => any,
+  onUpdate: (any: any) => any,
 }
 
 function ProfessionalView({
-  closeMeeting,
   appointment,
+  duration,
+  inSession,
+  closeMeeting,
+  startMeeting,
+  onUpdate,
 }: ViewProps & ProViewProps) {
+  const isUnapproved = appointment.status === APPOINTMENT.STATUSES.UNAPPROVED;
+  const isClosed = appointment.status === APPOINTMENT.STATUSES.CLOSED;
+  const isRejected = appointment.status === APPOINTMENT.STATUSES.REJECTED;
+
   return (
     <div>
-      {(appointment.status === APPOINTMENT.STATUSES.CLOSED) ? (
+      {(isClosed) ? (
         <ViewInner appointment={appointment} />
       ) : (
-          <Centered>
-            <IonButton color="secondary" size="large" onClick={closeMeeting}>
-              Mark closed
-              <IonIcon slot="end" icon={playSharp} />
-            </IonButton>
-          </Centered>
+          isUnapproved ? (
+            <ResponseButtons {...{ appointment, onUpdate }} />
+          ) : (isRejected) ? (
+            <Alert text="Appointment has been rejected." variant="danger" />
+          ) : (
+                <Centered>
+                  {inSession ? (
+                    <IonButton color="secondary" size="large" onClick={startMeeting}>
+                      Start meeting
+                      <IonIcon slot="end" icon={playSharp} />
+                    </IonButton>
+                  ) : (
+                      <div>
+                        <p className="ion-no-margin ion-text-center">
+                          <strong>{duration} min</strong>
+                        </p>
+                        <IonButton color="danger" size="large" onClick={closeMeeting}>
+                          End meeting
+                        <IonIcon slot="end" icon={pauseSharp} />
+                        </IonButton>
+                      </div>
+                    )}
+                </Centered>
+              )
         )
       }
     </div >

@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { IonPage, IonIcon, IonContent, IonText, IonButton, useIonViewDidEnter, useIonViewWillLeave, IonSpinner } from "@ionic/react";
-import { useParams, useLocation, useHistory } from "react-router";
+import { useParams, useLocation } from "react-router";
 import { useStripe, useElements, CardElement } from "@stripe/react-stripe-js";
 import { arrowBackSharp, checkmark } from 'ionicons/icons';
 

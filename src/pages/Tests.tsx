@@ -1,7 +1,7 @@
 import { IonButton, IonCard, IonCol, IonContent, IonIcon, IonInput, IonItem, IonLabel, IonPage, IonRow, IonText, IonTextarea, useIonViewDidEnter, useIonViewWillLeave } from "@ionic/react";
 import { arrowBackSharp, arrowDownCircleSharp, arrowForwardSharp, attachSharp } from "ionicons/icons";
 import React, { useEffect, useRef, useState } from "react";
-import { useHistory, useLocation } from "react-router";
+import { useHistory } from "react-router";
 import { Form, Formik } from "formik";
 import * as Yup from "yup";
 import download from "downloadjs";
@@ -17,6 +17,8 @@ import MeetingMiniInfo from "../components/MeetingMiniInfo";
 import BilledButton from "../components/BilledButton";
 import pluralizeDuration from "../lib/pluralize-duration";
 import ToReviewButton from "../components/ToReviewButton";
+import ResponseButtons from "../components/ResponseButtons";
+import Alert from "../components/Alert";
 
 const Tests: React.FC = () => {
   const { currentUser, activeAppointment } = useAppContext() as any;
@@ -26,23 +28,29 @@ const Tests: React.FC = () => {
 
   const handleSubmit = async (values: any, { setSubmitting }: any) => {
     try {
+      const status = APPOINTMENT.STATUSES.CLOSED;
       const { data } = await editAppointment(_appointment._id, currentUser.token, {
         ...values,
-        status: APPOINTMENT.STATUSES.CLOSED,
+        status,
       }, true);  // true for multi-part data
 
+      setSubmitting(false);
       isMounted && setAppointment({
         ..._appointment,
         ...values,
         testFile: data.testFile,
-        status: APPOINTMENT.STATUSES.CLOSED,
+        status,
       });
     } catch (error) {
+      setSubmitting(false);
       onError(error.message);
-    } finally {
-      isMounted && setSubmitting(false);
     }
   };
+
+  const onUpdate = (newDetails: any) => setAppointment({
+    ..._appointment,
+    ...newDetails,
+  });
 
   useEffect(() => {
     activeAppointment && setAppointment(activeAppointment);
@@ -92,6 +100,7 @@ const Tests: React.FC = () => {
                   <ProfessionalView
                     appointment={_appointment}
                     handleSubmit={handleSubmit}
+                    onUpdate={onUpdate}
                   />
                 )}
             </div>
@@ -126,113 +135,29 @@ function PatientView({ appointment }: ViewProps) {
   );
 }
 
-const testSchema = Yup.object({
-  testFile: Yup.mixed().test("fileSize", "That's too big (5MB max)", (value) =>
-    value ? value.size <= MAX_ATTACHMENT_SIZE : true
-  ).test("fileType", "Unsupported format (pdf/docx/doc allowed)", (value) =>
-    value ? ALLOWED_FILE_TYPES.includes(value.type) : true
-  ),
-  testSummary: Yup.string().required("a little summary won't hurt"),
-  amount: Yup.number().min(50, "Min KES50").required("Please enter amount to charge"),
-});
-
 interface ProViewProps {
   handleSubmit: any,
+  onUpdate: (any: any) => any,
 }
 
 function ProfessionalView({
-  appointment, handleSubmit
+  appointment, handleSubmit, onUpdate,
 }: ViewProps & ProViewProps) {
-  const customUploadInput = useRef<HTMLInputElement | null>(null);
-
-  const onFile = () => customUploadInput.current!.click();
-
-  const wrapFileHandler = (fieldName: any, setFieldValue: any) => {
-    return (event: any) => {
-      setFieldValue(fieldName, event.currentTarget.files[0]);
-    }
-  }
+  const isClosed = appointment.status === APPOINTMENT.STATUSES.CLOSED;
+  const isUnapproved = appointment.status === APPOINTMENT.STATUSES.UNAPPROVED;
+  const isRejected = appointment.status === APPOINTMENT.STATUSES.REJECTED;
 
   return (
     <div>
-      {(appointment.status === APPOINTMENT.STATUSES.CLOSED) ? (
+      {(isClosed) ? (
         <ViewInner appointment={appointment} />
+      ) : (isUnapproved) ? (
+        <ResponseButtons {...{ appointment, onUpdate }} />
+      ) : (isRejected) ? (
+        <Alert text="Appointment has been rejected." variant="danger" />
       ) : (
-          <Formik
-            validationSchema={testSchema}
-            onSubmit={handleSubmit}
-            initialValues={{
-              testFile: undefined,
-              testSummary: "",
-              amount: undefined,
-            }}
-          >
-            {({
-              handleChange,
-              handleBlur,
-              setFieldValue,
-              errors,
-              values,
-              touched,
-              isValid,
-              isSubmitting
-            }) => (
-                <Form noValidate>
-                  <input
-                    name="testFile"
-                    type="file"
-                    onChange={wrapFileHandler("testFile", setFieldValue)}
-                    className="form-control"
-                    hidden
-                    ref={customUploadInput}
-                  />
-                  <IonCard button onClick={onFile} style={{
-                    padding: "0 var(--padding-start)"
-                  }}>
-                    <IonText color={errors.testFile ? "danger" : "secondary"}>
-                      <div className="d-flex ion-align-items-center ion-justify-content-between">
-                        <p>
-                          {values.testFile ?
-                            (errors.testFile ? "Invalid file" : (values.testFile as any).name) :
-                            "Add file"}
-                        </p>
-                        <p>
-                          <IonIcon icon={attachSharp} />
-                        </p>
-                      </div>
-                    </IonText>
-                  </IonCard>
-                  <FormFieldFeedback
-                    {...{ errors, touched: { testFile: true }, fieldName: "testFile" }}
-                  />
-
-                  <IonItem className={touched.testSummary && errors.testSummary ? "has-error" : ""}>
-                    <IonLabel position="floating">Test summary</IonLabel>
-                    <IonTextarea
-                      rows={2} name="testSummary" onIonChange={handleChange} onIonBlur={handleBlur} />
-                  </IonItem>
-                  <FormFieldFeedback {...{ errors, touched, fieldName: "testSummary" }} />
-
-                  <IonItem className={touched.amount && errors.amount ? "has-error" : ""}>
-                    <IonLabel position="floating">Amount to charge <strong>(KES)</strong></IonLabel>
-                    <IonInput name="amount" type="number" onIonChange={handleChange} onIonBlur={handleBlur} />
-                  </IonItem>
-                  <FormFieldFeedback {...{ errors, touched, fieldName: "amount" }} />
-
-                  <IonRow>
-                    <IonCol>
-                      <IonButton
-                        color="secondary"
-                        expand="block"
-                        type="submit"
-                        disabled={!isValid || isSubmitting}
-                      >{isSubmitting ? "Submitting..." : "Submit results"}</IonButton>
-                    </IonCol>
-                  </IonRow>
-                </Form>
-              )}
-          </Formik>
-        )
+              <TestResulstsForm handleSubmit={handleSubmit} />
+            )
       }
     </div >
   );
@@ -332,5 +257,104 @@ function TestResultView({ appointment }: ViewProps) {
         <p>{appointment.testSummary}</p>
       </IonText>
     </>
+  );
+}
+
+const testSchema = Yup.object({
+  testFile: Yup.mixed().test("fileSize", "That's too big (5MB max)", (value) =>
+    value ? value.size <= MAX_ATTACHMENT_SIZE : true
+  ).test("fileType", "Unsupported format (pdf/docx/doc allowed)", (value) =>
+    value ? ALLOWED_FILE_TYPES.includes(value.type) : true
+  ),
+  testSummary: Yup.string().required("a little summary won't hurt"),
+  amount: Yup.number().min(50, "Min KES50").required("Please enter amount to charge"),
+});
+
+function TestResulstsForm({ handleSubmit }: { handleSubmit: (...any: any[]) => any }) {
+  const customUploadInput = useRef<HTMLInputElement | null>(null);
+
+  const onFile = () => customUploadInput.current!.click();
+
+  const wrapFileHandler = (fieldName: any, setFieldValue: any) => {
+    return (event: any) => {
+      setFieldValue(fieldName, event.currentTarget.files[0]);
+    }
+  }
+
+  return (
+    <Formik
+      validationSchema={testSchema}
+      onSubmit={handleSubmit}
+      initialValues={{
+        testFile: undefined,
+        testSummary: "",
+        amount: undefined,
+      }}
+    >
+      {({
+        handleChange,
+        handleBlur,
+        setFieldValue,
+        errors,
+        values,
+        touched,
+        isValid,
+        isSubmitting
+      }) => (
+          <Form noValidate>
+            <input
+              name="testFile"
+              type="file"
+              onChange={wrapFileHandler("testFile", setFieldValue)}
+              className="form-control"
+              hidden
+              ref={customUploadInput}
+            />
+            <IonCard button onClick={onFile} style={{
+              padding: "0 var(--padding-start)"
+            }}>
+              <IonText color={errors.testFile ? "danger" : "secondary"}>
+                <div className="d-flex ion-align-items-center ion-justify-content-between">
+                  <p>
+                    {values.testFile ?
+                      (errors.testFile ? "Invalid file" : (values.testFile as any).name) :
+                      "Add file"}
+                  </p>
+                  <p>
+                    <IonIcon icon={attachSharp} />
+                  </p>
+                </div>
+              </IonText>
+            </IonCard>
+            <FormFieldFeedback
+              {...{ errors, touched: { testFile: true }, fieldName: "testFile" }}
+            />
+
+            <IonItem className={touched.testSummary && errors.testSummary ? "has-error" : ""}>
+              <IonLabel position="floating">Test summary</IonLabel>
+              <IonTextarea
+                rows={2} name="testSummary" onIonChange={handleChange} onIonBlur={handleBlur} />
+            </IonItem>
+            <FormFieldFeedback {...{ errors, touched, fieldName: "testSummary" }} />
+
+            <IonItem className={touched.amount && errors.amount ? "has-error" : ""}>
+              <IonLabel position="floating">Amount to charge <strong>(KES)</strong></IonLabel>
+              <IonInput name="amount" type="number" onIonChange={handleChange} onIonBlur={handleBlur} />
+            </IonItem>
+            <FormFieldFeedback {...{ errors, touched, fieldName: "amount" }} />
+
+            <IonRow>
+              <IonCol>
+                <IonButton
+                  color="secondary"
+                  expand="block"
+                  type="submit"
+                  disabled={!isValid || isSubmitting}
+                >{isSubmitting ? "Submitting..." : "Submit results"}</IonButton>
+              </IonCol>
+            </IonRow>
+          </Form>
+        )}
+    </Formik>
   );
 }

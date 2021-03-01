@@ -36,6 +36,16 @@ export const USER = {
   },
 };
 
+export const SPECIALITIES = {
+  Psychology: "Psychology",
+  Psychiatry: "Psychiatry",
+  Psychoanalysis: "Psychoanalysis",
+  Psychotherapy: "Psychotherapy",
+  "Mental Counselling": "Mental Counselling",
+  "Family & Marriage": "Family & Marriage",
+  "Addiction Counselling": "Addiction Counselling",
+};
+
 export const STORAGE_KEY = "afyamedex-storage";
 
 export const ALLOWED_FILE_TYPES = [

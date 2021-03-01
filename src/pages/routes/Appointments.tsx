@@ -6,7 +6,7 @@ import Checkout from "../Checkout";
 import OnSite from "../OnSite";
 import Review from "../Review";
 import Tests from "../Tests";
-import Meeting from "../Meeting";
+import Meeting from "../meeting/Meeting";
 import _Appointments from "../Appointments";
 import Payments from "../Payments";
 

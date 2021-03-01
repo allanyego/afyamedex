@@ -22,16 +22,15 @@ export default function Appointments() {
   const { isMounted, setMounted } = useMounted();
 
   const onTapAppointment = (appointment: any) => {
-    const isNotApprovedOrIsRejected = appointment.status === APPOINTMENT.STATUSES.UNAPPROVED ||
-      appointment.status === APPOINTMENT.STATUSES.REJECTED;
+    const isRejected = appointment.status === APPOINTMENT.STATUSES.REJECTED;
+    const isNotApproved = appointment.status === APPOINTMENT.STATUSES.UNAPPROVED;
     const isClosed = appointment.status === APPOINTMENT.STATUSES.CLOSED;
-
-    if (isNotApprovedOrIsRejected) {
-      return;
-    }
-
     const isUnbilled = !appointment.hasBeenBilled;
     const isCurrentUserPatient = (appointment.patient._id === currentUser._id);
+
+    if (isRejected || (isCurrentUserPatient && isNotApproved)) {
+      return;
+    }
 
     if (isClosed && isUnbilled && isCurrentUserPatient) {
       history.push("/app/appointments/checkout/" + appointment._id, {

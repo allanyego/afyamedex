@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { IonButton, IonContent, IonPage, IonRow, IonCol, IonIcon, IonSearchbar, IonGrid, IonItem, IonLabel, IonAvatar, IonList, IonBadge, useIonViewDidEnter, useIonViewWillLeave } from '@ionic/react';
-import { search, person, businessOutline, close } from 'ionicons/icons';
+import { IonButton, IonContent, IonPage, IonRow, IonCol, IonIcon, IonSearchbar, IonGrid, IonItem, IonLabel, IonAvatar, IonList, IonBadge, useIonViewDidEnter, useIonViewWillLeave, IonPopover } from '@ionic/react';
+import { search, person, businessOutline, close, filter } from 'ionicons/icons';
 
 import './Listing.css';
 import { getUsers } from "../http/users";
 import useToastManager from '../lib/toast-hook';
 import LoadingFallback from '../components/LoadingFallback';
-import { USER } from '../http/constants';
+import { SPECIALITIES, USER } from '../http/constants';
 import UserHeader from '../components/UserHeader';
 import debounce from '../lib/debounce';
 import useMounted from '../lib/mounted-hook';
@@ -17,9 +17,13 @@ import RatingInfo from '../components/RatingInfo';
 import userPicture from '../http/helpers/user-picture';
 
 const Listing: React.FC = () => {
+  const ALL = "ALL";
   const [showSearchBar, setShowSearchBar] = useState(false);
+  const [showPopover, setShowPopover] = useState(false);
   const [isSearching, setSearching] = useState(false);
   let [professionals, setProfessionals] = useState<any[] | null>(null);
+  const [viewItems, setViewItems] = useState([]);
+  const [specialityFilter, setSpecialityFilter] = useState(ALL);
   const [loadError, setLoadError] = useState(false);
   const [listMargin, setListMargin] = useState(0);
   const { onError } = useToastManager();
@@ -39,6 +43,28 @@ const Listing: React.FC = () => {
     }
   };
 
+  const openPopover = () => setShowPopover(true);
+  const closePopover = () => setShowPopover(false);
+
+  const filterHandlerFactory = (speciality: string) => () => {
+    setSpecialityFilter(speciality);
+    closePopover();
+  };
+
+  const onToggle = () => setShowSearchBar(!showSearchBar);
+  const closeSearchBar = async () => {
+    setShowSearchBar(false);
+    await fetchProfessionals();
+  };
+
+  useEffect(() => {
+    let items: any = professionals;
+    if (specialityFilter !== ALL) {
+      items = professionals?.filter(p => p.speciality === specialityFilter);
+    }
+    setViewItems(items);
+  }, [professionals, specialityFilter]);
+
   useIonViewDidEnter(() => {
     setMounted(true);
     fetchProfessionals({});
@@ -48,20 +74,48 @@ const Listing: React.FC = () => {
     setMounted(false);
   });
 
-  const onToggle = () => setShowSearchBar(!showSearchBar);
-  const closeSearchBar = async () => {
-    setShowSearchBar(false);
-    await fetchProfessionals();
-  };
-
   return (
     <IonPage>
       <UserHeader title="Listing" secondary={
-        <IonButton onClick={onToggle} color={showSearchBar ? "danger" : "dark"}>
-          <IonIcon slot="icon-only" icon={showSearchBar ? close : search} />
-        </IonButton>
+        <>
+          <IonButton onClick={onToggle} color={showSearchBar ? "danger" : "dark"}>
+            <IonIcon slot="icon-only" icon={showSearchBar ? close : search} />
+          </IonButton>
+          <IonButton onClick={openPopover} color="dark">
+            <IonIcon slot="icon-only" icon={filter} color={specialityFilter !== ALL ? "secondary" : undefined} />
+          </IonButton>
+        </>
       }
       />
+
+      <IonPopover
+        isOpen={showPopover}
+        onDidDismiss={closePopover}
+      >
+        <div className="ion-padding">
+          <div className="d-flex ion-justify-content-between ion-align-items-center">
+            <p className="ion-no-margin">
+              Filter by <strong>speciality</strong>
+            </p>
+            <IonButton fill="clear" color="danger" onClick={closePopover}>
+              <IonIcon slot="icon-only" icon={close} />
+            </IonButton>
+          </div>
+          <IonList lines="full">
+            {[ALL, ...Object.keys(SPECIALITIES)].map((s: string, index: number) => (
+              <IonItem
+                key={index + s}
+                onClick={filterHandlerFactory(s)}
+                color={specialityFilter === s ? "secondary" : undefined}
+                button
+              >
+                {s}
+              </IonItem>
+            ))}
+          </IonList>
+        </div>
+      </IonPopover>
+
       <IonContent fullscreen className="listing-page">
         {showSearchBar && (
           <SearchBar {...{ fetchProfessionals, closeSearchBar, setListMargin, setSearching }} />
@@ -69,13 +123,13 @@ const Listing: React.FC = () => {
 
         {loadError ? (
           <ErrorFallback fullHeight />
-        ) : (!professionals || isSearching) ? (
+        ) : (!viewItems || isSearching) ? (
           <LoadingFallback />
         ) : (
               <IonList lines="full" style={{
                 marginTop: listMargin,
               }}>
-                {professionals.map((prof: any) => <ListingItem key={prof._id} prof={prof} />)}
+                {viewItems.map((prof: any) => <ListingItem key={prof._id} prof={prof} />)}
               </IonList>
             )}
       </IonContent>
@@ -88,8 +142,6 @@ export default Listing;
 function ListingItem({ prof }: {
   prof: ProfileData
 }) {
-  const [a, b, ...rest] = prof.speciality;
-
   return (
     <IonItem routerLink={`/app/profile/${prof._id}`} className="listing-item">
       <IonAvatar slot="start">
@@ -108,8 +160,9 @@ function ListingItem({ prof }: {
         <p>{prof.bio || "No bio."}</p>
         <RatingInfo userId={prof._id as any} />
         <div className="profile-badges-container d-flex ion-align-items-center">
-          {[a, b].map((s: any, idx: number) => <IonBadge key={`${s}${idx}`} color="secondary">{s}</IonBadge>)}{" "}
-          <small>{rest.length ? `${rest.length} more` : null}</small>
+          {prof.speciality && (
+            <IonBadge color="secondary">{prof.speciality}</IonBadge>
+          )}
         </div>
       </IonLabel>
     </IonItem>
